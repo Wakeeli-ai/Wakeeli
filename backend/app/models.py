@@ -1,0 +1,63 @@
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text, JSON
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from app.database import Base
+
+class Listing(Base):
+    __tablename__ = "listings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    listing_type = Column(String, index=True) # rent, buy
+    price = Column(Float, index=True)
+    location = Column(String, index=True)
+    bedrooms = Column(Integer)
+    furnishing = Column(String, nullable=True) # furnished, unfurnished, semi
+    description = Column(Text, nullable=True)
+    is_available = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Agent(Base):
+    __tablename__ = "agents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    phone = Column(String)
+    email = Column(String, nullable=True)
+    territories = Column(JSON) # List of cities/areas
+    specialties = Column(JSON) # List: ["rent", "buy"]
+    priority = Column(Integer, default=1)
+    is_active = Column(Boolean, default=True)
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_phone = Column(String, unique=True, index=True)
+    agent_id = Column(Integer, ForeignKey("agents.id"), nullable=True)
+    status = Column(String, default="new") # new, qualified, handed_off, closed
+    user_requirements = Column(JSON, nullable=True) # rent/buy, location, budget, etc.
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    agent = relationship("Agent")
+    messages = relationship("Message", back_populates="conversation")
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"))
+    role = Column(String) # user, assistant, system
+    content = Column(Text)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+    conversation = relationship("Conversation", back_populates="messages")
+
+class Event(Base):
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_type = Column(String)
+    payload = Column(JSON)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())

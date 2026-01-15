@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routes import whatsapp, listings, agents, conversations
+from app.routes import whatsapp, listings, agents, conversations, auth
 from app.config import settings
 
 # Create Tables
@@ -25,6 +25,7 @@ app.add_middleware(
 )
 
 # Routes
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(listings.router, prefix="/api/listings", tags=["Listings"])
 app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])

@@ -1,9 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import Listings from './pages/Listings';
 import Agents from './pages/Agents';
 import Conversations from './pages/Conversations';
-import { LayoutDashboard, Users, MessageSquare, Building2, Menu } from 'lucide-react';
-import { useState } from 'react';
+import Login from './pages/Login';
+import { LayoutDashboard, Users, MessageSquare, Building2, Menu, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getCurrentUser } from './api';
 
 function NavItem({ to, icon: Icon, label }: { to: string, icon: any, label: string }) {
   const location = useLocation();
@@ -27,6 +29,11 @@ function NavItem({ to, icon: Icon, label }: { to: string, icon: any, label: stri
 function Layout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 font-sans">
       {/* Sidebar */}
@@ -46,13 +53,20 @@ function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="absolute bottom-0 w-full p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 px-2">
+          <div className="flex items-center gap-3 px-2 mb-3">
             <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-medium">A</div>
-            <div>
+            <div className="flex-1">
               <p className="text-sm font-medium text-slate-700">Admin User</p>
               <p className="text-xs text-slate-500">admin@wakeeli.ai</p>
             </div>
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors"
+          >
+            <LogOut size={16} />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
@@ -118,17 +132,88 @@ function DashboardHome() {
   );
 }
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setIsAuthenticated(false);
+        return;
+      }
+
+      try {
+        await getCurrentUser();
+        setIsAuthenticated(true);
+      } catch {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      getCurrentUser()
+        .then(() => setIsAuthenticated(true))
+        .catch(() => {
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+        });
+    }
+  }, []);
+
   return (
     <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<DashboardHome />} />
-          <Route path="/listings" element={<Listings />} />
-          <Route path="/agents" element={<Agents />} />
-          <Route path="/conversations" element={<Conversations />} />
-        </Routes>
-      </Layout>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Login onLogin={() => setIsAuthenticated(true)} />
+            )
+          }
+        />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<DashboardHome />} />
+                  <Route path="/listings" element={<Listings />} />
+                  <Route path="/agents" element={<Agents />} />
+                  <Route path="/conversations" element={<Conversations />} />
+                </Routes>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </Router>
   );
 }

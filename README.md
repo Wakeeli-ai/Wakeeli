@@ -10,11 +10,32 @@ Unified conversational AI for real estate, supporting WhatsApp (Text/Voice) and 
 
 ## Prerequisites
 
-*   Python 3.10+
-*   Node.js 18+
-*   PostgreSQL
+*   Python 3.10+ (or Docker)
+*   Node.js 18+ (or Docker)
+*   PostgreSQL (or Docker)
 
-## Setup & Run
+## Quick Start with Docker 🐳
+
+The easiest way to run Wakeeli is using Docker:
+
+```bash
+# 1. Copy environment file
+cp docker-compose.env.example .env
+
+# 2. Edit .env with your API keys (OpenAI, WhatsApp)
+
+# 3. Start everything
+docker-compose up -d
+
+# Access:
+# - Frontend: http://localhost:3000
+# - Backend API: http://localhost:8000
+# - API Docs: http://localhost:8000/docs
+```
+
+See [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed Docker instructions.
+
+## Manual Setup & Run
 
 ### 1. Backend
 

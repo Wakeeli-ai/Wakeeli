@@ -1,0 +1,56 @@
+version: '3.8'
+
+# Development version with hot-reload and volume mounts
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: wakeeli-db-dev
+    environment:
+      POSTGRES_USER: wakeeli_user
+      POSTGRES_PASSWORD: wakeeli_password
+      POSTGRES_DB: wakeeli_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wakeeli_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wakeeli-network
+
+  # Backend API (Development - with hot reload)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wakeeli-backend-dev
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      DATABASE_URL: postgresql://wakeeli_user:wakeeli_password@db:5432/wakeeli_db
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - wakeeli-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  wakeeli-network:
+    driver: bridge

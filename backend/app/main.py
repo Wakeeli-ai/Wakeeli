@@ -10,12 +10,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # CORS
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://wakeeli-production-59a2.up.railway.app"
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,

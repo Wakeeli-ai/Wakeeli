@@ -13,7 +13,8 @@ app = FastAPI(title=settings.PROJECT_NAME)
 origins = [
     "http://localhost",
     "http://localhost:3000",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "https://wakeeli-production-59a2.up.railway.app"
 ]
 
 app.add_middleware(

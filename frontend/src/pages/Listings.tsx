@@ -5,6 +5,8 @@ import { Plus, Trash2, Home, MapPin, Bed, Bath, Search } from 'lucide-react';
 export default function Listings() {
   const [listings, setListings] = useState<any[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     title: '',
     listing_type: 'rent',
@@ -21,16 +23,23 @@ export default function Listings() {
 
   const loadListings = async () => {
     try {
+      setLoading(true);
+      setError('');
       const res = await getListings();
       setListings(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const errorMsg = err.response?.data?.detail || err.message || 'Failed to load listings. Check if backend is running and API URL is correct.';
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setError('');
       await createListing(form);
       setForm({
         title: '',
@@ -43,9 +52,11 @@ export default function Listings() {
       });
       setIsFormOpen(false);
       loadListings();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error creating listing');
+      const errorMsg = err.response?.data?.detail || err.message || 'Failed to create listing. Check if backend is running and API URL is correct.';
+      setError(errorMsg);
+      alert(`Error: ${errorMsg}`);
     }
   };
 
@@ -59,8 +70,23 @@ export default function Listings() {
     }
   };
 
+  const API_URL = 'https://wakeeli-ai.up.railway.app/api'; // Hardcoded for now
+
   return (
     <div className="space-y-6">
+      {/* Debug Info */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+        <p className="text-yellow-800"><strong>API URL:</strong> {API_URL}</p>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800 font-medium">Error: {error}</p>
+          <p className="text-red-600 text-sm mt-1">Check browser console (F12) for details.</p>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Property Listings</h1>
@@ -179,9 +205,18 @@ export default function Listings() {
         </div>
       )}
 
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-12">
+          <div className="inline-block w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-2 text-slate-500">Loading listings...</p>
+        </div>
+      )}
+
       {/* Grid Layout for Listings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {listings.map(l => (
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {listings.map(l => (
           <div key={l.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
             <div className="h-48 bg-slate-200 relative">
               {/* Placeholder for Image */}
@@ -234,11 +269,12 @@ export default function Listings() {
                 </button>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
       
-      {listings.length === 0 && (
+      {!loading && listings.length === 0 && !error && (
         <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
           <Home className="mx-auto h-12 w-12 text-slate-300 mb-3" />
           <h3 className="text-lg font-medium text-slate-900">No properties yet</h3>

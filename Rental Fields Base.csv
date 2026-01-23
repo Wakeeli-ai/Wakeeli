@@ -1,0 +1,65 @@
+﻿Table view
+"Field Name","Field Type","Required"
+"Property ID","Auto-generated text","Required"
+"Property Type","Dropdown: Apartment/Villa/Duplex/Penthouse/Office/Retail/Land","Required"
+"Listing Title","Text","Required"
+"Category","Dropdown: Residential/Commercial/Land","Required"
+"City","Dropdown all cities","Required"
+"Area/Neighborhood","Text","Optional"
+"Building Name","Text","Optional"
+"Bedrooms","Number","Required"
+"Bathrooms","Number","Required"
+"Built-Up Area (m²)","Number","Required"
+"Plot Area (m²)","Number","Optional"
+"Floor Number","Number","Optional"
+"Parking","Dropdown: None/1/2/Covered","Optional"
+"Property Age","Dropdown: 1-5 years/5-10 years/10+ years","Optional"
+"Furnishing","Dropdown: Furnished/Semi-Furnished/Unfurnished","Required"
+"View","Dropdown: Sea/City/Mountain/Open","Optional"
+"RENTAL PRICING & TERMS","RENT PRICE: Number
+
+Rental Duration: Dropdown: Daily / Monthly / Yearly
+
+Security Deposit: Number
+
+Negotiable? (Yes / No)
+
+Minimum Acceptable Rent: Number (optional)
+
+Owner Flexibility Notes: Text (optional)
+","Required"
+"AVAILIBILITY & MOVE-IN","Move-In Date: Dropdown: 
+ASAP - in a week - in a month - in a few months
+
+Minimum Stay: Text
+
+Viewing Notice Required: Immediate / 24h / 48h+","Optional"
+"UTILITIES","checkboxes: 
+24/7 Electricity-Generator-Water Supply-Internet Ready-Central A/C-Heating Type-Water Supply","Required"
+"UNIT AMENITIES","Checkboxes: 
+Balcony - Terrace - Built-in Kitchen Appliances - Built-in Wardrobes - Walk-in Closet - Maid’s Room - Study Room - Storage Room - Fireplace - Attic / Loft  -Playroom","Required"
+"BUILDING AMENITIES","Checkboxes:
+Elevator - Covered Parking - Security - Concierge - Shared Pool - Shared Gym - Shared Spa
+- Visitor Parking","Optional"
+"PRIVATE AMENITIES","Private Garden - Provite pool - Private Gym - Private Jacuzzi","Optional"
+"RENTAL RULES & RESTRICTIONS","Pets Allowed? (Yes / No)
+
+Family Only? (Yes / No)
+
+Nationality Restrictions: Tect
+
+
+Short-Term Allowed? (YES/NO)","Optional"
+"BUYER FIT","Ideal For: Dropdown: End User/Investor/Family
+
+Lifestyle Tags: Multi-select: Luxury/Quiet/Walkable/Family-Friendly-other (Optional)
+
+Target Renter Budget Range: Number
+
+Minimum Renter Budget: Number",""
+"MEDIA","Image Gallery: Media/URL
+Video Tour: Media/URL","Required"
+"ADDITIONAL DETAILS","Negotiable: Dropdown: Yes/No
+
+Viewing Notice Required:
+Dropdown: Immediate/24h/48h+","Optional"

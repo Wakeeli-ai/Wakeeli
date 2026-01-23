@@ -1,0 +1,52 @@
+﻿Table view
+"Field Name","Field Type","Required"
+"Property ID","Auto-generated text","Required"
+"Property Type","Dropdown: Apartment/Villa/Duplex/Penthouse/Office/Retail/Land","Required"
+"Listing Title","Text","Required"
+"Sale Price","Number","Required"
+"Category","Dropdown: Residential/Commercial/Land","Required"
+"City","Dropdown all cities","Required"
+"Area/Neighborhood","Text","Optional"
+"Building Name","Text","Optional"
+"Bedrooms","Check boxes 1-7 and +7","Required"
+"Bathrooms","Check boxes 1-7 and +7","Required"
+"Built-Up Area (m²)","Number","Required"
+"Plot Area (m²)","Number","Optional"
+"Floor Number","Number","Optional"
+"Parking","Dropdown: None/1/2/Covered","Optional"
+"Property Age","Dropdown: 1-5 years/5-10 years/10+ years","Optional"
+"Condition","Dropdown: Ready to Move In/Under Construction/Needs Renovation","Required"
+"Furnishing","Dropdown: Furnished/Semi-Furnished/Unfurnished","Required"
+"View","Dropdown: Sea/City/Mountain/Open","Optional"
+"UTILITIES","checkboxes: 
+24/7 Electricity-Generator-Water Supply-Internet Ready-Central A/C-Heating Type-Water Supply
+
+","Required"
+"UNIT AMENITIES","Checkboxes: 
+Balcony - Terrace - Built-in Kitchen Appliances - Built-in Wardrobes - Walk-in Closet - Maid’s Room - Study Room - Storage Room - Fireplace - Attic / Loft  -Playroom","Required"
+"BUILDING AMENITIES","Checkboxes:
+Elevator - Covered Parking - Security - Concierge - Shared Pool - Shared Gym - Shared Spa
+- Visitor Parking","Optional"
+"SPECIAL DETAILS","Pets Allowed? (Yes / No)
+
+Nationality Restrictions (Checkbox)
+
+Airbnb / Short-Term Allowed?
+(Checkbox)
+
+Furnishing Included in Price? (Yes / No)","Optional"
+"PRIVATE AMENITIES","Checkboxes:
+Private Garden - Provite pool - Private Gym - Private Jacuzzi","Optional"
+"BUYER FIT","Ideal For: Dropdown: End User/Investor/Family
+
+Lifestyle Tags: Multi-select: Luxury/Quiet/Walkable/Family-Friendly-other (Optional)
+
+Target Buyer Budget Range: Number
+
+Minimum Buyer Budget: Number","Required"
+"MEDIA","Image Gallery: Media/URL
+Video Tour: Media/URL","Required"
+"ADDITIONAL DETAILS","Negotiable: Dropdown: Yes/No
+
+Viewing Notice Required:
+Dropdown: Immediate/24h/48h+","Optional"

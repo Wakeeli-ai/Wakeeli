@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.routes import whatsapp, listings, agents, conversations, auth
+from app.models import Listing
 from app.config import settings
 
 # Create Tables
@@ -30,3 +31,10 @@ app.include_router(conversations.router, prefix="/api/conversations", tags=["Con
 @app.get("/")
 def read_root():
     return {"message": "Wakeeli AI Backend is running."}
+
+# TEMP: one-time reset for listings table (remove after use)
+@app.post("/admin/reset-listings")
+def reset_listings():
+    Listing.__table__.drop(bind=engine, checkfirst=True)
+    Listing.__table__.create(bind=engine, checkfirst=True)
+    return {"status": "ok", "message": "Listings table reset."}

@@ -118,14 +118,36 @@ def process_user_message(db: Session, conversation_id: int, user_message: str):
             
             if function_name == "search_listings":
                 results = search_listings(db, function_args)
-                # Serialize results
-                tool_output = json.dumps([r.title + " - " + str(r.price) for r in results])
+                # Serialize results with richer context
+                tool_output = json.dumps([
+                    {
+                        "title": r.title,
+                        "listing_type": r.listing_type,
+                        "price": r.sale_price if r.listing_type == "buy" else r.rent_price,
+                        "city": r.city,
+                        "area": r.area,
+                        "bedrooms": r.bedrooms,
+                        "bathrooms": r.bathrooms
+                    }
+                    for r in results
+                ])
                 if not results:
                     tool_output = "No listings found matching these exact criteria."
 
             elif function_name == "recommend_alternatives":
                 results = recommend_alternatives(db, function_args)
-                tool_output = json.dumps([r.title + " - " + str(r.price) for r in results])
+                tool_output = json.dumps([
+                    {
+                        "title": r.title,
+                        "listing_type": r.listing_type,
+                        "price": r.sale_price if r.listing_type == "buy" else r.rent_price,
+                        "city": r.city,
+                        "area": r.area,
+                        "bedrooms": r.bedrooms,
+                        "bathrooms": r.bathrooms
+                    }
+                    for r in results
+                ])
             
             elif function_name == "handoff_to_agent":
                 # Update conversation requirements

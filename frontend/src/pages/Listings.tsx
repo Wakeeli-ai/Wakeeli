@@ -1,6 +1,25 @@
 import { useState, useEffect } from 'react';
-import { getListings, createListing, deleteListing } from '../api';
-import { Plus, Trash2, Home, MapPin, Bed, Bath, Search } from 'lucide-react';
+import { getListings, createListing, deleteListing, API_URL } from '../api';
+import { Plus, Trash2, Home, MapPin, Bed, Bath, Search, Square } from 'lucide-react';
+
+const formatPrice = (value: any) => {
+  if (value === null || value === undefined || value === '') return 'N/A';
+  const num = Number(value);
+  return Number.isFinite(num) ? num.toLocaleString() : 'N/A';
+};
+
+const formatNumberInput = (value: string) => {
+  const digits = value.replace(/[^\d]/g, '');
+  if (!digits) return '';
+  return Number(digits).toLocaleString();
+};
+
+const parseNumberInput = (value: string) => {
+  const digits = value.replace(/[^\d]/g, '');
+  if (!digits) return null;
+  const num = Number(digits);
+  return Number.isFinite(num) ? num : null;
+};
 
 export default function Listings() {
   const [listings, setListings] = useState<any[]>([]);
@@ -8,12 +27,28 @@ export default function Listings() {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
-    title: '',
     listing_type: 'rent',
-    price: 0,
-    location: '',
+    property_type: 'Apartment',
+    title: '',
+    category: 'Residential',
+    city: '',
+    area: '',
+    building_name: '',
     bedrooms: 1,
-    furnishing: 'unfurnished',
+    bathrooms: 1,
+    built_up_area: '',
+    plot_area: '',
+    floor_number: '',
+    parking: 'None',
+    property_age: '',
+    furnishing: 'Unfurnished',
+    view: '',
+    condition: '',
+    sale_price: '',
+    rent_price: '',
+    rental_duration: 'Monthly',
+    security_deposit: '',
+    negotiable: '',
     description: ''
   });
 
@@ -40,14 +75,50 @@ export default function Listings() {
     e.preventDefault();
     try {
       setError('');
-      await createListing(form);
+      if (form.listing_type === 'buy' && !form.sale_price) {
+        setError('Sale price is required for buy listings.');
+        return;
+      }
+      if (form.listing_type === 'rent' && !form.rent_price) {
+        setError('Rent price is required for rent listings.');
+        return;
+      }
+
+      const payload = {
+        ...form,
+        built_up_area: parseNumberInput(form.built_up_area),
+        plot_area: parseNumberInput(form.plot_area),
+        floor_number: parseNumberInput(form.floor_number),
+        sale_price: parseNumberInput(form.sale_price),
+        rent_price: parseNumberInput(form.rent_price),
+        security_deposit: parseNumberInput(form.security_deposit),
+        negotiable: form.negotiable === '' ? null : form.negotiable === 'Yes',
+      };
+
+      await createListing(payload);
       setForm({
-        title: '',
         listing_type: 'rent',
-        price: 0,
-        location: '',
+        property_type: 'Apartment',
+        title: '',
+        category: 'Residential',
+        city: '',
+        area: '',
+        building_name: '',
         bedrooms: 1,
-        furnishing: 'unfurnished',
+        bathrooms: 1,
+        built_up_area: '',
+        plot_area: '',
+        floor_number: '',
+        parking: 'None',
+        property_age: '',
+        furnishing: 'Unfurnished',
+        view: '',
+        condition: '',
+        sale_price: '',
+        rent_price: '',
+        rental_duration: 'Monthly',
+        security_deposit: '',
+        negotiable: '',
         description: ''
       });
       setIsFormOpen(false);
@@ -69,8 +140,6 @@ export default function Listings() {
       console.error(err);
     }
   };
-
-  const API_URL = 'https://wakeeli-ai.up.railway.app/api'; // Hardcoded for now
 
   return (
     <div className="space-y-6">
@@ -106,7 +175,7 @@ export default function Listings() {
           <h3 className="text-lg font-semibold mb-4 text-slate-800">New Property Details</h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Listing Title</label>
               <input 
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                 placeholder="e.g. Modern Apartment in Downtown" 
@@ -117,7 +186,7 @@ export default function Listings() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Listing Type</label>
               <select 
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
                 value={form.listing_type} 
@@ -129,23 +198,42 @@ export default function Listings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Price ($)</label>
-              <input 
-                type="number" 
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                value={form.price} 
-                onChange={e => setForm({...form, price: Number(e.target.value)})} 
-                required 
-              />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Property Type</label>
+              <select
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                value={form.property_type}
+                onChange={e => setForm({...form, property_type: e.target.value})}
+              >
+                <option>Apartment</option>
+                <option>Villa</option>
+                <option>Duplex</option>
+                <option>Penthouse</option>
+                <option>Office</option>
+                <option>Retail</option>
+                <option>Land</option>
+              </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+              <select
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                value={form.category}
+                onChange={e => setForm({...form, category: e.target.value})}
+              >
+                <option>Residential</option>
+                <option>Commercial</option>
+                <option>Land</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
               <input 
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                placeholder="City, District"
-                value={form.location} 
-                onChange={e => setForm({...form, location: e.target.value})} 
+                placeholder="e.g. Beirut"
+                value={form.city} 
+                onChange={e => setForm({...form, city: e.target.value})} 
                 required 
               />
             </div>
@@ -162,18 +250,207 @@ export default function Listings() {
                 />
               </div>
               <div>
+                 <label className="block text-sm font-medium text-slate-700 mb-1">Bathrooms</label>
+                 <input 
+                  type="number" 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.bathrooms} 
+                  onChange={e => setForm({...form, bathrooms: Number(e.target.value)})} 
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Built-Up Area (m²)</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.built_up_area} 
+                  onChange={e => setForm({...form, built_up_area: formatNumberInput(e.target.value)})} 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Plot Area (m²)</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.plot_area} 
+                  onChange={e => setForm({...form, plot_area: formatNumberInput(e.target.value)})} 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Area / Neighborhood</label>
+                <input 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="e.g. Achrafieh"
+                  value={form.area} 
+                  onChange={e => setForm({...form, area: e.target.value})} 
+                />
+              </div>
+              <div>
                  <label className="block text-sm font-medium text-slate-700 mb-1">Furnishing</label>
                   <select 
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
                     value={form.furnishing} 
                     onChange={e => setForm({...form, furnishing: e.target.value})}
                   >
-                    <option value="unfurnished">Unfurnished</option>
-                    <option value="furnished">Furnished</option>
-                    <option value="semi">Semi</option>
+                    <option>Unfurnished</option>
+                    <option>Furnished</option>
+                    <option>Semi-Furnished</option>
                   </select>
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Building Name</label>
+                <input 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.building_name} 
+                  onChange={e => setForm({...form, building_name: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Floor Number</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.floor_number} 
+                  onChange={e => setForm({...form, floor_number: formatNumberInput(e.target.value)})} 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Parking</label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.parking}
+                  onChange={e => setForm({...form, parking: e.target.value})}
+                >
+                  <option>None</option>
+                  <option>1</option>
+                  <option>2</option>
+                  <option>Covered</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Property Age</label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.property_age}
+                  onChange={e => setForm({...form, property_age: e.target.value})}
+                >
+                  <option value="">Select</option>
+                  <option>1-5 years</option>
+                  <option>5-10 years</option>
+                  <option>10+ years</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">View</label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.view}
+                  onChange={e => setForm({...form, view: e.target.value})}
+                >
+                  <option value="">Select</option>
+                  <option>Sea</option>
+                  <option>City</option>
+                  <option>Mountain</option>
+                  <option>Open</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Condition</label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.condition}
+                  onChange={e => setForm({...form, condition: e.target.value})}
+                >
+                  <option value="">Select</option>
+                  <option>Ready to Move In</option>
+                  <option>Under Construction</option>
+                  <option>Needs Renovation</option>
+                </select>
+              </div>
+            </div>
+
+            {form.listing_type === 'buy' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Sale Price ($)</label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.sale_price}
+                  onChange={e => setForm({...form, sale_price: formatNumberInput(e.target.value)})}
+                  required
+                />
+              </div>
+            )}
+
+            {form.listing_type === 'rent' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Rent Price ($)</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    value={form.rent_price}
+                    onChange={e => setForm({...form, rent_price: formatNumberInput(e.target.value)})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Rental Duration</label>
+                  <select
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                    value={form.rental_duration}
+                    onChange={e => setForm({...form, rental_duration: e.target.value})}
+                  >
+                    <option>Daily</option>
+                    <option>Monthly</option>
+                    <option>Yearly</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {form.listing_type === 'rent' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Security Deposit ($)</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    value={form.security_deposit}
+                    onChange={e => setForm({...form, security_deposit: formatNumberInput(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Negotiable</label>
+                  <select
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                    value={form.negotiable}
+                    onChange={e => setForm({...form, negotiable: e.target.value})}
+                  >
+                    <option value="">Select</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
@@ -232,7 +509,7 @@ export default function Listings() {
               </div>
               <div className="absolute top-4 right-4">
                  <span className="px-3 py-1 bg-white/90 backdrop-blur rounded-full text-xs font-bold text-slate-900 shadow-sm">
-                   ${l.price.toLocaleString()}
+                   ${l.listing_type === 'buy' ? formatPrice(l.sale_price) : formatPrice(l.rent_price)}
                  </span>
               </div>
             </div>
@@ -242,15 +519,23 @@ export default function Listings() {
                 <h3 className="font-bold text-slate-900 line-clamp-1">{l.title}</h3>
               </div>
               
-              <div className="flex items-center text-slate-500 text-sm mb-4">
+              <div className="flex items-center text-slate-500 text-sm mb-2">
                 <MapPin size={16} className="mr-1" />
-                {l.location}
+                {l.city}{l.area ? `, ${l.area}` : ''}
               </div>
 
               <div className="flex items-center gap-4 text-sm text-slate-600 mb-4 pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-1">
+                  <Square size={16} />
+                  <span>{formatPrice(l.built_up_area)} m²</span>
+                </div>
+                <div className="flex items-center gap-1">
                   <Bed size={16} />
                   <span>{l.bedrooms} Beds</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Bath size={16} />
+                  <span>{l.bathrooms} Baths</span>
                 </div>
                 {l.furnishing && (
                   <div className="capitalize px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-const API_URL = 'https://wakeeli-ai.up.railway.app/api'; // Hardcoded for now
+export const API_URL =
+  import.meta.env.VITE_API_URL || 'https://wakeeli-ai.up.railway.app/api';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -16,16 +16,10 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 errors (unauthorized)
+// Handle errors (avoid redirect since auth is disabled)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export const getListings = () => api.get('/listings/');

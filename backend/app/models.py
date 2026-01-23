@@ -7,12 +7,32 @@ class Listing(Base):
     __tablename__ = "listings"
 
     id = Column(Integer, primary_key=True, index=True)
+    listing_type = Column(String, index=True)  # rent, buy
+    property_type = Column(String, index=True)  # Apartment, Villa, etc.
     title = Column(String, index=True)
-    listing_type = Column(String, index=True) # rent, buy
-    price = Column(Float, index=True)
-    location = Column(String, index=True)
+    category = Column(String, index=True)  # Residential, Commercial, Land
+    city = Column(String, index=True)
+    area = Column(String, nullable=True)  # Area/Neighborhood
+    building_name = Column(String, nullable=True)
+
     bedrooms = Column(Integer)
-    furnishing = Column(String, nullable=True) # furnished, unfurnished, semi
+    bathrooms = Column(Integer)
+    built_up_area = Column(Float)
+    plot_area = Column(Float, nullable=True)
+    floor_number = Column(Integer, nullable=True)
+
+    parking = Column(String, nullable=True)  # None/1/2/Covered
+    property_age = Column(String, nullable=True)  # 1-5, 5-10, 10+
+    furnishing = Column(String, nullable=True)  # Furnished/Semi/Unfurnished
+    view = Column(String, nullable=True)  # Sea/City/Mountain/Open
+    condition = Column(String, nullable=True)  # Ready/Under Construction/Needs Renovation
+
+    sale_price = Column(Float, nullable=True)
+    rent_price = Column(Float, nullable=True)
+    rental_duration = Column(String, nullable=True)  # Daily/Monthly/Yearly
+    security_deposit = Column(Float, nullable=True)
+    negotiable = Column(Boolean, nullable=True)
+
     description = Column(Text, nullable=True)
     is_available = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

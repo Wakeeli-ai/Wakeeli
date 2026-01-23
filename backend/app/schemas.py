@@ -4,12 +4,32 @@ from datetime import datetime
 
 # Listing Schemas
 class ListingBase(BaseModel):
-    title: str
     listing_type: str
-    price: float
-    location: str
+    property_type: str
+    title: str
+    category: str
+    city: str
+    area: Optional[str] = None
+    building_name: Optional[str] = None
+
     bedrooms: int
+    bathrooms: int
+    built_up_area: float
+    plot_area: Optional[float] = None
+    floor_number: Optional[int] = None
+
+    parking: Optional[str] = None
+    property_age: Optional[str] = None
     furnishing: Optional[str] = None
+    view: Optional[str] = None
+    condition: Optional[str] = None
+
+    sale_price: Optional[float] = None
+    rent_price: Optional[float] = None
+    rental_duration: Optional[str] = None
+    security_deposit: Optional[float] = None
+    negotiable: Optional[bool] = None
+
     description: Optional[str] = None
     is_available: bool = True
 

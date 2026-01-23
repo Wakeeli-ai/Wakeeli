@@ -10,7 +10,12 @@ def search_listings(db: Session, filters: dict):
     
     if filters.get("location"):
         # Simple case-insensitive partial match
-        query = query.filter(Listing.location.ilike(f"%{filters['location']}%"))
+        query = query.filter(
+            or_(
+                Listing.city.ilike(f"%{filters['location']}%"),
+                Listing.area.ilike(f"%{filters['location']}%")
+            )
+        )
     
     if filters.get("bedrooms"):
         query = query.filter(Listing.bedrooms == filters["bedrooms"])
@@ -18,11 +23,36 @@ def search_listings(db: Session, filters: dict):
     if filters.get("furnishing"):
         query = query.filter(Listing.furnishing.ilike(filters["furnishing"]))
 
-    if filters.get("budget_max"):
-        query = query.filter(Listing.price <= filters["budget_max"])
-    
-    if filters.get("budget_min"):
-        query = query.filter(Listing.price >= filters["budget_min"])
+    listing_type = filters.get("listing_type")
+    budget_max = filters.get("budget_max")
+    budget_min = filters.get("budget_min")
+
+    if listing_type == "buy":
+        if budget_max is not None:
+            query = query.filter(Listing.sale_price <= budget_max)
+        if budget_min is not None:
+            query = query.filter(Listing.sale_price >= budget_min)
+    elif listing_type == "rent":
+        if budget_max is not None:
+            query = query.filter(Listing.rent_price <= budget_max)
+        if budget_min is not None:
+            query = query.filter(Listing.rent_price >= budget_min)
+    else:
+        # If listing_type isn't provided, match either sale or rent price
+        if budget_max is not None:
+            query = query.filter(
+                or_(
+                    Listing.sale_price <= budget_max,
+                    Listing.rent_price <= budget_max
+                )
+            )
+        if budget_min is not None:
+            query = query.filter(
+                or_(
+                    Listing.sale_price >= budget_min,
+                    Listing.rent_price >= budget_min
+                )
+            )
 
     # Order by price (budget closeness) and recency
     # For MVP, just order by created_at desc

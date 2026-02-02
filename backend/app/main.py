@@ -16,6 +16,7 @@ origins = [
     "http://localhost:3000",
     "http://localhost:5173",
     "https://wakeeli-production-59a2.up.railway.app",
+    "null",  # Allow file:// protocol for local HTML testing
 ]
 
 app.add_middleware(

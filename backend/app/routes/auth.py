@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models import User
-from app.schemas import UserCreate
+from app.schemas import UserCreate, UserResponse
 
 router = APIRouter()
 
@@ -26,6 +26,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24 * 60  # 30 days
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class TokenWithUser(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash."""
@@ -46,12 +52,22 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def authenticate_user(db: Session, username: str, password: str) -> User | bool:
+class AdminUser:
+    """Mock admin user object for settings-based admin login."""
+    def __init__(self):
+        self.id = 0
+        self.username = settings.ADMIN_USERNAME
+        self.email = "admin@wakeeli.com"
+        self.role = "admin"
+        self.is_active = True
+
+
+def authenticate_user(db: Session, username: str, password: str) -> User | AdminUser | bool:
     """Authenticate user against database or admin settings."""
-    # First check admin credentials
+    # First check admin credentials from settings
     if username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD:
-        # Return a mock user object for admin
-        return True
+        # Return a mock admin user object
+        return AdminUser()
     
     # Then check database users
     user = db.query(User).filter(User.username == username).first()
@@ -66,7 +82,7 @@ def authenticate_user(db: Session, username: str, password: str) -> User | bool:
     
     return user
 
-@router.post("/signup", response_model=Token)
+@router.post("/signup", response_model=TokenWithUser)
 async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     """Signup endpoint - create a new user."""
     # Check if username already exists
@@ -86,12 +102,16 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
                 detail="Email already registered"
             )
     
+    # Validate role
+    role = user_data.role if user_data.role in ["admin", "agent"] else "agent"
+    
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     db_user = User(
         username=user_data.username,
         email=user_data.email,
         hashed_password=hashed_password,
+        role=role,
         is_active=True
     )
     db.add(db_user)
@@ -101,11 +121,21 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     # Generate token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": db_user.username}, expires_delta=access_token_expires
+        data={"sub": db_user.username, "role": db_user.role}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user": UserResponse(
+            id=db_user.id,
+            username=db_user.username,
+            email=db_user.email,
+            role=db_user.role,
+            is_active=db_user.is_active
+        )
+    }
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=TokenWithUser)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """Login endpoint."""
     user = authenticate_user(db, form_data.username, form_data.password)
@@ -118,18 +148,50 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": form_data.username}, expires_delta=access_token_expires
+        data={"sub": user.username, "role": user.role}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user": UserResponse(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            role=user.role,
+            is_active=user.is_active
+        )
+    }
 
-@router.get("/me")
-async def read_users_me(token: str = Depends(oauth2_scheme)):
+@router.get("/me", response_model=UserResponse)
+async def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """Get current user info."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-        return {"username": username}
+        
+        # Check if it's the admin user from settings
+        if username == settings.ADMIN_USERNAME:
+            return UserResponse(
+                id=0,
+                username=settings.ADMIN_USERNAME,
+                email="admin@wakeeli.com",
+                role="admin",
+                is_active=True
+            )
+        
+        # Otherwise, fetch from database
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return UserResponse(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            role=user.role,
+            is_active=user.is_active
+        )
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")

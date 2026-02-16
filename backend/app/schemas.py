@@ -102,11 +102,25 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    role: Optional[str] = "agent"  # "admin" or "agent"
 
 class User(UserBase):
     id: int
+    role: str
     is_active: bool
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserResponse(BaseModel):
+    """Response model for user info (excludes sensitive data)"""
+    id: int
+    username: str
+    email: Optional[str] = None
+    role: str
+    is_active: bool
 
     class Config:
         from_attributes = True

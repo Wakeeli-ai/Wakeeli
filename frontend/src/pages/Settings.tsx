@@ -1,0 +1,160 @@
+import { MessageCircle, Globe, Building2, ArrowRight, User, Users } from 'lucide-react';
+import { useRole } from '../context/RoleContext';
+
+export default function Settings() {
+  const { role, setRole } = useRole();
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
+        <p className="text-slate-500 mt-1">
+          Manage your company profile, integrations, user permissions, and billing preferences
+        </p>
+      </div>
+
+      <div className="bg-slate-100 rounded-xl border border-slate-200 p-4 flex items-center justify-between">
+        <div>
+          <p className="font-medium text-slate-900">Switch view (demo)</p>
+          <p className="text-sm text-slate-500">Preview the app as Admin or Agent</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setRole('admin')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${role === 'admin' ? 'bg-brand-600 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'}`}
+          >
+            <Users size={18} />
+            Admin
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole('agent')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${role === 'agent' ? 'bg-brand-600 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'}`}
+          >
+            <User size={18} />
+            Agent
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button
+          type="button"
+          className="flex items-center justify-between p-5 bg-brand-50 hover:bg-brand-100 rounded-xl border border-brand-100 text-left transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-brand-500/20 flex items-center justify-center">
+              <Building2 className="text-brand-600" size={20} />
+            </div>
+            <div>
+              <p className="font-medium text-slate-900">Company Profile</p>
+              <p className="text-sm text-slate-500">Basic information</p>
+            </div>
+          </div>
+          <ArrowRight className="text-slate-400" size={20} />
+        </button>
+        <button
+          type="button"
+          className="flex items-center justify-between p-5 bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-emerald-100 text-left transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <MessageCircle className="text-emerald-600" size={20} />
+            </div>
+            <div>
+              <p className="font-medium text-slate-900">Integrations</p>
+              <p className="text-sm text-slate-500">3 active connections</p>
+            </div>
+          </div>
+          <ArrowRight className="text-slate-400" size={20} />
+        </button>
+        <button
+          type="button"
+          className="flex items-center justify-between p-5 bg-amber-50 hover:bg-amber-100 rounded-xl border border-amber-100 text-left transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+              <Globe className="text-amber-600" size={20} />
+            </div>
+            <div>
+              <p className="font-medium text-slate-900">User Settings</p>
+              <p className="text-sm text-slate-500">Roles & Permissions</p>
+            </div>
+          </div>
+          <ArrowRight className="text-slate-400" size={20} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-slate-900">Company Profile</h2>
+            <button
+              type="button"
+              className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700"
+            >
+              Save Changes
+            </button>
+          </div>
+          <div className="space-y-4">
+            {['Company Name', 'Email Address', 'Phone Number', 'Address', 'Website'].map((label) => (
+              <div key={label}>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  placeholder={label}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-slate-900">Integrations</h2>
+            <button
+              type="button"
+              className="px-4 py-2 border border-brand-600 text-brand-600 rounded-lg text-sm font-medium hover:bg-brand-50"
+            >
+              Add Integration
+            </button>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold">W</div>
+                <div>
+                  <p className="font-medium text-slate-900">WhatsApp Business</p>
+                  <p className="text-xs text-slate-500">Connected 3 days ago · Messages handled</p>
+                </div>
+              </div>
+              <span className="text-brand-600 font-medium">2,847</span>
+            </div>
+            <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-bold">f</div>
+                <div>
+                  <p className="font-medium text-slate-900">Meta (Facebook)</p>
+                  <p className="text-xs text-slate-500">Connected 1 week ago · Lead imports</p>
+                </div>
+              </div>
+              <span className="text-brand-600 font-medium">1,452</span>
+            </div>
+            <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                  <Globe size={20} />
+                </div>
+                <div>
+                  <p className="font-medium text-slate-900">Website Widget</p>
+                  <p className="text-xs text-slate-500">Connected 2 weeks ago · Chat sessions</p>
+                </div>
+              </div>
+              <span className="text-brand-600 font-medium">3,921</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

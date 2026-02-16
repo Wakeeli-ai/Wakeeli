@@ -12,6 +12,28 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "update_requirements",
+            "description": "Update the user's property requirements as you learn them during conversation. Call this whenever the user mentions rent/buy preference, location, budget, bedrooms, property type, or any other requirements. This helps track what the user is looking for.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "listing_type": {"type": "string", "enum": ["rent", "buy"], "description": "Whether user wants to rent or buy"},
+                    "location": {"type": "string", "description": "Preferred city or area"},
+                    "budget_min": {"type": "number", "description": "Minimum budget in USD"},
+                    "budget_max": {"type": "number", "description": "Maximum budget in USD"},
+                    "bedrooms": {"type": "integer", "description": "Number of bedrooms needed"},
+                    "bathrooms": {"type": "integer", "description": "Number of bathrooms needed"},
+                    "property_type": {"type": "string", "description": "Type like Apartment, Villa, Studio, etc."},
+                    "furnishing": {"type": "string", "enum": ["furnished", "unfurnished", "semi"]},
+                    "additional_requirements": {"type": "array", "items": {"type": "string"}, "description": "Other requirements like parking, gym, sea view, etc."}
+                },
+                "required": []
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "search_listings",
             "description": "Search for real estate listings based on filters.",
             "parameters": {
@@ -70,12 +92,14 @@ You understand Lebanese Arabic, English, and mixed speech.
 
 Rules:
 1. Extract user requirements: rent/buy, location, budget, bedrooms, furnishing.
-2. Ask clarifying questions if info is missing.
-3. Use 'search_listings' to find properties.
-4. If no results, use 'recommend_alternatives'.
-5. ONLY show listings returned by the tools. Do NOT invent listings.
-6. When a lead is qualified (requirements gathered) or requests an agent, use 'handoff_to_agent'.
-7. Be polite and match the user's language/tone.
+2. IMPORTANT: Whenever the user mentions ANY requirement (rent vs buy, location, budget, bedrooms, property type, etc.), 
+   immediately call 'update_requirements' with whatever info you've learned. Do this progressively as you learn new info.
+3. Ask clarifying questions if info is missing.
+4. Use 'search_listings' to find properties once you have enough info.
+5. If no results, use 'recommend_alternatives'.
+6. ONLY show listings returned by the tools. Do NOT invent listings.
+7. When a lead is qualified (requirements gathered) or requests an agent, use 'handoff_to_agent'.
+8. Be polite and match the user's language/tone.
 """
 
 def process_user_message(db: Session, conversation_id: int, user_message: str):
@@ -116,7 +140,24 @@ def process_user_message(db: Session, conversation_id: int, user_message: str):
             
             tool_output = None
             
-            if function_name == "search_listings":
+            if function_name == "update_requirements":
+                # Progressively update conversation requirements
+                existing_reqs = conversation.user_requirements or {}
+                # Merge new requirements with existing ones (new values override)
+                for key, value in function_args.items():
+                    if value is not None:
+                        if key == "additional_requirements" and existing_reqs.get(key):
+                            # Merge additional requirements lists
+                            existing_list = existing_reqs.get(key, [])
+                            new_list = value if isinstance(value, list) else [value]
+                            existing_reqs[key] = list(set(existing_list + new_list))
+                        else:
+                            existing_reqs[key] = value
+                conversation.user_requirements = existing_reqs
+                db.commit()
+                tool_output = f"Requirements updated: {json.dumps(existing_reqs)}"
+
+            elif function_name == "search_listings":
                 results = search_listings(db, function_args)
                 # Serialize results with richer context
                 tool_output = json.dumps([

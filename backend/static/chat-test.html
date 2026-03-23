@@ -283,7 +283,7 @@
   <!-- API URL config bar -->
   <div class="api-url-bar">
     <span>API:</span>
-    <input type="text" id="api-url" value="http://localhost:8000" placeholder="http://localhost:8000" />
+    <input type="text" id="api-url" value="" placeholder="auto-detected" />
   </div>
 
   <!-- Messages -->
@@ -317,8 +317,15 @@
   let conversationId = null;
 
   function getApiUrl() {
-    return document.getElementById('api-url').value.replace(/\/$/, '');
+    const val = document.getElementById('api-url').value.trim();
+    if (val) return val.replace(/\/$/, '');
+    return window.location.origin;
   }
+
+  // Auto-detect API URL on load
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('api-url').placeholder = window.location.origin;
+  });
 
   function autoResize(el) {
     el.style.height = 'auto';

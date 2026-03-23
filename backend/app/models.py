@@ -38,8 +38,19 @@ class Listing(Base):
     is_available = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # Amenities and extras
+    maids_room = Column(Boolean, nullable=True)
+    balconies = Column(Integer, nullable=True)
+    electricity_24_7 = Column(Boolean, nullable=True)
+    elevator = Column(Boolean, nullable=True)
+    concierge = Column(Boolean, nullable=True)
+    storage = Column(Boolean, nullable=True)
+    ac_heating = Column(Boolean, nullable=True)
+    generator = Column(Boolean, nullable=True)
+    notes = Column(Text, nullable=True)
 
-    
+
+
 
 class Agent(Base):
     __tablename__ = "agents"

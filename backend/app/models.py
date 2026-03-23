@@ -9,6 +9,7 @@ class Listing(Base):
     id = Column(Integer, primary_key=True, index=True)
     listing_type = Column(String, index=True)  # rent, buy
     property_type = Column(String, index=True)  # Apartment, Villa, etc.
+    property_id = Column(String, unique=True, index=True)  # Unique ID from source
     title = Column(String, index=True)
     category = Column(String, index=True)  # Residential, Commercial, Land
     city = Column(String, index=True)
@@ -36,6 +37,9 @@ class Listing(Base):
     description = Column(Text, nullable=True)
     is_available = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+    
 
 class Agent(Base):
     __tablename__ = "agents"

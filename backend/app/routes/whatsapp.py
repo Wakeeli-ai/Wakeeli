@@ -3,13 +3,15 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.config import settings
 from app.models import Conversation
-from app.services.llm import process_user_message
+from app.services.agent import process_user_message
 from app.services.transcription import download_audio, transcribe_audio
 import logging
 import requests
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
 
 @router.get("/webhook")
 async def verify_webhook(request: Request):
@@ -18,6 +20,26 @@ async def verify_webhook(request: Request):
     if params.get("hub.mode") == "subscribe" and params.get("hub.verify_token") == settings.WHATSAPP_VERIFY_TOKEN:
         return int(params.get("hub.challenge"))
     raise HTTPException(status_code=403, detail="Verification failed")
+
+
+def mark_as_read(phone_number_id, version, access_token, message_id):
+
+    url = f"https://graph.facebook.com/{version}/{phone_number_id}/messages"
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "status": "read",
+        "message_id": message_id
+    }
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    requests.post(url, json=payload, headers=headers)
+
+
 
 @router.post("/webhook")
 async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
@@ -32,6 +54,7 @@ async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
         if "messages" in value:
             message_data = value["messages"][0]
             phone_number = message_data["from"]
+            message_id = message_data["id"] if "id" in message_data else None
             
             # Find or Create Conversation
             conversation = db.query(Conversation).filter(Conversation.user_phone == phone_number).first()
@@ -51,7 +74,7 @@ async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
                     # Fetch media URL from Meta Graph API
                     headers = {"Authorization": f"Bearer {settings.WHATSAPP_TOKEN}"}
                     url_response = requests.get(
-                        f"https://graph.facebook.com/v18.0/{media_id}",
+                        f"https://graph.facebook.com/{settings.VERSION}/{media_id}",
                         headers=headers
                     )
                     url_response.raise_for_status()
@@ -73,12 +96,23 @@ async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
                     logger.error(f"Error processing voice note: {e}")
                     user_text = "[Voice Note Received - Error processing audio]"
 
+            # Send typing indicator
+            try:
+                mark_as_read(
+                settings.WHATSAPP_PHONE_NUMBER_ID,
+                settings.VERSION,
+                settings.WHATSAPP_TOKEN,
+                message_id
+            )
+            except Exception as e:
+                logger.error(f"Error sending typing indicator: {e}")
+
             # Process with AI
             response_text = process_user_message(db, conversation.id, user_text)
 
             # Send response back to WhatsApp (Using Facebook Graph API)
             try:
-                url = f"https://graph.facebook.com/v18.0/{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
+                url = f"https://graph.facebook.com/{settings.VERSION}/{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
                 headers = {
                     "Authorization": f"Bearer {settings.WHATSAPP_TOKEN}",
                     "Content-Type": "application/json"

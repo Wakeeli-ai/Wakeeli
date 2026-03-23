@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 from app.models import Listing
 from sqlalchemy import or_, and_
+import re
+from urllib.parse import urlparse
 
 def search_listings(db: Session, filters: dict):
     query = db.query(Listing).filter(Listing.is_available == True)
@@ -58,6 +60,10 @@ def search_listings(db: Session, filters: dict):
     # For MVP, just order by created_at desc
     return query.order_by(Listing.created_at.desc()).limit(5).all()
 
+
+
+
+
 def recommend_alternatives(db: Session, requirements: dict):
     # If specific search fails, relax constraints.
     # For MVP, we'll just remove the 'bedrooms' and 'furnishing' constraints 
@@ -71,3 +77,8 @@ def recommend_alternatives(db: Session, requirements: dict):
     relaxed_filters = {k: v for k, v in relaxed_filters.items() if v is not None}
     
     return search_listings(db, relaxed_filters)
+
+
+
+
+

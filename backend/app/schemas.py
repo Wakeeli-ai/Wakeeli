@@ -6,6 +6,7 @@ from datetime import datetime
 class ListingBase(BaseModel):
     listing_type: str
     property_type: str
+    property_id: str
     title: str
     category: str
     city: str
@@ -95,14 +96,23 @@ class ConversationDetail(Conversation):
     messages: List[Message] = []
     agent: Optional[Agent] = None
 
+
+
+
 # User Schemas
 class UserBase(BaseModel):
     username: str
     email: Optional[str] = None
 
+
+
+
 class UserCreate(UserBase):
     password: str
     role: Optional[str] = "agent"  # "admin" or "agent"
+
+
+
 
 class User(UserBase):
     id: int
@@ -112,6 +122,9 @@ class User(UserBase):
 
     class Config:
         from_attributes = True
+
+
+
 
 
 class UserResponse(BaseModel):
@@ -124,3 +137,7 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+

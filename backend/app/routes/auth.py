@@ -9,6 +9,7 @@ from app.config import settings
 from app.database import get_db
 from app.models import User
 from app.schemas import UserCreate, UserResponse
+import hashlib
 
 router = APIRouter()
 
@@ -33,13 +34,14 @@ class TokenWithUser(BaseModel):
     token_type: str
     user: UserResponse
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+def normalize_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def get_password_hash(password: str) -> str:
-    """Hash a password."""
-    return pwd_context.hash(password)
+    return pwd_context.hash(normalize_password(password))
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(normalize_password(plain_password), hashed_password)
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     """Create a JWT access token."""
@@ -82,58 +84,70 @@ def authenticate_user(db: Session, username: str, password: str) -> User | Admin
     
     return user
 
+
+
+
+
 @router.post("/signup", response_model=TokenWithUser)
 async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Signup endpoint - create a new user."""
-    # Check if username already exists
-    existing_user = db.query(User).filter(User.username == user_data.username).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered"
-        )
-    
-    # Check if email already exists (if provided)
-    if user_data.email:
-        existing_email = db.query(User).filter(User.email == user_data.email).first()
-        if existing_email:
+    try:
+        """Signup endpoint - create a new user."""
+        # Check if username already exists
+        existing_user = db.query(User).filter(User.username == user_data.username).first()
+        if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
+                detail="Username already registered"
             )
-    
-    # Validate role
-    role = user_data.role if user_data.role in ["admin", "agent"] else "agent"
-    
-    # Create new user
-    hashed_password = get_password_hash(user_data.password)
-    db_user = User(
-        username=user_data.username,
-        email=user_data.email,
-        hashed_password=hashed_password,
-        role=role,
-        is_active=True
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    
-    # Generate token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": db_user.username, "role": db_user.role}, expires_delta=access_token_expires
-    )
-    return {
-        "access_token": access_token, 
-        "token_type": "bearer",
-        "user": UserResponse(
-            id=db_user.id,
-            username=db_user.username,
-            email=db_user.email,
-            role=db_user.role,
-            is_active=db_user.is_active
+        
+        # Check if email already exists (if provided)
+        if user_data.email:
+            existing_email = db.query(User).filter(User.email == user_data.email).first()
+            if existing_email:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered"
+                )
+        
+        # Validate role
+        role = user_data.role if user_data.role in ["admin", "agent"] else "agent"
+        
+        # Create new user
+        hashed_password = get_password_hash(user_data.password)
+        db_user = User(
+            username=user_data.username,
+            email=user_data.email,
+            hashed_password=hashed_password,
+            role=role,
+            is_active=True
         )
-    }
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        
+        # Generate token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": db_user.username, "role": db_user.role}, expires_delta=access_token_expires
+        )
+        return {
+            "access_token": access_token, 
+            "token_type": "bearer",
+            "user": UserResponse(
+                id=db_user.id,
+                username=db_user.username,
+                email=db_user.email,
+                role=db_user.role,
+                is_active=db_user.is_active
+            )
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
 
 @router.post("/login", response_model=TokenWithUser)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -161,6 +175,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
             is_active=user.is_active
         )
     }
+
+
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):

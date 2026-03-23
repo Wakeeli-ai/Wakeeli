@@ -12,6 +12,10 @@ def get_agents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     agents = db.query(Agent).offset(skip).limit(limit).all()
     return agents
 
+
+
+
+
 @router.post("/", response_model=AgentSchema)
 def create_agent(agent: AgentCreate, db: Session = Depends(get_db)):
     db_agent = Agent(**agent.dict())
@@ -19,6 +23,8 @@ def create_agent(agent: AgentCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_agent)
     return db_agent
+
+
 
 @router.put("/{agent_id}", response_model=AgentSchema)
 def update_agent(agent_id: int, agent: AgentCreate, db: Session = Depends(get_db)):
@@ -32,6 +38,8 @@ def update_agent(agent_id: int, agent: AgentCreate, db: Session = Depends(get_db
     db.commit()
     db.refresh(db_agent)
     return db_agent
+
+
 
 @router.delete("/{agent_id}")
 def delete_agent(agent_id: int, db: Session = Depends(get_db)):

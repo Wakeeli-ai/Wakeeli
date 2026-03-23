@@ -11,44 +11,34 @@ from pprint import pprint
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
+# Per-conversation session storage keyed by conversation_id (int)
+_sessions: dict = {}
 
 
-session = SessionState()
+def get_session(conversation_id: int) -> SessionState:
+    """Return the SessionState for this conversation, creating one if needed."""
+    if conversation_id not in _sessions:
+        _sessions[conversation_id] = SessionState()
+    return _sessions[conversation_id]
 
 
-
-def update_memory(extracted):
+def update_memory(session: SessionState, extracted):
     pprint(extracted)
-
     session.update_agent_state(extracted)
 
 
-
-
-def decide_next_action():
+def decide_next_action(session: SessionState):
     session.update_stage()
-
     current_stage = session.stage
-
     return STAGES.get(current_stage)
 
 
-
-
-#     Step 3:
-#     If the user's name and some property preferences are already known, and the user appears to be looking to rent, ask when they plan to move in.
-
-
-
-def generate_reply(action, user_message, db, conversation, conversation_id):
-    state = session.getter()  # your session snapshot
+def generate_reply(action, user_message, db, conversation, conversation_id, session: SessionState):
+    state = session.getter()
     property_info = state.get("property_info", {})
 
     message = ""
 
-    # ---------------------------
-    # ACTION HANDLER
-    # ---------------------------
     if action == "intent_detection":
         message = """
 Important behavior rules:
@@ -63,26 +53,21 @@ Important behavior rules:
 Your goal is simply to guide the user toward explaining their real estate need.
 """
 
-
-
     elif action == "handoff_or_finish":
         requirements = property_info
         conversation.user_requirements = requirements
-        
-        # Find agent
+
         agent = find_best_agent(db, requirements)
         if agent:
             assign_agent(db, conversation.id, agent.id)
             tool_output = f"Handed off to agent {agent.name}."
         else:
             tool_output = "Not found available agent found, but requirements logged."
-        
-        # Create Handoff Event
+
         event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": agent.id if agent else None})
         db.add(event)
         db.commit()
 
-        # Log the handoff event
         message = f"""
 Important behavior rules:
 
@@ -91,8 +76,6 @@ Important behavior rules:
 example messages:
 - Hey {state.get('user_info', {}).get('name', '')}! Based on what you've shared, I'm connecting you with one of our expert agents who can assist you further. Please hold on for a moment while I do that.
 """
-        
-
 
     elif action == "collect_property_info":
         missing = []
@@ -108,9 +91,6 @@ example messages:
         else:
             message = "Could you please share more details about the property?"
 
-
-
-
     elif action == "process_property_request":
         try:
             link_or_id = property_info.get("link_or_id")
@@ -122,9 +102,6 @@ example messages:
 
             msg = ""
 
-            # ---------------------------
-            # 1️⃣ PROPERTY BY LINK/ID
-            # ---------------------------
             if link_or_id:
                 listing = db.query(Listing).filter(
                     Listing.property_id == link_or_id
@@ -156,9 +133,6 @@ example messages:
     Ask the user to confirm the ID or provide more details.
     """
 
-            # ---------------------------
-            # 2️⃣ SEARCH BASED ON PREFERENCES
-            # ---------------------------
             else:
                 has_filters = any([budget_min, budget_max, bedrooms, furnishing])
 
@@ -189,7 +163,7 @@ example messages:
 
     Ask the user which one they like or if they want more options.
     """
-                        
+
                 else:
                     msg = """
     Not enough information.
@@ -199,9 +173,6 @@ example messages:
     - And at least one of: budget, bedrooms, or furnishing
     """
 
-            # ---------------------------
-            # FINAL PROMPT
-            # ---------------------------
             message = f"""
     Instructions:
     - Be natural and conversational.
@@ -219,10 +190,6 @@ example messages:
     Ask the user politely to try again or re-share their preferences.
     """
 
-
-
-
-
     elif action == "more_info_needed":
 
         if state.get("classification") == "B":
@@ -231,20 +198,19 @@ example messages:
                 message = """
 Important beahavior rules:
 
-- Ask users for the property link or ID 
+- Ask users for the property link or ID
 
 Example:
 Please could you share the property link or ID, so i can assist you better?
 """
 
-            elif not state.get("user_info", {}).get("name") :
+            elif not state.get("user_info", {}).get("name"):
                 message = """
 Important beahavior rules:
 
 - Ask users for their full name
 
 """
-            
 
             else:
                 excluded_fields = {"link_or_id", "timeline"}
@@ -256,7 +222,6 @@ Important beahavior rules:
 
                 total_required = len(property_info) - len(excluded_fields)
 
-                # Human-friendly field names
                 field_map = {
                     "budget_min": "minimum budget",
                     "budget_max": "maximum budget",
@@ -271,7 +236,7 @@ Important beahavior rules:
                 readable_fields = [field_map.get(f, f) for f in missing_fields]
 
                 if missing_fields:
-                    message =  f"""
+                    message = f"""
                     Important behavior rules:
 
                     - Ask user for all this missing information: **{', '.join(readable_fields)}?**
@@ -284,9 +249,6 @@ Important beahavior rules:
                         - Ask user about their timeline for buying or renting
                         """
 
-    # ---------------------------
-    # LLM GENERATION
-    # ---------------------------
     system_prompt = get_reply_system_prompt(message)
 
     messages = [
@@ -302,8 +264,6 @@ Important beahavior rules:
 
     reply = completion.choices[0].message.content
     return reply
-
-
 
 
 def extract_entities(message, history):
@@ -325,22 +285,22 @@ def extract_entities(message, history):
     return data
 
 
-
-
 def process_user_message(db: Session, conversation_id: int, user_message: str, **kwargs) -> str:
     history = []
 
-    # 1. Fetch conversation history
+    # Get or create the per-conversation session
+    session = get_session(conversation_id)
+
+    # Fetch conversation and recent history
     conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
     recent_messages = (
-    db.query(Message)
-    .filter(Message.conversation_id == conversation_id)
-    .order_by(Message.timestamp.desc())
-    .limit(10)
-    .all()
-)
+        db.query(Message)
+        .filter(Message.conversation_id == conversation_id)
+        .order_by(Message.timestamp.desc())
+        .limit(10)
+        .all()
+    )
     recent_messages = list(reversed(recent_messages))
-
 
     for msg in recent_messages:
         history.append({
@@ -348,26 +308,24 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             "content": msg.content
         })
 
-            # Save user message to DB
+    # Save user message to DB
     new_msg = Message(conversation_id=conversation_id, role="user", content=user_message)
     db.add(new_msg)
     db.commit()
 
     extracted = extract_entities(user_message, history)
 
-    #STEP 2: Update session memory with extracted info
-    update_memory(extracted)
+    # Update session memory with extracted info
+    update_memory(session, extracted)
 
-    #STEP 3: Decide next action based on current session state
-    action = decide_next_action()
+    # Decide next action based on current session state
+    action = decide_next_action(session)
 
     # Generate reply based on the action
-    reply = generate_reply(action, user_message, db, conversation, conversation_id)
+    reply = generate_reply(action, user_message, db, conversation, conversation_id, session)
 
     ai_msg = Message(conversation_id=conversation_id, role="assistant", content=reply)
     db.add(ai_msg)
     db.commit()
 
     return reply
-
-

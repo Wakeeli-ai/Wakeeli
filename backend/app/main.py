@@ -1,7 +1,10 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.database import engine, Base
-from app.routes import whatsapp, listings, agents, conversations, auth
+from app.routes import whatsapp, listings, agents, conversations, auth, chat
 from app.models import Listing
 from app.config import settings
 
@@ -11,18 +14,9 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # CORS
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://wakeeli-production-59a2.up.railway.app",
-    "null",  # Allow file:// protocol for local HTML testing
-]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_origin_regex=r"^https://wakeeli-production-.*\.up\.railway\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,10 +28,25 @@ app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(listings.router, prefix="/api/listings", tags=["Listings"])
 app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])
 app.include_router(conversations.router, prefix="/api/conversations", tags=["Conversations"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+
+# Static files
+_static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.isdir(_static_dir):
+    app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+
 
 @app.get("/")
 def read_root():
     return {"message": "Wakeeli AI Backend is running."}
+
+
+@app.get("/chat-test")
+def chat_test_page():
+    """Serve the web chat test interface."""
+    html_path = os.path.join(os.path.dirname(__file__), "..", "static", "chat-test.html")
+    return FileResponse(html_path)
+
 
 # TEMP: one-time reset for listings table (remove after use)
 @app.post("/admin/reset-listings")

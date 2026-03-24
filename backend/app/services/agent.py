@@ -242,11 +242,16 @@ Ask the user politely to try again or re-share their preferences.
                 message = f"""
 Entry B — first contact or early stage. Send exactly 3 messages using ||| as separator:
 
-Message 1: Just say hello or hey. 2-3 words MAX. Do NOT repeat or paraphrase what the user said. Do NOT mention their location, property type, or anything they asked about.
+Message 1: ONLY "Marhaba!" or "Hey!" or "Hello!" — literally just a greeting word. NOTHING ELSE. Do NOT add any other words. Do NOT mention location. Do NOT mention property type. Do NOT mention bedrooms. Do NOT mention anything the user said. JUST THE GREETING WORD AND NOTHING MORE.
 Message 2: ONE bundled question asking for ALL of these at once: {missing_str}
 Message 3: "What's your full name btw?"
 
 Example: "Marhaba!" ||| "What's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
+
+WRONG examples (NEVER do this):
+- "Marhaba! Looking for a place in Zalka, nice area." — NO, too many words
+- "Hello! An apartment in Beirut, great choice." — NO, don't echo the user
+- "Hey! Furnished 3-bedroom, got it." — NO, don't repeat their requirements
 
 NEVER ask name first. NEVER ask fields separately. NEVER write one big paragraph.
 """

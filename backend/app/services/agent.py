@@ -3,7 +3,8 @@ import re
 import anthropic
 from sqlalchemy.orm import Session
 from app.config import settings
-from app.services.matching import search_listings, recommend_alternatives, REGION_MAP
+from app.services.matching import search_listings, recommend_alternatives
+from app.services.geography import REGION_MAP, GOVERNORATE_MAP, DISTRICT_MAP, GOVERNORATE_NAMES, DISTRICT_NAMES, get_location_type, get_area_examples
 from app.services.routing import find_best_agent, assign_agent
 from app.models import Conversation, Message, Event, Listing
 from app.services.prompt import intent_detection_prompt, get_reply_system_prompt, Normal_conversation_prompt
@@ -245,13 +246,18 @@ Ask the user politely to try again or re-share their preferences.
             if missing_fields and not has_name:
                 missing_str = ", ".join(missing_fields)
 
-                # Check if location is a broad region and add a specific area question
+                # Check if location is a governorate or district and ask for more specificity
                 location_val = property_info.get("location", "")
                 area_note = ""
-                if location_val and location_val.lower() in REGION_MAP:
-                    neighborhoods = REGION_MAP[location_val.lower()]
-                    examples = ", ".join(neighborhoods[:3])
-                    area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, with examples like {examples}."
+                if location_val:
+                    loc_type, loc_canonical = get_location_type(location_val)
+                    if loc_type == 'governorate':
+                        examples = get_area_examples(loc_canonical, 'governorate')
+                        area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, like {examples}."
+                    elif loc_type == 'district':
+                        examples = get_area_examples(loc_canonical, 'district')
+                        area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
+                    # If city or unknown, no area_note needed
 
                 message = f"""
 Entry B — first contact or early stage. Send exactly 3 messages using ||| as separator:

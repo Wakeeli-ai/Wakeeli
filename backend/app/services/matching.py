@@ -3,14 +3,13 @@ from app.models import Listing
 from sqlalchemy import or_, and_
 import re
 from urllib.parse import urlparse
-
-REGION_MAP = {
-    'beirut': ['Achrafieh', 'Hamra', 'Verdun', 'Ras Beirut', 'Sin el Fil', 'Hazmieh', 'Baabda', 'Jal el Dib', 'Naccache', 'Antelias'],
-    'mount lebanon': ['Jounieh', 'Broumana', 'Beit Meri', 'Kornet Chehwan', 'Mtayleb', 'Bsalim', 'Rabieh', 'Aaoukar', 'Dbayeh Waterfront', 'Kaslik', 'Adma', 'Biyada', 'Ghosta', 'Mansourieh'],
-    'north': ['Batroun', 'Byblos (Jbeil)', 'Jbeil', 'Zikrit', 'Zekrit'],
-    'metn': ['Jal el Dib', 'Sin el Fil', 'Hazmieh', 'Baabda', 'Mansourieh', 'Naccache', 'Antelias', 'Bsalim', 'Rabieh', 'Aaoukar', 'Biyada', 'Kornet Chehwan', 'Mtayleb'],
-    'keserwan': ['Jounieh', 'Kaslik', 'Adma', 'Ghosta', 'Broumana', 'Beit Meri', 'Dbayeh Waterfront'],
-}
+from app.services.geography import (
+    GOVERNORATE_MAP,
+    DISTRICT_MAP,
+    REGION_MAP,
+    GOVERNORATE_NAMES,
+    DISTRICT_NAMES,
+)
 
 def search_listings(db: Session, filters: dict):
     query = db.query(Listing).filter(Listing.is_available == True)

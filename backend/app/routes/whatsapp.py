@@ -108,25 +108,27 @@ async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
                 logger.error(f"Error sending typing indicator: {e}")
 
             # Process with AI
-            response_text = process_user_message(db, conversation.id, user_text)
+            response_parts = process_user_message(db, conversation.id, user_text)
 
-            # Send response back to WhatsApp (Using Facebook Graph API)
+            # Send each message part separately to WhatsApp
             try:
                 url = f"https://graph.facebook.com/{settings.VERSION}/{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
                 headers = {
                     "Authorization": f"Bearer {settings.WHATSAPP_TOKEN}",
                     "Content-Type": "application/json"
                 }
-                payload = {
-                    "messaging_product": "whatsapp",
-                    "to": phone_number,
-                    "type": "text",
-                    "text": {"body": response_text}
-                }
-                
-                response = requests.post(url, json=payload, headers=headers)
-                response.raise_for_status()
-                logger.info(f"Message sent successfully to {phone_number}")
+                for part in response_parts:
+                    if not part or not part.strip():
+                        continue
+                    payload = {
+                        "messaging_product": "whatsapp",
+                        "to": phone_number,
+                        "type": "text",
+                        "text": {"body": part.strip()}
+                    }
+                    response = requests.post(url, json=payload, headers=headers)
+                    response.raise_for_status()
+                logger.info(f"Message sent successfully to {phone_number} ({len(response_parts)} parts)")
             except Exception as e:
                 logger.error(f"Error sending WhatsApp message: {e}")
                 # Don't fail the webhook, just log the error

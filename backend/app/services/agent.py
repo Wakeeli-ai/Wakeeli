@@ -1,5 +1,5 @@
 import json
-from openai import OpenAI
+import anthropic
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.services.matching import search_listings, recommend_alternatives
@@ -9,7 +9,7 @@ from app.services.prompt import intent_detection_prompt, get_reply_system_prompt
 from app.services.session import SessionState, STAGES
 from pprint import pprint
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
 # Per-conversation session storage keyed by conversation_id (int)
 _sessions: dict = {}
@@ -304,19 +304,16 @@ Greet the user naturally and ask how you can help them find a property in Lebano
 """
 
     system_prompt = get_reply_system_prompt(message)
+    combined_system = f"{system_prompt}\n\nCurrent session state: {state}"
 
-    messages_for_ai = [
-        {"role": "system", "content": system_prompt},
-        {"role": "system", "content": f"Current session state: {state}"},
-        {"role": "user", "content": user_message}
-    ]
-
-    completion = client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages_for_ai
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        system=combined_system,
+        messages=[{"role": "user", "content": user_message}]
     )
 
-    raw_reply = completion.choices[0].message.content
+    raw_reply = response.content[0].text
 
     # Split on ||| delimiter and clean each part
     parts = [p.strip() for p in raw_reply.split("|||") if p.strip()]
@@ -326,18 +323,18 @@ Greet the user naturally and ask how you can help them find a property in Lebano
 def extract_entities(message, history):
 
     messages = [
-        {"role": "system", "content": intent_detection_prompt},
         *history,
         {"role": "user", "content": message}
     ]
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages,
-        response_format={"type": "json_object"}
+    response = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=1024,
+        system=intent_detection_prompt,
+        messages=messages
     )
 
-    data = json.loads(response.choices[0].message.content)
+    data = json.loads(response.content[0].text)
 
     return data
 

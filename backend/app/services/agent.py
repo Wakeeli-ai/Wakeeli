@@ -186,8 +186,8 @@ LISTINGS:
                                 _format_listing(r, i) for i, r in enumerate(alt_results[:5], 1)
                             ])
                             msg = f"""
-No exact match found. Present these alternative listings.
-Tell the user no exact match was found but here are some close options.
+No exact match found for their criteria. Present these alternative listings.
+Tell the user these are slightly above their budget but are the closest matches available, and let them decide if they want to stretch.
 Use ||| to separate: opening message ||| listings ||| follow-up question.
 
 ALTERNATIVE LISTINGS:
@@ -212,6 +212,7 @@ Bundle it all into one short message.
 Be natural and conversational.
 Present property information clearly.
 Help the user move toward booking a visit.
+Do NOT echo or summarize the user's requirements before presenting results. If you need to acknowledge their last input, say something brief like "All right, noted!" then go straight to the listings.
 
 {msg}
 """
@@ -241,16 +242,17 @@ Ask the user politely to try again or re-share their preferences.
             if missing_fields and not has_name:
                 missing_str = ", ".join(missing_fields)
                 message = f"""
-Entry B — first contact or early stage. Send exactly 3 messages using ||| as separator:
+Entry B — first contact or early stage. Send exactly 4 messages using ||| as separator:
 
-Message 1: ONLY "Marhaba!" or "Hey!" or "Hello!" — literally just a greeting word. NOTHING ELSE. Do NOT add any other words. Do NOT mention location. Do NOT mention property type. Do NOT mention bedrooms. Do NOT mention anything the user said. JUST THE GREETING WORD AND NOTHING MORE.
-Message 2: ONE bundled question asking for ALL of these at once: {missing_str}
-Message 3: "What's your full name btw?"
+Message 1: ONLY a greeting like "Hello!" or "Hey!" or "Marhaba!" — one word or phrase only. NOTHING ELSE.
+Message 2: ONLY "Thanks for reaching out!" — nothing else. Do NOT add anything.
+Message 3: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options:" then asking for ALL of these at once: {missing_str}
+Message 4: "What's your full name btw?"
 
-Example: "Marhaba!" ||| "What's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
+Example: "Hello!" ||| "Thanks for reaching out!" ||| "Sure, to help you find the best options: what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
 
 WRONG examples (NEVER do this):
-- "Marhaba! Looking for a place in Zalka, nice area." — NO, too many words
+- "Marhaba! Looking for a place in Zalka, nice area." — NO, don't echo the user
 - "Hello! An apartment in Beirut, great choice." — NO, don't echo the user
 - "Hey! Furnished 3-bedroom, got it." — NO, don't repeat their requirements
 
@@ -316,8 +318,8 @@ Greet the user naturally and ask how you can help them find a property in Lebano
 
     raw_reply = response.content[0].text
 
-    # Split on ||| delimiter and clean each part
-    parts = [p.strip() for p in raw_reply.split("|||") if p.strip()]
+    # Split on ||| delimiter and clean each part, stripping any stray quotation marks
+    parts = [p.strip().strip('"').strip("'").strip() for p in raw_reply.split("|||") if p.strip()]
     return parts if parts else [raw_reply]
 
 

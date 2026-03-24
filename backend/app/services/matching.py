@@ -82,16 +82,15 @@ def search_listings(db: Session, filters: dict):
 
 def recommend_alternatives(db: Session, requirements: dict):
     # If specific search fails, relax constraints.
-    # For MVP, we'll just remove the 'bedrooms' and 'furnishing' constraints 
-    # and search by location and type/budget again.
+    # Remove bedrooms, furnishing, AND budget so we show the closest options regardless of price.
+    # The user can decide if they want to stretch their budget.
     relaxed_filters = {
         "listing_type": requirements.get("listing_type"),
         "location": requirements.get("location"),
-        "budget_max": requirements.get("budget_max")
     }
     # Filter out None values
     relaxed_filters = {k: v for k, v in relaxed_filters.items() if v is not None}
-    
+
     return search_listings(db, relaxed_filters)
 
 

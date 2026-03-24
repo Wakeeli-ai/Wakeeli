@@ -194,9 +194,11 @@ ALTERNATIVE LISTINGS:
 """
                         else:
                             msg = """
-No listings found at all.
-Tell the user no listings match their criteria right now.
-Offer to connect them with a human agent who may have more options.
+CRITICAL: There are ZERO listings matching their criteria in the database right now.
+Do NOT say you found options. Do NOT make up or invent listings. Do NOT hallucinate properties.
+Tell the user honestly that you could not find matching properties right now but you will keep looking.
+Offer to connect them with a human agent who might have more options off-market.
+Be honest and direct.
 """
                 else:
                     msg = """
@@ -240,11 +242,11 @@ Ask the user politely to try again or re-share their preferences.
                 message = f"""
 Entry B — first contact or early stage. Send exactly 3 messages using ||| as separator:
 
-Message 1: Short friendly greeting (1 sentence). If they mentioned a location, acknowledge it warmly.
+Message 1: Just say hello or hey. 2-3 words MAX. Do NOT repeat or paraphrase what the user said. Do NOT mention their location, property type, or anything they asked about.
 Message 2: ONE bundled question asking for ALL of these at once: {missing_str}
 Message 3: "What's your full name btw?"
 
-Example: "Marhaba! Looking for a place in Zalka, nice area." ||| "What's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
+Example: "Marhaba!" ||| "What's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
 
 NEVER ask name first. NEVER ask fields separately. NEVER write one big paragraph.
 """

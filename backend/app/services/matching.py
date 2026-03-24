@@ -4,26 +4,42 @@ from sqlalchemy import or_, and_
 import re
 from urllib.parse import urlparse
 
+REGION_MAP = {
+    'beirut': ['Achrafieh', 'Hamra', 'Verdun', 'Ras Beirut', 'Sin el Fil', 'Hazmieh', 'Baabda', 'Jal el Dib', 'Naccache', 'Antelias'],
+    'mount lebanon': ['Jounieh', 'Broumana', 'Beit Meri', 'Kornet Chehwan', 'Mtayleb', 'Bsalim', 'Rabieh', 'Aaoukar', 'Dbayeh Waterfront', 'Kaslik', 'Adma', 'Biyada', 'Ghosta', 'Mansourieh'],
+    'north': ['Batroun', 'Byblos (Jbeil)', 'Jbeil', 'Zikrit', 'Zekrit'],
+    'metn': ['Jal el Dib', 'Sin el Fil', 'Hazmieh', 'Baabda', 'Mansourieh', 'Naccache', 'Antelias', 'Bsalim', 'Rabieh', 'Aaoukar', 'Biyada', 'Kornet Chehwan', 'Mtayleb'],
+    'keserwan': ['Jounieh', 'Kaslik', 'Adma', 'Ghosta', 'Broumana', 'Beit Meri', 'Dbayeh Waterfront'],
+}
+
 def search_listings(db: Session, filters: dict):
     query = db.query(Listing).filter(Listing.is_available == True)
 
     if filters.get("listing_type"):
         query = query.filter(Listing.listing_type == filters["listing_type"])
-    
+
     if filters.get("location"):
-        # Simple case-insensitive partial match
-        query = query.filter(
-            or_(
-                Listing.city.ilike(f"%{filters['location']}%"),
-                Listing.area.ilike(f"%{filters['location']}%")
+        location_lower = filters['location'].lower()
+        if location_lower in REGION_MAP:
+            neighborhoods = REGION_MAP[location_lower]
+            region_conditions = []
+            for neighborhood in neighborhoods:
+                region_conditions.append(Listing.city.ilike(f"%{neighborhood}%"))
+                region_conditions.append(Listing.area.ilike(f"%{neighborhood}%"))
+            query = query.filter(or_(*region_conditions))
+        else:
+            query = query.filter(
+                or_(
+                    Listing.city.ilike(f"%{filters['location']}%"),
+                    Listing.area.ilike(f"%{filters['location']}%")
+                )
             )
-        )
-    
+
     if filters.get("bedrooms"):
         query = query.filter(Listing.bedrooms == filters["bedrooms"])
-    
+
     if filters.get("furnishing"):
-        query = query.filter(Listing.furnishing.ilike(filters["furnishing"]))
+        query = query.filter(Listing.furnishing.ilike(f"%{filters['furnishing']}%"))
 
     listing_type = filters.get("listing_type")
     budget_max = filters.get("budget_max")

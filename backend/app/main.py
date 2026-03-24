@@ -43,9 +43,16 @@ def read_root():
 
 @app.get("/chat-test")
 def chat_test_page():
-    """Serve the web chat test interface."""
+    """Serve the web chat test interface with no-cache headers."""
     html_path = os.path.join(os.path.dirname(__file__), "..", "static", "chat-test.html")
-    return FileResponse(html_path)
+    return FileResponse(
+        html_path,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 # TEMP: one-time reset for listings table (remove after use)

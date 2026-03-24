@@ -3,7 +3,7 @@ import re
 import anthropic
 from sqlalchemy.orm import Session
 from app.config import settings
-from app.services.matching import search_listings, recommend_alternatives
+from app.services.matching import search_listings, recommend_alternatives, REGION_MAP
 from app.services.routing import find_best_agent, assign_agent
 from app.models import Conversation, Message, Event, Listing
 from app.services.prompt import intent_detection_prompt, get_reply_system_prompt, Normal_conversation_prompt
@@ -173,8 +173,9 @@ Offer to search for similar properties based on their preferences.
 LISTINGS FOUND — present these to the user enthusiastically.
 First send a short opening message saying you found great options in {area_label}.
 Then send the numbered listings as one message.
-Then send a short follow-up asking which one catches their eye.
-Use ||| to separate these 3 parts.
+Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'.
+Then send a final separate message saying 'What do you think?'
+Use ||| to separate these 4 parts.
 
 LISTINGS:
 {formatted_listings}
@@ -188,7 +189,9 @@ LISTINGS:
                             msg = f"""
 No exact match found for their criteria. Present these alternative listings.
 Tell the user these are slightly above their budget but are the closest matches available, and let them decide if they want to stretch.
-Use ||| to separate: opening message ||| listings ||| follow-up question.
+Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'.
+Then send a final separate message saying 'What do you think?'
+Use ||| to separate: opening message ||| listings ||| recommendation ||| 'What do you think?'
 
 ALTERNATIVE LISTINGS:
 {formatted_listings}
@@ -241,15 +244,23 @@ Ask the user politely to try again or re-share their preferences.
 
             if missing_fields and not has_name:
                 missing_str = ", ".join(missing_fields)
+
+                # Check if location is a broad region and add a specific area question
+                location_val = property_info.get("location", "")
+                area_note = ""
+                if location_val and location_val.lower() in REGION_MAP:
+                    neighborhoods = REGION_MAP[location_val.lower()]
+                    examples = ", ".join(neighborhoods[:3])
+                    area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, with examples like {examples}."
+
                 message = f"""
-Entry B — first contact or early stage. Send exactly 4 messages using ||| as separator:
+Entry B — first contact or early stage. Send exactly 3 messages using ||| as separator:
 
-Message 1: ONLY a greeting like "Hello!" or "Hey!" or "Marhaba!" — one word or phrase only. NOTHING ELSE.
-Message 2: ONLY "Thanks for reaching out!" — nothing else. Do NOT add anything.
-Message 3: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options:" then asking for ALL of these at once: {missing_str}
-Message 4: "What's your full name btw?"
+Message 1: "Hello, thanks for reaching out!" — use this exact phrase or a natural variation in their language. NOTHING ELSE.
+Message 2: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
+Message 3: "What's your full name btw?"
 
-Example: "Hello!" ||| "Thanks for reaching out!" ||| "Sure, to help you find the best options: what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
+Example: "Hello, thanks for reaching out!" ||| "Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
 
 WRONG examples (NEVER do this):
 - "Marhaba! Looking for a place in Zalka, nice area." — NO, don't echo the user

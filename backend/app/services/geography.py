@@ -132,14 +132,13 @@ DISTRICT_MAP: dict[str, list[str]] = {
     'baabda': [
         'Baabda',
         'Hazmieh',
-        'Aley',
-        'Baalchmay',
-        'Khalde',
+        'Yarze',
         'Hadath',
         'Furn el Chebbak',
-        'Chiyah',
         'Ain el Remmaneh',
+        'Chiyah',
         'Bchamoun',
+        'Khalde',
     ],
 
     # ---- Mount Lebanon: Chouf ----

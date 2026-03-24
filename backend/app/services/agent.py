@@ -1,4 +1,5 @@
 import json
+import re
 import anthropic
 from sqlalchemy.orm import Session
 from app.config import settings
@@ -334,7 +335,11 @@ def extract_entities(message, history):
         messages=messages
     )
 
-    data = json.loads(response.content[0].text)
+    raw_text = response.content[0].text.strip()
+    # Strip markdown code fences if Claude wraps the JSON
+    raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
+    raw_text = re.sub(r'\s*```$', '', raw_text).strip()
+    data = json.loads(raw_text)
 
     return data
 

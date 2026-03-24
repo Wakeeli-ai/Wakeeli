@@ -79,11 +79,11 @@ class SessionState:
             return
 
         # ---------------------------
-        # 3️⃣ COMPLETE PROPERTY INFO
+        # 3️⃣ ENOUGH INFO TO SEARCH (location + at least one filter)
         # ---------------------------
-        has_budget = budget_min or budget_max
+        has_any_filter = bedrooms or furnishing or budget_min or budget_max
 
-        if location and bedrooms and furnishing and has_budget:
+        if location and has_any_filter:
             self.stage = 3
             return
 

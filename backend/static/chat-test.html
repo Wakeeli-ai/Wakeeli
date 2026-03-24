@@ -426,7 +426,21 @@
       const data = await res.json();
       conversationId = data.conversation_id;
       hideTyping();
-      appendBubble('assistant', data.response);
+
+      // Support both new {messages: [...]} and legacy {response: "..."} format
+      const msgs = data.messages && Array.isArray(data.messages) && data.messages.length > 0
+        ? data.messages
+        : (data.response ? [data.response] : ['No response received']);
+
+      for (let i = 0; i < msgs.length; i++) {
+        if (i > 0) {
+          await new Promise(resolve => setTimeout(resolve, 400));
+          showTyping();
+          await new Promise(resolve => setTimeout(resolve, 500));
+          hideTyping();
+        }
+        appendBubble('assistant', msgs[i]);
+      }
       setStatus('online');
     } catch (err) {
       hideTyping();

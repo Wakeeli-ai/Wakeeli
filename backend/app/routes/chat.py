@@ -31,6 +31,6 @@ async def chat_test(request: ChatRequest, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(conversation)
 
-    response = process_user_message(db, conversation.id, request.message)
+    messages = process_user_message(db, conversation.id, request.message)
 
-    return {"response": response, "conversation_id": conv_key}
+    return {"messages": messages, "conversation_id": conv_key}

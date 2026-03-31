@@ -107,6 +107,14 @@ def _format_listing(r, index: int) -> str:
 
 
 def generate_reply(action, user_message, db, conversation, conversation_id, session: SessionState) -> list[str]:
+    try:
+        return _generate_reply_inner(action, user_message, db, conversation, conversation_id, session)
+    except Exception as e:
+        print(f"generate_reply: unhandled error (action={action}): {e}")
+        return ["Give me one moment, something went wrong on my end. Please try again."]
+
+
+def _generate_reply_inner(action, user_message, db, conversation, conversation_id, session: SessionState) -> list[str]:
     state = session.getter()
     property_info = state.get("property_info", {})
 
@@ -273,18 +281,22 @@ Offer to search for similar properties based on their preferences.
             else:
                 has_budget = budget_min or budget_max
 
-                if session.listings_shown and not (location and has_budget):
-                    msg = """
-The user has already seen listings and is responding. They may be unsure or need help deciding.
-Ask them what they thought of the options, or if they would like to see different options.
-Keep it short and conversational. One message only.
-"""
-                elif session.listings_shown:
-                    msg = """
-The user has already seen the listings and gave an uncertain or unclear response.
-Do NOT re-present the same listings again.
-Ask them what specifically they are unsure about, or whether they would like to adjust their criteria.
-Keep it short. One message only.
+                if session.listings_shown:
+                    msg = f"""
+The user has already seen listings. This is a follow-up message in the ongoing conversation.
+
+Respond naturally based on what the user just said. Possible scenarios:
+- If they expressed interest in a specific option: move to booking a visit. Ask what day works.
+- If they confirmed a visit time (e.g. 'Wednesday works', 'yeah that works', 'sure'): send a clean booking confirmation summary. Format: "Your visit is set for [day] at [time]" ||| "I'll be connecting you with the agent shortly"
+- If they asked about address or location details: say "The agent will share the address with you." Keep it brief.
+- If they asked a question about a specific property (price, size, features): answer from the listings context if possible, or say the agent will have more details.
+- If they seem unsure or said something vague: ask what specifically they are unsure about or if they want to see different options. Keep it short.
+- If they want to adjust criteria: acknowledge and offer to search again.
+- Do NOT re-present the same listings again unless they explicitly ask.
+- Do NOT ask for location, budget, or other criteria already collected.
+- Keep responses short and conversational. Use ||| to separate if sending multiple messages.
+
+User message to respond to: {user_message}
 """
                 elif location and has_budget:
                     results = search_listings(db, property_info)
@@ -557,14 +569,17 @@ Greet the user naturally and ask how you can help them find a property in Lebano
     system_prompt = get_reply_system_prompt(message)
     combined_system = f"{system_prompt}\n\nCurrent session state: {state}"
 
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1024,
-        system=combined_system,
-        messages=[{"role": "user", "content": user_message}]
-    )
-
-    raw_reply = response.content[0].text
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=1024,
+            system=combined_system,
+            messages=[{"role": "user", "content": user_message}]
+        )
+        raw_reply = response.content[0].text
+    except Exception as e:
+        print(f"generate_reply: LLM call failed (action={action}): {e}")
+        return ["Bear with me for a second, something went wrong. Please try again."]
 
     # Split on ||| delimiter and clean each part, stripping any stray quotation marks
     parts = [p.strip().strip('"').strip("'").strip() for p in raw_reply.split("|||") if p.strip()]
@@ -586,20 +601,49 @@ def extract_entities(message, history):
         {"role": "user", "content": message}
     ]
 
-    response = client.messages.create(
-        model="claude-haiku-4-5",
-        max_tokens=1024,
-        system=intent_detection_prompt,
-        messages=messages
-    )
+    try:
+        response = client.messages.create(
+            model="claude-haiku-4-5",
+            max_tokens=1024,
+            system=intent_detection_prompt,
+            messages=messages
+        )
 
-    raw_text = response.content[0].text.strip()
-    # Strip markdown code fences if Claude wraps the JSON
-    raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
-    raw_text = re.sub(r'\s*```$', '', raw_text).strip()
-    data = json.loads(raw_text)
+        raw_text = response.content[0].text.strip()
+        # Strip markdown code fences if Claude wraps the JSON
+        raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
+        raw_text = re.sub(r'\s*```$', '', raw_text).strip()
+        data = json.loads(raw_text)
+        return data
 
-    return data
+    except json.JSONDecodeError as e:
+        print(f"extract_entities: JSON parse error: {e}")
+        return {
+            "classification": "B",
+            "bare_greeting": False,
+            "user_info": {"name": None, "not_link_or_id": False},
+            "property_info": {
+                "link_or_id": None, "listing_type": None, "location": None,
+                "budget_min": None, "budget_max": None, "bedrooms": None,
+                "bathrooms": None, "property_type": None, "furnishing": None,
+                "timeline": None
+            },
+            "confidence": 0
+        }
+    except Exception as e:
+        print(f"extract_entities: unexpected error: {e}")
+        return {
+            "classification": "B",
+            "bare_greeting": False,
+            "user_info": {"name": None, "not_link_or_id": False},
+            "property_info": {
+                "link_or_id": None, "listing_type": None, "location": None,
+                "budget_min": None, "budget_max": None, "bedrooms": None,
+                "bathrooms": None, "property_type": None, "furnishing": None,
+                "timeline": None
+            },
+            "confidence": 0
+        }
 
 
 def process_user_message(db: Session, conversation_id: int, user_message: str, **kwargs) -> list[str]:
@@ -608,49 +652,61 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
     # Get or create the per-conversation session
     session = get_session(conversation_id)
 
-    # Fetch conversation and recent history
-    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
-    recent_messages = (
-        db.query(Message)
-        .filter(Message.conversation_id == conversation_id)
-        .order_by(Message.timestamp.desc())
-        .limit(10)
-        .all()
-    )
-    recent_messages = list(reversed(recent_messages))
+    try:
+        # Fetch conversation and recent history
+        conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+        recent_messages = (
+            db.query(Message)
+            .filter(Message.conversation_id == conversation_id)
+            .order_by(Message.timestamp.desc())
+            .limit(10)
+            .all()
+        )
+        recent_messages = list(reversed(recent_messages))
 
-    for msg in recent_messages:
-        history.append({
-            "role": msg.role,
-            "content": msg.content
-        })
+        for msg in recent_messages:
+            history.append({
+                "role": msg.role,
+                "content": msg.content
+            })
 
-    # Save user message to DB
-    new_msg = Message(conversation_id=conversation_id, role="user", content=user_message)
-    db.add(new_msg)
-    db.commit()
+        # Save user message to DB
+        new_msg = Message(conversation_id=conversation_id, role="user", content=user_message)
+        db.add(new_msg)
+        db.commit()
 
-    extracted = extract_entities(user_message, history)
+        extracted = extract_entities(user_message, history)
 
-    # Update session memory with extracted info
-    update_memory(session, extracted)
+        # Update session memory with extracted info
+        update_memory(session, extracted)
 
-    # Decide next action based on current session state
-    action = decide_next_action(session)
+        # Decide next action based on current session state
+        action = decide_next_action(session)
 
-    # Check routing conditions - may override the action
-    should_route, route_message = _check_routing_conditions(session, user_message)
-    if should_route:
-        session.pending_route_message = route_message
-        action = "route_to_agent"
+        # Check routing conditions - may override the action
+        should_route, route_message = _check_routing_conditions(session, user_message)
+        if should_route:
+            session.pending_route_message = route_message
+            action = "route_to_agent"
 
-    # Generate reply based on the action
-    reply_parts = generate_reply(action, user_message, db, conversation, conversation_id, session)
+        # Generate reply based on the action
+        reply_parts = generate_reply(action, user_message, db, conversation, conversation_id, session)
 
-    # Save full reply as one message in DB (joined for history context)
-    full_reply = " ||| ".join(reply_parts)
-    ai_msg = Message(conversation_id=conversation_id, role="assistant", content=full_reply)
-    db.add(ai_msg)
-    db.commit()
+        # Save full reply as one message in DB (joined for history context)
+        full_reply = " ||| ".join(reply_parts)
+        ai_msg = Message(conversation_id=conversation_id, role="assistant", content=full_reply)
+        db.add(ai_msg)
+        db.commit()
 
-    return reply_parts
+        return reply_parts
+
+    except Exception as e:
+        print(f"process_user_message: unhandled error for conversation {conversation_id}: {e}")
+        fallback = "Something went wrong on my end. Give me a second and try again."
+        try:
+            ai_msg = Message(conversation_id=conversation_id, role="assistant", content=fallback)
+            db.add(ai_msg)
+            db.commit()
+        except Exception as db_err:
+            print(f"process_user_message: could not save fallback message: {db_err}")
+        return [fallback]

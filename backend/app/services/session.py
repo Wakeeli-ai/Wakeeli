@@ -78,7 +78,17 @@ class SessionState:
             return
 
         # ---------------------------
-        # 2. PROPERTY LINK PROVIDED
+        # 2. LISTINGS ALREADY SHOWN: always stay in process_property_request
+        #    so follow-up messages (unsure, questions, booking confirmations)
+        #    are handled in the right action branch, not bounced back to
+        #    more_info_needed which would ask qualifying questions again.
+        # ---------------------------
+        if self.listings_shown:
+            self.stage = 3
+            return
+
+        # ---------------------------
+        # 3. PROPERTY LINK PROVIDED
         # ---------------------------
         if link_or_id:
             if not name:
@@ -88,7 +98,7 @@ class SessionState:
             return
 
         # ---------------------------
-        # 3. ENOUGH INFO TO SEARCH (location + budget required)
+        # 4. ENOUGH INFO TO SEARCH (location + budget required)
         # ---------------------------
         has_budget = budget_min or budget_max
 
@@ -100,14 +110,14 @@ class SessionState:
             return
 
         # ---------------------------
-        # 4. VAGUE PROPERTY REQUEST
+        # 5. VAGUE PROPERTY REQUEST
         # ---------------------------
         if self.classification == "A2":
             self.stage = 2
             return
 
         # ---------------------------
-        # 5. GENERAL CONVERSATION
+        # 6. GENERAL CONVERSATION
         # ---------------------------
         if self.classification == "B":
             self.stage = 5

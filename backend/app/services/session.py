@@ -19,6 +19,9 @@ class SessionState:
         self.stage = 1
         self.classification = None
         self.bare_greeting = False
+        self.rejection_count = 0
+        self.listings_shown = False
+        self.pending_route_message = None
 
         self.user_info = {
             "name": None,
@@ -43,6 +46,8 @@ class SessionState:
             "stage": self.stage,
             "classification": self.classification,
             "bare_greeting": self.bare_greeting,
+            "rejection_count": self.rejection_count,
+            "listings_shown": self.listings_shown,
             "user_info": self.user_info,
             "property_info": self.property_info
         }

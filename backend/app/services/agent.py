@@ -16,6 +16,55 @@ client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 # Per-conversation session storage keyed by conversation_id (int)
 _sessions: dict = {}
 
+# Routing detection patterns
+_DISMISSIVE_PATTERNS = re.compile(
+    r"\b(no|nah|nope|not interested|none of these|none of them|don'?t like|don'?t want|"
+    r"not what i|no thanks|pass|nothing here|nothing works|not for me)\b",
+    re.IGNORECASE
+)
+
+_TODAY_PATTERNS = re.compile(
+    r"\b(today|tonight|right now|this morning|this afternoon|this evening)\b",
+    re.IGNORECASE
+)
+
+_RESCHEDULE_PATTERNS = re.compile(
+    r"\b(reschedule|change.{0,15}(visit|appointment|booking|time|day)|"
+    r"move.{0,15}(visit|appointment|booking)|postpone|different (day|time|slot))\b",
+    re.IGNORECASE
+)
+
+_FAR_TIMELINE_PATTERNS = re.compile(
+    r"(just browsing|not sure when|not sure yet|not looking (yet|now|anytime soon)|"
+    r"next year|no rush|no hurry|not urgent|few months|several months|"
+    r"\b[3-9]\s*months?\b|\b1[0-9]\s*months?\b)",
+    re.IGNORECASE
+)
+
+
+def _check_routing_conditions(session: SessionState, user_message: str):
+    """Check if any special routing condition is met. Returns (should_route, message)."""
+
+    # Reschedule check
+    if _RESCHEDULE_PATTERNS.search(user_message):
+        return True, "Let me connect you with your agent to reschedule."
+
+    # Same-day visit check (only relevant after listings have been shown)
+    if session.listings_shown and _TODAY_PATTERNS.search(user_message):
+        return True, "Let me connect you with one of our agents to arrange that for you."
+
+    # Far timeline check
+    if _FAR_TIMELINE_PATTERNS.search(user_message):
+        return True, "No problem! Let me connect you with one of our agents who can keep you updated when something comes up."
+
+    # Dismissive check after listings shown
+    if session.listings_shown and _DISMISSIVE_PATTERNS.search(user_message):
+        session.rejection_count += 1
+        if session.rejection_count >= 2:
+            return True, "Let me connect you with one of our agents who might have more options for you."
+
+    return False, ""
+
 
 def get_session(conversation_id: int) -> SessionState:
     """Return the SessionState for this conversation, creating one if needed."""
@@ -75,7 +124,25 @@ def generate_reply(action, user_message, db, conversation, conversation_id, sess
             return ["Marhaba kifak, shu fine a3mile la2ak?"]
         return ["Hello! How can I help you?"]
 
-    if action == "intent_detection":
+    if action == "route_to_agent":
+        route_message = session.pending_route_message or "Let me connect you with one of our agents."
+        session.pending_route_message = None
+
+        requirements = property_info
+        conversation.user_requirements = requirements
+
+        agent = find_best_agent(db, requirements)
+        if agent:
+            assign_agent(db, conversation.id, agent.id)
+            event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": agent.id})
+        else:
+            event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": None})
+        db.add(event)
+        db.commit()
+
+        return [route_message]
+
+    elif action == "intent_detection":
         message = """
 Important behavior rules:
 
@@ -178,6 +245,7 @@ Offer to search for similar properties based on their preferences.
                     results = search_listings(db, property_info)
 
                     if results:
+                        session.listings_shown = True
                         results_to_show = results[:5]
                         result_count = len(results_to_show)
                         formatted_listings = "\n\n".join([
@@ -206,6 +274,7 @@ LISTINGS:
                     else:
                         alt_results = recommend_alternatives(db, property_info)
                         if alt_results:
+                            session.listings_shown = True
                             alt_to_show = alt_results[:5]
                             alt_count = len(alt_to_show)
                             formatted_listings = "\n\n".join([
@@ -459,6 +528,12 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
 
     # Decide next action based on current session state
     action = decide_next_action(session)
+
+    # Check routing conditions — may override the action
+    should_route, route_message = _check_routing_conditions(session, user_message)
+    if should_route:
+        session.pending_route_message = route_message
+        action = "route_to_agent"
 
     # Generate reply based on the action
     reply_parts = generate_reply(action, user_message, db, conversation, conversation_id, session)

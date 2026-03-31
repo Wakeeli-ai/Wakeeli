@@ -93,7 +93,10 @@ class SessionState:
         has_budget = budget_min or budget_max
 
         if location and has_budget:
-            self.stage = 3
+            if not name:
+                self.stage = 5
+            else:
+                self.stage = 3
             return
 
         # ---------------------------

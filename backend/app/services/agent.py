@@ -131,11 +131,14 @@ def generate_reply(action, user_message, db, conversation, conversation_id, sess
         session.pending_route_message = None
 
         requirements = property_info
-        conversation.user_requirements = requirements
+        if conversation is not None:
+            conversation.user_requirements = requirements
 
         agent = find_best_agent(db, requirements)
-        if agent:
+        if agent and conversation is not None:
             assign_agent(db, conversation.id, agent.id)
+            event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": agent.id})
+        elif agent:
             event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": agent.id})
         else:
             event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": None})
@@ -158,11 +161,13 @@ Important behavior rules:
 
     elif action == "handoff_or_finish":
         requirements = property_info
-        conversation.user_requirements = requirements
+        if conversation is not None:
+            conversation.user_requirements = requirements
 
         agent = find_best_agent(db, requirements)
         if agent:
-            assign_agent(db, conversation.id, agent.id)
+            if conversation is not None:
+                assign_agent(db, conversation.id, agent.id)
             tool_output = f"Handed off to agent {agent.name}."
         else:
             tool_output = "No available agent found, but requirements logged."
@@ -268,7 +273,20 @@ Offer to search for similar properties based on their preferences.
             else:
                 has_budget = budget_min or budget_max
 
-                if location and has_budget:
+                if session.listings_shown and not (location and has_budget):
+                    msg = """
+The user has already seen listings and is responding. They may be unsure or need help deciding.
+Ask them what they thought of the options, or if they would like to see different options.
+Keep it short and conversational. One message only.
+"""
+                elif session.listings_shown:
+                    msg = """
+The user has already seen the listings and gave an uncertain or unclear response.
+Do NOT re-present the same listings again.
+Ask them what specifically they are unsure about, or whether they would like to adjust their criteria.
+Keep it short. One message only.
+"""
+                elif location and has_budget:
                     results = search_listings(db, property_info)
 
                     if results:
@@ -495,7 +513,9 @@ Keep it casual and brief.
 """
                     elif not has_name:
                         message = """
-Ask for the user's full name naturally and briefly.
+All property details are collected but the name is still missing.
+Send ONLY this exact message: "And your name?"
+Nothing else. No other question. No filler.
 """
                     else:
                         message = """

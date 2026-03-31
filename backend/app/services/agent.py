@@ -861,6 +861,22 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             + message
         )
 
+    # LBP conversion reminder: if a budget was converted from LBP this turn,
+    # inject an explicit instruction so the LLM always acknowledges the USD amount
+    # before continuing. This is required by the LBP MENTION RULE.
+    if session.lbp_converted:
+        converted_parts = []
+        for key, usd_val in session.lbp_converted.items():
+            converted_parts.append(f"${usd_val:,}")
+        converted_str = " / ".join(converted_parts)
+        message = (
+            f"CRITICAL: The user just provided a budget in LBP. It was converted to USD: {converted_str}. "
+            f"You MUST mention this converted amount naturally at the start of your reply before doing anything else. "
+            f"Example: 'That's about {converted_str}/month. Let me check what's available.' "
+            f"Do NOT skip this mention. This is mandatory per the LBP MENTION RULE.\n\n"
+            + message
+        )
+
     static_prompt = get_static_system_prompt()
     dynamic_prompt = get_dynamic_action_prompt(message)
     session_state_text = f"\nCurrent session state: {state}"
@@ -1047,12 +1063,27 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             r'(\d|\$|usd|lbp|dollars?|thousand|k\b|per month|monthly)',
             re.IGNORECASE
         )
+        # Only treat the message as a name if ALL of the following are true:
+        # 1. Bot previously asked for the name
+        # 2. Name is still unknown
+        # 3. The extractor did not detect a name
+        # 4. Message is short (1-4 words)
+        # 5. No property keywords detected in the message
+        # 6. No budget/number patterns detected in the message
+        # 7. The extractor found NO property info from this message
+        #    (prevents locations like "Beirut" or listing types being treated as names)
+        extracted_prop = extracted.get("property_info", {})
+        has_extracted_property_info = any(
+            v is not None and v is not False
+            for v in extracted_prop.values()
+        )
         if (session.name_asked
                 and not session.user_info.get("name")
                 and not extracted.get("user_info", {}).get("name")
                 and len(user_message.split()) <= 4
                 and not _PROPERTY_KEYWORDS.search(user_message)
-                and not _BUDGET_PATTERN.search(user_message)):
+                and not _BUDGET_PATTERN.search(user_message)
+                and not has_extracted_property_info):
             extracted.setdefault("user_info", {})
             extracted["user_info"]["name"] = user_message.strip()
 

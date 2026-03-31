@@ -29,6 +29,8 @@ class SessionState:
         self.budget_ask_count = 0
         self.show_alternatives = False
         self.lbp_converted = {}
+        # Set to True for one turn when the name was just extracted this turn
+        self.name_just_set = False
 
         self.user_info = {
             "name": None,
@@ -59,6 +61,7 @@ class SessionState:
             "handed_off": self.handed_off,
             "name_asked": self.name_asked,
             "name_ask_count": self.name_ask_count,
+            "name_just_set": self.name_just_set,
             "budget_ask_count": self.budget_ask_count,
             "show_alternatives": self.show_alternatives,
             "user_info": self.user_info,
@@ -151,10 +154,15 @@ class SessionState:
         # bare_greeting resets on every message based on current intent
         self.bare_greeting = bool(new_data.get("bare_greeting", False))
 
+        # Reset name_just_set at the start of each turn
+        self.name_just_set = False
+
         if "user_info" in new_data:
-            self.user_info.update(
-                {k: v for k, v in new_data["user_info"].items() if v is not None}
-            )
+            new_user_info = {k: v for k, v in new_data["user_info"].items() if v is not None}
+            # Detect if a name was just provided this turn (was None before, now set)
+            if new_user_info.get("name") and not self.user_info.get("name"):
+                self.name_just_set = True
+            self.user_info.update(new_user_info)
 
         if "property_info" in new_data:
             self.property_info.update(

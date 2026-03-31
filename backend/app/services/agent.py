@@ -52,22 +52,29 @@ _FAR_TIMELINE_PATTERNS = re.compile(
 _THINKING_LINE_PATTERN = re.compile(
     r'^(?:Wait[,.]|Hmm[,.]?|Hm[,.]?|Actually,\s+(?:let|I|wait)|'
     r'Let me restart|Let me re-think|Let me reconsider|Let me start over|'
-    r'I need to reset|I need to reconsider|I realize[d]?\s+I|'
+    r'Let me just\b|Let me respond\b|'
+    r'I need to reset|I need to reconsider|I need to\b|I realize[d]?\s+I|'
+    r'I should\b|I should just\b|'
     r'Rethinking this|Re-reading this|'
-    r'I already\b|I should\b|I notice[d]?\b|Looking at\b|Based on\b|'
+    r'I already\b|I notice[d]?\b|Looking at\b|Based on\b|'
     r'Oh,|Okay,|OK,|Right,|So,)[^\n]*(?:\n|$)',
     re.IGNORECASE | re.MULTILINE
 )
 
+# Pattern to strip triple-dash separator lines and content between them
+_TRIPLE_DASH_PATTERN = re.compile(r'---+[^\n]*(?:\n|$)', re.MULTILINE)
+
 # Phrases that indicate self-referential reasoning leaking into a response part
 _SELF_REF_PHRASES = re.compile(
-    r'\b(let me restart|i need to|i realize[d]?|wait[,\s]+i|hmm[,\s]+i)\b',
+    r'\b(let me restart|let me just|let me respond|i need to|i realize[d]?|i should\b|wait[,\s]+i|hmm[,\s]+i)\b',
     re.IGNORECASE
 )
 
 
 def _strip_internal_reasoning(text: str) -> str:
     """Remove chain-of-thought reasoning that leaked into the bot response."""
+    # Remove triple-dash separator lines first
+    text = _TRIPLE_DASH_PATTERN.sub('', text)
     # First pass: remove lines that start with known thinking prefixes
     cleaned = _THINKING_LINE_PATTERN.sub('', text).strip()
     # Second pass: after splitting on |||, drop any segment containing self-referential phrases
@@ -97,13 +104,17 @@ def _check_routing_conditions(session: SessionState, user_message: str):
         return True, "No problem! Let me connect you with one of our agents who can keep you updated when something comes up."
 
     # Dismissive check after listings shown
+    # Use show_alternatives flag state to track rejection sequence:
+    # First rejection: flag is False -> set it True and offer alternatives (no route)
+    # Second rejection: flag is already True -> route to agent
     if session.listings_shown and _DISMISSIVE_PATTERNS.search(user_message):
         session.rejection_count += 1
-        if session.rejection_count == 1:
-            # First rejection: do not route yet, offer alternatives instead
+        if not session.show_alternatives:
+            # First rejection: offer alternatives instead of routing
             session.show_alternatives = True
             return False, ""
-        if session.rejection_count >= 2:
+        else:
+            # Second rejection: flag was already True, route to agent
             return True, "Let me connect you with one of our agents who might have more options for you."
 
     return False, ""
@@ -186,13 +197,14 @@ def _generate_reply_inner(action, user_message, db, conversation, conversation_i
     # No LLM call needed. This prevents Claude from ignoring the instruction
     # and dumping qualification questions when the user just says hi/hello.
     if session.bare_greeting:
-        arabic_patterns = re.compile(
+        arabic_unicode_pattern = re.compile(r'[\u0600-\u06FF]')
+        arabic_romanized_pattern = re.compile(
             r'\b(marhaba|ahla|salam|kifak|bonjour|ahlan|yiiii|ya3ne|hayde|shu|wein|baddi)\b',
             re.IGNORECASE
         )
-        if arabic_patterns.search(user_message):
+        if arabic_unicode_pattern.search(user_message) or arabic_romanized_pattern.search(user_message):
             session.greeted = True
-            return ["Marhaba kifak, shu fine a3mile la2ak?"]
+            return ["\u0623\u0647\u0644\u0627\u064b! \u0643\u064a\u0641 \u0628\u0642\u062f\u0631 \u0633\u0627\u0639\u062f\u0643\u061f"]
         session.greeted = True
         return ["Hello! How can I help you?"]
 
@@ -808,6 +820,17 @@ All info collected. Tell the user you are searching for options.
 Greet the user naturally and ask how you can help them find a property in Lebanon.
 """
 
+    # Safety net: if the name was just provided this turn, inject a hard stop
+    # so the LLM cannot re-ask for the name in this same reply.
+    if session.name_just_set and session.user_info.get("name"):
+        provided_name = session.user_info["name"]
+        message = (
+            f"CRITICAL: The user JUST provided their name: '{provided_name}'. "
+            "Do NOT ask for their name again. Do NOT say 'And your name?' or any variation. "
+            "Acknowledge the name naturally if appropriate and continue the flow.\n\n"
+            + message
+        )
+
     # Safety net: if the user was already greeted before this turn, prepend an explicit
     # instruction so the LLM cannot include any greeting regardless of which path ran.
     if was_greeted:
@@ -989,6 +1012,22 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             return [response_msg]
 
         extracted = extract_entities(user_message, history)
+
+        # If the bot previously asked for the user's name and the extractor still
+        # returned null for name, treat the current message as a name if it is
+        # short (1-3 words) and contains no property-related keywords.
+        _PROPERTY_KEYWORDS = re.compile(
+            r'\b(rent|buy|bedroom|studio|apartment|furnished|location|budget|'
+            r'ista2jar|ishtari|baddi|wein|shu)\b',
+            re.IGNORECASE
+        )
+        if (session.name_asked
+                and not session.user_info.get("name")
+                and not extracted.get("user_info", {}).get("name")
+                and len(user_message.split()) <= 4
+                and not _PROPERTY_KEYWORDS.search(user_message)):
+            extracted.setdefault("user_info", {})
+            extracted["user_info"]["name"] = user_message.strip()
 
         # Stash previous property_info before merging so correction detection can compare
         session._prev_property_info = dict(session.property_info)

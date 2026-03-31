@@ -189,7 +189,7 @@ Offer to search for similar properties based on their preferences.
                             opening_instruction = "First send a short opening message appropriate for a single result, like 'Here you go' or 'Check this one out'. Do NOT use plural language or say 'options'."
                             recommendation_instruction = "Skip the recommendation line since there is only one result."
                         else:
-                            opening_instruction = f"First send a short opening message saying you found great options in {area_label}."
+                            opening_instruction = f"First send a short opening message like 'On it' or 'Here you go'. Do NOT say 'Found some great options', 'searching now', 'looking now', or any variation."
                             recommendation_instruction = "Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'."
 
                         msg = f"""

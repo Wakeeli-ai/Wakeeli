@@ -121,7 +121,9 @@ def generate_reply(action, user_message, db, conversation, conversation_id, sess
             re.IGNORECASE
         )
         if arabic_patterns.search(user_message):
+            session.greeted = True
             return ["Marhaba kifak, shu fine a3mile la2ak?"]
+        session.greeted = True
         return ["Hello! How can I help you?"]
 
     if action == "route_to_agent":
@@ -357,6 +359,7 @@ Ask the user politely to try again or re-share their preferences.
         classification = state.get("classification")
         has_name = state.get("user_info", {}).get("name")
         bare_greeting = state.get("bare_greeting", False)
+        already_greeted = session.greeted
 
         if classification == "B":
             # Bare greeting: user sent only "hi" / "hello" / "marhaba" with no intent
@@ -372,7 +375,14 @@ Lebanese Arabic variation: "Marhaba kifak, shu fine a3mile la2ak?"
                 # listing_type must be known before anything else.
                 # If missing, ask only that one question and stop.
                 if not property_info.get("listing_type"):
-                    if not has_name:
+                    if already_greeted:
+                        # Greeting already sent in a previous turn. Ask only the question.
+                        message = """
+Ask ONLY: "Is this for rent or to buy?"
+One question. Nothing else. Do not bundle with other questions. No greeting.
+"""
+                    elif not has_name:
+                        # First contact. Send greeting + question.
                         message = """
 Entry B: listing type unknown. This is first contact. Send exactly 2 messages using ||| as separator:
 
@@ -398,10 +408,10 @@ One question. Nothing else. Do not bundle with other questions.
                     if not property_info.get("furnishing"):
                         missing_fields.append("furnished or unfurnished")
 
-                    if missing_fields and not has_name:
+                    if missing_fields and already_greeted and not has_name:
+                        # Already greeted. Send bundled question + name ask. No greeting.
                         missing_str = ", ".join(missing_fields)
 
-                        # Check if location is a governorate or district and ask for more specificity
                         location_val = property_info.get("location", "")
                         area_note = ""
                         if location_val:
@@ -412,7 +422,53 @@ One question. Nothing else. Do not bundle with other questions.
                             elif loc_type == 'district':
                                 examples = get_area_examples(loc_canonical, 'district')
                                 area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
-                            # If city or unknown, no area_note needed
+
+                        message = f"""
+Already greeted. Do NOT repeat "Hello, thanks for reaching out!" or any greeting. Send exactly 2 messages using ||| as separator:
+
+Message 1: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
+Message 2: "What's your full name btw?"
+
+Example: "Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
+
+NEVER include a greeting in Message 1. NEVER write one big paragraph.
+"""
+
+                    elif missing_fields and already_greeted and has_name:
+                        # Already greeted and name is known. Ask only missing fields. No greeting.
+                        missing_str = ", ".join(missing_fields)
+
+                        location_val = property_info.get("location", "")
+                        area_note = ""
+                        if location_val:
+                            loc_type, loc_canonical = get_location_type(location_val)
+                            if loc_type == 'governorate':
+                                examples = get_area_examples(loc_canonical, 'governorate')
+                                area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, like {examples}."
+                            elif loc_type == 'district':
+                                examples = get_area_examples(loc_canonical, 'district')
+                                area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
+
+                        message = f"""
+Ask only for these missing details in one short message: {missing_str}.{area_note}
+Do NOT include a greeting. Do NOT re-ask for anything already known.
+Keep it casual and brief.
+"""
+
+                    elif missing_fields and not has_name:
+                        # First contact with missing fields. Full 3-message format.
+                        missing_str = ", ".join(missing_fields)
+
+                        location_val = property_info.get("location", "")
+                        area_note = ""
+                        if location_val:
+                            loc_type, loc_canonical = get_location_type(location_val)
+                            if loc_type == 'governorate':
+                                examples = get_area_examples(loc_canonical, 'governorate')
+                                area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, like {examples}."
+                            elif loc_type == 'district':
+                                examples = get_area_examples(loc_canonical, 'district')
+                                area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
 
                         message = f"""
 Entry B: listing type is known. First contact or early stage. Send exactly 3 messages using ||| as separator:
@@ -492,6 +548,14 @@ Greet the user naturally and ask how you can help them find a property in Lebano
 
     # Split on ||| delimiter and clean each part, stripping any stray quotation marks
     parts = [p.strip().strip('"').strip("'").strip() for p in raw_reply.split("|||") if p.strip()]
+
+    # Mark session as greeted if a greeting was just sent via Entry B first contact paths.
+    # Covers the listing_type-unknown and missing_fields first-contact branches above.
+    if action == "more_info_needed" and not session.greeted:
+        classification = state.get("classification")
+        if classification == "B" and not state.get("bare_greeting", False):
+            session.greeted = True
+
     return parts if parts else [raw_reply]
 
 
@@ -554,7 +618,7 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
     # Decide next action based on current session state
     action = decide_next_action(session)
 
-    # Check routing conditions — may override the action
+    # Check routing conditions - may override the action
     should_route, route_message = _check_routing_conditions(session, user_message)
     if should_route:
         session.pending_route_message = route_message

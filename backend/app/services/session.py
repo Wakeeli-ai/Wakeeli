@@ -19,6 +19,7 @@ class SessionState:
         self.stage = 1
         self.classification = None
         self.bare_greeting = False
+        self.greeted = False
         self.rejection_count = 0
         self.listings_shown = False
         self.pending_route_message = None
@@ -46,6 +47,7 @@ class SessionState:
             "stage": self.stage,
             "classification": self.classification,
             "bare_greeting": self.bare_greeting,
+            "greeted": self.greeted,
             "rejection_count": self.rejection_count,
             "listings_shown": self.listings_shown,
             "user_info": self.user_info,
@@ -69,14 +71,14 @@ class SessionState:
         name = user_info.get("name")
 
         # ---------------------------
-        # 1️⃣ OFF TOPIC (highest priority)
+        # 1. OFF TOPIC (highest priority)
         # ---------------------------
         if self.classification == "OFF_TOPIC":
             self.stage = 4
             return
 
         # ---------------------------
-        # 2️⃣ PROPERTY LINK PROVIDED
+        # 2. PROPERTY LINK PROVIDED
         # ---------------------------
         if link_or_id:
             if not name:
@@ -86,7 +88,7 @@ class SessionState:
             return
 
         # ---------------------------
-        # 3️⃣ ENOUGH INFO TO SEARCH (location + budget required)
+        # 3. ENOUGH INFO TO SEARCH (location + budget required)
         # ---------------------------
         has_budget = budget_min or budget_max
 
@@ -95,14 +97,14 @@ class SessionState:
             return
 
         # ---------------------------
-        # 4️⃣ VAGUE PROPERTY REQUEST
+        # 4. VAGUE PROPERTY REQUEST
         # ---------------------------
         if self.classification == "A2":
             self.stage = 2
             return
 
         # ---------------------------
-        # 5️⃣ GENERAL CONVERSATION
+        # 5. GENERAL CONVERSATION
         # ---------------------------
         if self.classification == "B":
             self.stage = 5

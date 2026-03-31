@@ -216,6 +216,30 @@ Example:
                     if listing.description:
                         desc_snippet = (listing.description[:100] + "...") if len(listing.description) > 100 else listing.description
 
+                    # Find similar listings for cross-sell after booking confirmation
+                    similar_filters = {
+                        "listing_type": listing.listing_type,
+                        "location": listing.area or listing.city,
+                    }
+                    price_val = listing.rent_price if listing.listing_type == "rent" else listing.sale_price
+                    if price_val:
+                        similar_filters["budget_max"] = price_val * 1.3
+                    all_similar = search_listings(db, similar_filters)
+                    similar_listings = [r for r in all_similar if r.property_id != link_or_id][:3]
+
+                    similar_section = ""
+                    if similar_listings:
+                        similar_formatted = "\n\n".join([
+                            _format_listing(r, i) for i, r in enumerate(similar_listings, 1)
+                        ])
+                        similar_section = (
+                            "\n\nCROSS-SELL CONTEXT:\n"
+                            "When the user confirms a visit booking, after sending the booking confirmation summary, "
+                            "add one more message: \"I'll also send you a couple similar options that might interest you.\""
+                            " Then present these similar listings:\n"
+                            + similar_formatted
+                        )
+
                     msg = f"""
 Property found:
   Title: {listing.title}
@@ -230,6 +254,7 @@ Present this property in a natural, friendly way.
 Tell the user the property is available and share the details clearly.
 Then ask if they want to book a visit.
 Use ||| to separate the property details message from the follow-up question.
+{similar_section}
 """
                 else:
                     msg = """

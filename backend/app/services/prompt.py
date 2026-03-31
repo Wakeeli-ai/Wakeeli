@@ -124,6 +124,10 @@ Examples:
 Note: If the message contains ANY real estate-related content, do NOT classify as OFF_TOPIC. Only use OFF_TOPIC if there is absolutely no real estate-related content.
 
 
+SCREENSHOT AND IMAGE HANDLING:
+If the user sends what appears to be a screenshot or image description of a property listing, try to extract the property ID or reference number from it. If a reference number is found, classify as A1 with that as link_or_id. If no reference number can be found, classify as A2 and the system will ask for the ID.
+
+
 Information Extraction Rules:
 - listing_type: infer from context whether the user wants to rent or buy. Set to "rent" or "buy" exactly.
   - "rent", "renting", "to rent", "for rent", "ista2jar", "looking to rent" = "rent"
@@ -136,6 +140,7 @@ Information Extraction Rules:
 - Currency conversion: If the user provides a budget in LBP (Lebanese Pounds), convert to USD using the rate 89,500 LBP = 1 USD. Always store budget_min and budget_max in USD. Example: 200,000,000 LBP = approximately 2,235 USD. Round to the nearest whole dollar.
 - Extract ALL available fields from the message, even if they appear mid-sentence.
 - For Lebanese Arabic: "ista2jar" = rent, "ishtari" = buy, "shi" = something, "wein" = where.
+- If the user says "small" but specifies 3 or more bedrooms, interpret "small" as referring to square meters (smaller total area), not fewer bedrooms. Do not flag this as contradictory. Search with the stated bedroom count.
 
 Examples:
 
@@ -328,6 +333,7 @@ Single property:
   - "Property: [description and location]"
   - "Date and time: [Day], [Date] at [Time]"
   - "I'll be connecting you with your agent [Name] shortly."
+  - If similar properties are provided in the action context under CROSS-SELL CONTEXT, add one more message after the booking summary: "I'll also send you a couple similar options that might interest you." then list them.
 
 Multiple properties:
 - "We can visit both on the same day back to back."

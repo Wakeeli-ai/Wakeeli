@@ -121,11 +121,14 @@ def update_memory(session: SessionState, extracted):
     # LBP fallback: if budget values look like LBP (over 50,000), auto-convert to USD
     # Rate: 89,500 LBP = 1 USD
     prop_info = extracted.get("property_info", {})
+    session.lbp_converted = {}
     if prop_info:
         for key in ("budget_min", "budget_max"):
             val = prop_info.get(key)
             if val and isinstance(val, (int, float)) and val > 50000:
-                prop_info[key] = round(val / 89500)
+                usd_val = round(val / 89500)
+                session.lbp_converted[key] = usd_val
+                prop_info[key] = usd_val
     session.update_agent_state(extracted)
 
 
@@ -168,6 +171,11 @@ def generate_reply(action, user_message, db, conversation, conversation_id, sess
 def _generate_reply_inner(action, user_message, db, conversation, conversation_id, session: SessionState) -> list[str]:
     state = session.getter()
     property_info = state.get("property_info", {})
+
+    # BUG 1 fix: listing reply parts are built directly and returned without
+    # relying on the LLM to reproduce the formatted listing text.
+    # This attribute is set below in process_property_request when listings are found.
+    _direct_parts: list[str] | None = None
 
     message = ""
     # Capture greeted status BEFORE any action block modifies it.
@@ -352,7 +360,8 @@ Offer to search for similar properties based on their preferences.
                     )
 
                     if criteria_changed:
-                        # Reset listings_shown so the search branch below runs fresh
+                        # BUG 7 fix: reset listings_shown and re-search rather than
+                        # falling back to agent. Only fall back if truly zero results.
                         session.listings_shown = False
                         results = search_listings(db, session.property_info)
                         if results:
@@ -362,27 +371,38 @@ Offer to search for similar properties based on their preferences.
                             formatted_listings = "\n\n".join([
                                 _format_listing(r, i) for i, r in enumerate(results_to_show, 1)
                             ])
-                            area_label = session.property_info.get("location") or "your area"
 
+                            # BUG 1 fix: directly include listings in reply parts
                             if result_count == 1:
-                                opening_instruction = "Send a short opening like 'Here you go' or 'Check this one out'. Do NOT say 'options'."
-                                recommendation_instruction = "Skip the recommendation line since there is only one result."
+                                corr_opening_instruction = (
+                                    "Send ONE short opening phrase only, like 'Here you go' or 'Check this one out'. "
+                                    "Do NOT say 'options'. No listing text. Reply with the opening phrase only."
+                                )
+                                corr_recommendation_instruction = (
+                                    "Send ONE short closing question only, like 'What do you think?' "
+                                    "Reply with the closing question only. No listing text."
+                                )
                             else:
-                                opening_instruction = "Send a short opening like 'On it' or 'Here you go'. Do NOT say 'Found some great options', 'searching now', or any variation."
-                                recommendation_instruction = "Then recommend which option is closest to their criteria."
+                                corr_opening_instruction = (
+                                    "Send ONE short opening phrase only, like 'Sure' or 'Here you go'. "
+                                    "Do NOT say 'let me redo the search'. No listing text. Reply with the opening phrase only."
+                                )
+                                corr_recommendation_instruction = (
+                                    "Send a recommendation line then 'What do you think?' as two short messages. "
+                                    "Example: 'Option 2 is probably the closest to what you had in mind' ||| 'What do you think?' "
+                                    "No listing text."
+                                )
 
                             msg = f"""
-CORRECTION FLOW: The user updated their search criteria. Fresh results from the database:
-{opening_instruction}
-Then send the numbered listings as one message.
-{recommendation_instruction}
-Then send a final separate message saying 'What do you think?'
-Use ||| to separate these parts.
-Do NOT comment on the criteria change. Do NOT say 'let me redo the search'. Just present the new results.
-
-LISTINGS:
-{formatted_listings}
+CORRECTION FLOW: The user updated their search criteria. Fresh results are already included in the response by the system.
+Your job is only to generate:
+1. {corr_opening_instruction}
+2. {corr_recommendation_instruction}
+Do NOT comment on the criteria change. Do NOT say 'let me redo the search'. Do NOT reproduce the listing text.
+Use ||| to separate your parts.
 """
+                            _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
+
                         else:
                             alt_results = recommend_alternatives(db, session.property_info)
                             if alt_results:
@@ -392,15 +412,17 @@ LISTINGS:
                                     _format_listing(r, i) for i, r in enumerate(alt_to_show, 1)
                                 ])
                                 msg = f"""
-CORRECTION FLOW: No exact match for updated criteria. Present these alternatives.
-You MUST tell the user these are slightly above their budget BEFORE listing them. Start with: 'These are a bit above your range but they are the closest available right now.' Then present the listings.
-Then send a final separate message: 'What do you think?'
-Use ||| to separate.
-
-ALTERNATIVE LISTINGS:
-{formatted_listings}
+CORRECTION FLOW: No exact match for updated criteria. Alternative listings are already included in the response by the system.
+Your job is only to generate:
+1. An opener telling the user these are slightly above their budget. Say: 'These are a bit above your range but they are the closest available right now.' Send that sentence only.
+2. Send 'What do you think?' as a closing.
+Do NOT reproduce the listing text. Use ||| to separate your parts.
 """
+                                _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
+
                             else:
+                                # BUG 7 fix: if truly zero results even after relaxing filters,
+                                # route to agent cleanly rather than crashing the flow.
                                 msg = """
 CORRECTION FLOW: No listings match the updated criteria.
 Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with one of our agents who might have more options for you.'
@@ -443,26 +465,45 @@ User message to respond to: {user_message}
                         formatted_listings = "\n\n".join([
                             _format_listing(r, i) for i, r in enumerate(results_to_show, 1)
                         ])
-                        area_label = location or "your area"
+
+                        # BUG 1 fix: build reply parts directly so listings are always
+                        # included in the response, not just in the LLM instruction.
+                        if result_count == 1:
+                            opening_instruction = (
+                                "Send ONE short opening phrase only, like 'Here you go' or "
+                                "'Check this one out'. Do NOT say 'options'. No listing text. "
+                                "Reply with the opening phrase only."
+                            )
+                        else:
+                            opening_instruction = (
+                                "Send ONE short opening phrase only, like 'On it' or 'Here you go'. "
+                                "Do NOT say 'Found some great options', 'searching now', or any variation. "
+                                "Reply with the opening phrase only. No listing text."
+                            )
 
                         if result_count == 1:
-                            opening_instruction = "First send a short opening message appropriate for a single result, like 'Here you go' or 'Check this one out'. Do NOT use plural language or say 'options'."
-                            recommendation_instruction = "Skip the recommendation line since there is only one result."
+                            recommendation_instruction = (
+                                "Send ONE short closing question only, like 'What do you think?' "
+                                "Reply with the closing question only. No listing text."
+                            )
                         else:
-                            opening_instruction = f"First send a short opening message like 'On it' or 'Here you go'. Do NOT say 'Found some great options', 'searching now', 'looking now', or any variation."
-                            recommendation_instruction = "Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'."
+                            recommendation_instruction = (
+                                "Send a recommendation line then 'What do you think?' as two separate short messages. "
+                                "Example: 'Option 2 is probably the closest to what you had in mind' ||| 'What do you think?' "
+                                "Reply with the recommendation and closing only. No listing text."
+                            )
 
                         msg = f"""
-LISTINGS FOUND — present these to the user.
-{opening_instruction}
-Then send the numbered listings as one message.
-{recommendation_instruction}
-Then send a final separate message saying 'What do you think?'
-Use ||| to separate these parts.
-
-LISTINGS:
-{formatted_listings}
+LISTINGS FOUND. The listings are already included in the response by the system.
+Your job is only to generate:
+1. {opening_instruction}
+2. {recommendation_instruction}
+Do NOT reproduce the listing text. The listings block is injected automatically.
+Use ||| to separate your parts.
 """
+                        # Direct parts will be assembled after the LLM generates opener/closer
+                        _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
+
                     else:
                         alt_results = recommend_alternatives(db, property_info)
                         if alt_results:
@@ -472,22 +513,40 @@ LISTINGS:
                             formatted_listings = "\n\n".join([
                                 _format_listing(r, i) for i, r in enumerate(alt_to_show, 1)
                             ])
-                            if alt_count == 1:
-                                alt_opening = "You MUST tell the user this listing is slightly above their budget BEFORE presenting it. Start with: 'This one is a bit above your range but it is the closest available right now.' Then present the listing."
-                                alt_recommendation = "Skip the recommendation line since there is only one result."
-                            else:
-                                alt_opening = "You MUST tell the user these are slightly above their budget BEFORE listing them. Start with: 'These are a bit above your range but they are the closest available right now.' Then present the listings."
-                                alt_recommendation = "Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'."
-                            msg = f"""
-No exact match found for their criteria. Present these alternative listings.
-{alt_opening}
-{alt_recommendation}
-Then send a final separate message saying 'What do you think?'
-Use ||| to separate: opening message ||| listings ||| recommendation ||| 'What do you think?'
 
-ALTERNATIVE LISTINGS:
-{formatted_listings}
+                            # BUG 1 fix: directly include alternatives in reply parts
+                            if alt_count == 1:
+                                alt_opening_instruction = (
+                                    "Tell the user this listing is slightly above their budget. "
+                                    "Say: 'This one is a bit above your range but it is the closest available right now.' "
+                                    "Send that sentence only as the opener."
+                                )
+                                alt_recommendation_instruction = (
+                                    "Send ONE short closing question only, like 'What do you think?' "
+                                    "Reply with the closing question only. No listing text."
+                                )
+                            else:
+                                alt_opening_instruction = (
+                                    "Tell the user these are slightly above their budget. "
+                                    "Say: 'These are a bit above your range but they are the closest available right now.' "
+                                    "Send that sentence only as the opener."
+                                )
+                                alt_recommendation_instruction = (
+                                    "Send a recommendation line then 'What do you think?' as two short messages. "
+                                    "Example: 'Option 2 is probably the closest to what you had in mind' ||| 'What do you think?' "
+                                    "Reply with the recommendation and closing only. No listing text."
+                                )
+
+                            msg = f"""
+NO EXACT MATCH. Alternative listings are already included in the response by the system.
+Your job is only to generate:
+1. {alt_opening_instruction}
+2. {alt_recommendation_instruction}
+Do NOT reproduce the listing text. The listings block is injected automatically.
+Use ||| to separate your parts.
 """
+                            _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
+
                         else:
                             msg = """
 CRITICAL: There are ZERO listings matching their criteria in the database right now.
@@ -797,6 +856,17 @@ Greet the user naturally and ask how you can help them find a property in Lebano
     # Split on ||| delimiter and clean each part, stripping any stray quotation marks
     parts = [p.strip().strip('"').strip("'").strip() for p in raw_reply.split("|||") if p.strip()]
 
+    # Listings flow: inject the formatted listings block between the LLM opener and closer.
+    # _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
+    # LLM generates: opener (parts[0]) and closer (parts[1:])
+    # Final reply: [opener, listings, ...closer_parts]
+    if _direct_parts is not None:
+        listing_block = _direct_parts[1]
+        if parts:
+            assembled = parts[0:1] + [listing_block] + parts[1:]
+        else:
+            assembled = [listing_block]
+        return assembled
 
     return parts if parts else [raw_reply]
 

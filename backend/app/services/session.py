@@ -28,6 +28,7 @@ class SessionState:
         self.name_ask_count = 0
         self.budget_ask_count = 0
         self.show_alternatives = False
+        self.lbp_converted = {}
 
         self.user_info = {
             "name": None,
@@ -72,6 +73,7 @@ class SessionState:
         user_info = self.user_info or {}
 
         location = property_info.get("location")
+        listing_type = property_info.get("listing_type")
         bedrooms = property_info.get("bedrooms")
         furnishing = property_info.get("furnishing")
         budget_min = property_info.get("budget_min")
@@ -112,7 +114,7 @@ class SessionState:
         # ---------------------------
         has_budget = budget_min or budget_max
 
-        if location and has_budget:
+        if location and listing_type and has_budget:
             if not name:
                 self.stage = 5
             else:

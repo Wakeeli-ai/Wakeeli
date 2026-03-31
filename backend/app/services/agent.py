@@ -51,7 +51,7 @@ def _format_listing(r, index: int) -> str:
         desc_snippet = (r.description[:100] + "...") if len(r.description) > 100 else r.description
 
     lines = [f"{index}. {r.title}"]
-    lines.append(f"   {area_str} | {bed_bath} | {furnishing_str} | {price_str}")
+    lines.append(f"   {area_str}, {bed_bath}, {furnishing_str}, {price_str}")
     if desc_snippet:
         lines.append(f"   {desc_snippet}")
     return "\n".join(lines)
@@ -141,7 +141,7 @@ Example:
 Property found:
   Title: {listing.title}
   Location: {listing.area or listing.city}
-  Bedrooms: {listing.bedrooms or 'N/A'} | Bathrooms: {listing.bathrooms or 'N/A'}
+  Bedrooms: {listing.bedrooms or 'N/A'}, Bathrooms: {listing.bathrooms or 'N/A'}
   Furnishing: {listing.furnishing or 'N/A'}
   Price: {price_str}
   Type: {'For Rent' if listing.listing_type == 'rent' else 'For Sale'}
@@ -160,23 +160,33 @@ Offer to search for similar properties based on their preferences.
 """
 
             else:
-                has_filters = any([budget_min, budget_max, bedrooms, furnishing])
+                has_budget = budget_min or budget_max
 
-                if location or has_filters:
+                if location and has_budget:
                     results = search_listings(db, property_info)
 
                     if results:
+                        results_to_show = results[:5]
+                        result_count = len(results_to_show)
                         formatted_listings = "\n\n".join([
-                            _format_listing(r, i) for i, r in enumerate(results[:5], 1)
+                            _format_listing(r, i) for i, r in enumerate(results_to_show, 1)
                         ])
                         area_label = location or "your area"
+
+                        if result_count == 1:
+                            opening_instruction = "First send a short opening message appropriate for a single result, like 'Here you go' or 'Check this one out'. Do NOT use plural language or say 'options'."
+                            recommendation_instruction = "Skip the recommendation line since there is only one result."
+                        else:
+                            opening_instruction = f"First send a short opening message saying you found great options in {area_label}."
+                            recommendation_instruction = "Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'."
+
                         msg = f"""
-LISTINGS FOUND — present these to the user enthusiastically.
-First send a short opening message saying you found great options in {area_label}.
+LISTINGS FOUND — present these to the user.
+{opening_instruction}
 Then send the numbered listings as one message.
-Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'.
+{recommendation_instruction}
 Then send a final separate message saying 'What do you think?'
-Use ||| to separate these 4 parts.
+Use ||| to separate these parts.
 
 LISTINGS:
 {formatted_listings}
@@ -184,13 +194,21 @@ LISTINGS:
                     else:
                         alt_results = recommend_alternatives(db, property_info)
                         if alt_results:
+                            alt_to_show = alt_results[:5]
+                            alt_count = len(alt_to_show)
                             formatted_listings = "\n\n".join([
-                                _format_listing(r, i) for i, r in enumerate(alt_results[:5], 1)
+                                _format_listing(r, i) for i, r in enumerate(alt_to_show, 1)
                             ])
+                            if alt_count == 1:
+                                alt_opening = "Tell the user this is slightly above their budget but is the closest match available, and let them decide if they want to stretch."
+                                alt_recommendation = "Skip the recommendation line since there is only one result."
+                            else:
+                                alt_opening = "Tell the user these are slightly above their budget but are the closest matches available, and let them decide if they want to stretch."
+                                alt_recommendation = "Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'."
                             msg = f"""
 No exact match found for their criteria. Present these alternative listings.
-Tell the user these are slightly above their budget but are the closest matches available, and let them decide if they want to stretch.
-Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'.
+{alt_opening}
+{alt_recommendation}
 Then send a final separate message saying 'What do you think?'
 Use ||| to separate: opening message ||| listings ||| recommendation ||| 'What do you think?'
 
@@ -208,8 +226,9 @@ Be honest and direct.
                 else:
                     msg = """
 Not enough information to search yet.
-Ask for location and at least one of: budget range, bedrooms, or furnishing preference.
-Bundle it all into one short message.
+Budget range is required before searching. Ask for location and budget range.
+If location is already known, ask only for the budget range.
+Bundle it into one short message.
 """
 
             message = f"""
@@ -231,35 +250,46 @@ Ask the user politely to try again or re-share their preferences.
     elif action == "more_info_needed":
         classification = state.get("classification")
         has_name = state.get("user_info", {}).get("name")
+        bare_greeting = state.get("bare_greeting", False)
 
         if classification == "B":
-            missing_fields = []
-            if not property_info.get("location"):
-                missing_fields.append("preferred location")
-            if not property_info.get("bedrooms"):
-                missing_fields.append("number of bedrooms")
-            if not property_info.get("budget_min") and not property_info.get("budget_max"):
-                missing_fields.append("budget range")
-            if not property_info.get("furnishing"):
-                missing_fields.append("furnished or unfurnished")
+            # Bare greeting: user sent only "hi" / "hello" / "marhaba" with no intent
+            if bare_greeting:
+                message = """
+The user sent only a greeting with no property intent whatsoever.
+Respond with ONE single message only: "Hello how can I help you?" or a natural variation in their language.
+Do NOT ask qualification questions. Do NOT ask for their name. Do NOT say "thanks for reaching out".
+Just ask how you can help.
+Lebanese Arabic variation: "Marhaba kifak, shu fine a3mile la2ak?"
+"""
+            else:
+                missing_fields = []
+                if not property_info.get("location"):
+                    missing_fields.append("preferred location")
+                if not property_info.get("bedrooms"):
+                    missing_fields.append("number of bedrooms")
+                if not property_info.get("budget_min") and not property_info.get("budget_max"):
+                    missing_fields.append("budget range")
+                if not property_info.get("furnishing"):
+                    missing_fields.append("furnished or unfurnished")
 
-            if missing_fields and not has_name:
-                missing_str = ", ".join(missing_fields)
+                if missing_fields and not has_name:
+                    missing_str = ", ".join(missing_fields)
 
-                # Check if location is a governorate or district and ask for more specificity
-                location_val = property_info.get("location", "")
-                area_note = ""
-                if location_val:
-                    loc_type, loc_canonical = get_location_type(location_val)
-                    if loc_type == 'governorate':
-                        examples = get_area_examples(loc_canonical, 'governorate')
-                        area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, like {examples}."
-                    elif loc_type == 'district':
-                        examples = get_area_examples(loc_canonical, 'district')
-                        area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
-                    # If city or unknown, no area_note needed
+                    # Check if location is a governorate or district and ask for more specificity
+                    location_val = property_info.get("location", "")
+                    area_note = ""
+                    if location_val:
+                        loc_type, loc_canonical = get_location_type(location_val)
+                        if loc_type == 'governorate':
+                            examples = get_area_examples(loc_canonical, 'governorate')
+                            area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, like {examples}."
+                        elif loc_type == 'district':
+                            examples = get_area_examples(loc_canonical, 'district')
+                            area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
+                        # If city or unknown, no area_note needed
 
-                message = f"""
+                    message = f"""
 Entry B — first contact or early stage. Send exactly 3 messages using ||| as separator:
 
 Message 1: "Hello, thanks for reaching out!" — use this exact phrase or a natural variation in their language. NOTHING ELSE.
@@ -275,19 +305,19 @@ WRONG examples (NEVER do this):
 
 NEVER ask name first. NEVER ask fields separately. NEVER write one big paragraph.
 """
-            elif missing_fields:
-                missing_str = ", ".join(missing_fields)
-                message = f"""
+                elif missing_fields:
+                    missing_str = ", ".join(missing_fields)
+                    message = f"""
 Ask only for these missing details in one short message: {missing_str}
 Do NOT re-ask for anything already known.
 Keep it casual and brief.
 """
-            elif not has_name:
-                message = """
+                elif not has_name:
+                    message = """
 Ask for the user's full name naturally and briefly.
 """
-            else:
-                message = """
+                else:
+                    message = """
 All required info is collected. Let the user know you are finding options for them.
 """
 

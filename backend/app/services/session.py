@@ -18,6 +18,7 @@ class SessionState:
     def __init__(self):
         self.stage = 1
         self.classification = None
+        self.bare_greeting = False
 
         self.user_info = {
             "name": None,
@@ -41,6 +42,7 @@ class SessionState:
         return {
             "stage": self.stage,
             "classification": self.classification,
+            "bare_greeting": self.bare_greeting,
             "user_info": self.user_info,
             "property_info": self.property_info
         }
@@ -79,11 +81,11 @@ class SessionState:
             return
 
         # ---------------------------
-        # 3️⃣ ENOUGH INFO TO SEARCH (location + at least one filter)
+        # 3️⃣ ENOUGH INFO TO SEARCH (location + budget required)
         # ---------------------------
-        has_any_filter = bedrooms or furnishing or budget_min or budget_max
+        has_budget = budget_min or budget_max
 
-        if location and has_any_filter:
+        if location and has_budget:
             self.stage = 3
             return
 
@@ -113,6 +115,9 @@ class SessionState:
         incoming = new_data.get("classification")
         if incoming:
             self.classification = incoming
+
+        # bare_greeting resets on every message based on current intent
+        self.bare_greeting = bool(new_data.get("bare_greeting", False))
 
         if "user_info" in new_data:
             self.user_info.update(

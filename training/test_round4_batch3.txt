@@ -1,0 +1,178 @@
+WAKEELI CHATBOT TEST RESULTS - ROUND 4 BATCH 3
+Scenarios 21-30
+Date: 2026-03-31
+================================================
+
+SCENARIO 21: VILLA REQUEST
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: I want a villa in Beit Mery, budget $500,000
+Bot: We currently focus on apartments and houses. Want me to search for houses in Beit Mery instead? Or I can connect you with an agent who might have villa listings.
+
+VERDICT: PASS
+Reason: Bot correctly recognized the villa request is outside its inventory and offered two sensible alternatives (houses in Beit Mery, or agent referral). Did not show irrelevant apartment listings.
+
+================================================
+
+SCENARIO 22: DRIP INPUT
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: rent
+Bot: Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished? What's your full name btw?
+User: Beirut
+Bot: Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Mar Elias? And your name?
+User: $700
+Bot: How many bedrooms are you looking for, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?
+User: Sarah
+Bot: [Showed 3 listings above budget range] These are a bit above your range but they are the closest available right now. Option 1 is probably the closest to what you had in mind, Sarah. What do you think?
+
+VERDICT: PARTIAL
+Reason: Bot correctly gathered info piece by piece and acknowledged each drip input. However it accepted "Sarah" as both the name AND the trigger to show listings, without ever confirming bedrooms or furnished preference. Final listings shown are far above the $700 budget with no exact match found. Minor issue: name was never explicitly confirmed separately.
+
+================================================
+
+SCENARIO 23: ALL INFO ONE MESSAGE
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: I want to rent a 2-bedroom apartment in Achrafieh for $900, my name is Tony
+Bot: [Showed 3 listings, labeled them, noted Option 3 is closest] These are a bit above your range... Option 3 is probably the closest to what you had in mind, Tony. What do you think?
+
+VERDICT: PASS
+Reason: Bot extracted all provided info (transaction type, bedrooms, location, budget, name) from one message without re-asking for any of it. Went straight to listings. No unnecessary follow-up questions.
+
+================================================
+
+SCENARIO 24: BUDGET REFUSAL
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: I want to rent in Beirut
+Bot: Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind? What's your full name btw?
+User: I prefer not to share
+Bot: Sure, no problem! Just so we can find the right options, what's your budget range, number of bedrooms, and furnished or unfurnished?
+User: I prefer not to share
+Bot: Let me connect you with one of our agents who can help you with that.
+
+VERDICT: PASS
+Reason: Bot asked for budget once, accepted the first refusal gracefully but tried one more time (acceptable), then on second refusal escalated to agent instead of asking a third time. Correct behavior.
+
+================================================
+
+SCENARIO 25: NAME AS PHONE NUMBER
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: rent
+Bot: Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished? What's your full name btw?
+User: Beirut
+Bot: Sure, to help you find the best options, what's your budget range, how many bedrooms, and furnished or unfurnished? Also, any specific area in Beirut you have in mind? And your name?
+User: $800
+Bot: How many bedrooms are you looking for, and furnished or unfurnished? Also, any specific area in Beirut in mind?
+User: 03123456
+Bot: And your name?
+
+VERDICT: PASS
+Reason: Bot correctly rejected "03123456" as a name and asked again for the actual name. Phone number was not accepted as a valid name input.
+
+================================================
+
+SCENARIO 26: RETURNING LEAD
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: I talked to someone before about an apartment
+Bot: Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished? What's your full name btw?
+
+VERDICT: PARTIAL
+Reason: No error occurred and the bot responded reasonably. However it did not acknowledge the returning customer context at all and just treated this as a fresh lead. A better response would acknowledge they had spoken before and ask for their name to look up the previous conversation. Functional but impersonal.
+
+================================================
+
+SCENARIO 27: OVER BUDGET
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: rent
+Bot: Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished? What's your full name btw?
+User: Beirut
+Bot: Any specific area in Beirut in mind? Like Hamra, Achrafieh, or Verdun? And your budget range, bedrooms, and furnished or unfurnished?
+User: $50,000 per month
+Bot: That's quite a high budget for a rental in Beirut! Just to confirm, are you looking at $50,000 per month, or did you mean something like $5,000 or $500?
+User: Michael
+Bot: [Showed 3 listings, all in Achrafieh, max $4,000/month] Option 1 is probably the closest to a solid all-around pick, but it depends on how many bedrooms you need. What do you think, Michael?
+
+VERDICT: PARTIAL
+Reason: No 500 error, so the critical failure condition was avoided. Bot correctly questioned the $50,000 budget. However when "Michael" was sent as a name (not a budget confirmation), bot interpreted the name as a signal to proceed and showed listings well below the stated $50,000, without ever getting a confirmed budget. The confusion between name input and budget confirmation is a flow issue.
+
+================================================
+
+SCENARIO 28: MULTIPLE PROPERTY TYPES
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: I want a studio or 1-bedroom in Hamra for rent, $600
+Bot: Sure, to help you find the best options, how many bedrooms exactly, and would you prefer furnished or unfurnished? What's your full name btw?
+
+VERDICT: PARTIAL
+Reason: No error, bot proceeded without crashing. It correctly parsed location (Hamra), transaction type (rent), and budget ($600) from the message. However it asked for clarification on bedrooms instead of searching for both studio and 1-bedroom options. Re-asking for bedroom count when user already specified "studio or 1-bedroom" is a minor UX issue. Budget and location were correctly captured.
+
+================================================
+
+SCENARIO 29: CORRECTION AFTER LISTINGS
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: I want to rent a 1-bedroom in Ashrafieh for $800, my name is Layla
+Bot: Let me connect you with one of our agents who can help you further.
+User: actually I meant Jounieh not Ashrafieh
+Bot: Sure! These are a bit above your range but they are the closest available right now. [3 Jounieh listings shown] Option 1 is probably the closest to what you had in mind, Layla. What do you think?
+
+VERDICT: PARTIAL
+Reason: Bot correctly triggered a new search for Jounieh after the location correction and remembered the name Layla. However the first response to the full-info message ("Let me connect you with an agent") was unexpected behavior rather than showing listings. The correction did result in a proper Jounieh search, which is good. The initial failure to show listings for Ashrafieh is a concern worth investigating.
+
+================================================
+
+SCENARIO 30: EMOJI/SPECIAL CHARS
+--------------------------------------------------
+User: hi
+Bot: Hello! How can I help you?
+User: I want an apartment [emoji] in Beirut for rent!! Budget around $800???
+Bot: Sure, to help you find the best options, how many bedrooms are you looking for, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun? What's your full name btw?
+
+VERDICT: PASS
+Reason: Bot correctly extracted key info (apartment, Beirut, rent, $800) despite the emoji and special characters (!! and ???). It proceeded to ask only for missing info (bedrooms, furnished/unfurnished, name) without confusion or errors.
+
+================================================
+SUMMARY
+================================================
+21. VILLA REQUEST:         PASS
+22. DRIP INPUT:            PARTIAL
+23. ALL INFO ONE MESSAGE:  PASS
+24. BUDGET REFUSAL:        PASS
+25. NAME AS PHONE NUMBER:  PASS
+26. RETURNING LEAD:        PARTIAL
+27. OVER BUDGET:           PARTIAL
+28. MULTIPLE TYPES:        PARTIAL
+29. CORRECTION AFTER FLOW: PARTIAL
+30. EMOJI/SPECIAL CHARS:   PASS
+
+TOTALS: 5 PASS / 5 PARTIAL / 0 FAIL
+
+================================================
+KEY ISSUES IDENTIFIED
+================================================
+
+1. [S22/S27] Name input hijacks flow: When bot is waiting for missing info and user sends their name, bot treats name as signal to show listings even if bedrooms/furnished preference are still missing. Budget confirmation is skipped.
+
+2. [S26] No returning customer handling: Bot has no mechanism to recognize or acknowledge a returning lead. Treats every conversation as new.
+
+3. [S27] Budget clarification loop: After bot correctly questions the $50,000 budget, user sends name instead of confirming budget. Bot skips budget confirmation entirely and shows listings.
+
+4. [S28] Ambiguous bedroom request not handled: "Studio or 1-bedroom" should be treated as two valid options to search across, not a reason to re-ask for bedroom count.
+
+5. [S29] Initial listing failure: Full-info message with valid Ashrafieh 1BR $800 led to agent escalation instead of listings. Possibly a no-results edge case that triggers agent fallback too quickly.
+
+================================================

@@ -1,0 +1,280 @@
+================================================
+SCENARIO 11: BROKEN LINK
+================================================
+[User]: hey check this property https://broken-link-xyz
+[Bot]: Can you resend the link? This one isn't working. Or just give me the ID number.
+       What's your full name btw?
+
+RESULT: PASS - Bot correctly identified the broken link and asked the user to resend or provide an ID number.
+
+================================================
+SCENARIO 12: RETURNING LEAD
+================================================
+[User]: hi I want to rent an apartment
+[Bot]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+       What's your full name btw?
+
+[User]: looking in Achrafieh
+[Bot]: Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: budget is around 1500
+[Bot]: Sure, to help you find the best options, how many bedrooms are you looking for, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: 2 bedrooms unfurnished
+[Bot]: And your name?
+
+[User]: Taylor
+[Bot]: And your name? (loop - then context caught up)
+       Wait -- you already told me, Taylor! So which of the properties caught your eye?
+
+--- (wait a moment) ---
+
+[User]: hi
+[Bot]: What's holding you back, Taylor? Anything specific you'd like to know about the listings?
+
+RESULT: PASS - Bot did NOT greet the returning user with "welcome back" or treat them as a new lead. It continued the prior context naturally.
+
+NOTE (bug): The bot asked for the name multiple times in a loop before catching itself. That is a qualification loop issue worth flagging.
+
+================================================
+SCENARIO 13: PHOTO QUESTION
+================================================
+[User]: I want to rent a 2 bedroom apartment in Achrafieh
+[Bot]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: my budget is 1500 per month
+[Bot]: Sure, to help you find the best options, would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: unfurnished
+[Bot]: And your name?
+
+[User]: Alex
+[Bot]: (self-correction loop visible in response, then listings shown)
+       These are slightly above your $1,500 budget, Alex, but they're the closest we have in Achrafieh:
+
+       1. Luxury Furnished 3BR - Achrafieh
+          3 bed / 3 bath | Fully Furnished | $2,800/month
+          200 sqm premium apartment in the heart of Achrafieh.
+
+       2. Grand 4BR Penthouse - Achrafieh
+          4 bed / 5 bath | Fully Furnished | $4,000/month
+          280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+       3. Modern 2BR - Achrafieh
+          2 bed / 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium building.
+
+       Option 3 is probably the closest to what you had in mind.
+       What do you think?
+
+[User]: are the photos real?
+[Bot]: Yes they are! Best way to confirm is to see it in person though. Want me to book a visit?
+
+RESULT: PASS - Bot confirmed photos are real (affirmative first), then immediately suggested an in-person visit. Correct flow.
+
+NOTE (bug): The bot's response when given the name "Alex" contained visible reasoning/self-correction text in the output ("Hmm, I need to reset and respond properly. Let me redo this."). This is an internal monologue leak that should not appear in user-facing responses.
+
+================================================
+SCENARIO 14: UNKNOWN NEIGHBORHOOD INFO
+================================================
+[User]: looking to rent in Achrafieh
+[Bot]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: 2 bedrooms
+[Bot]: Sure, to help you find the best options, what's your budget range, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: budget 1500
+[Bot]: Sure, to help you find the best options, would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: unfurnished
+[Bot]: And your name?
+
+[User]: Sam
+[Bot]: (self-correction loop, then listings)
+       These are slightly above your budget, but they're the closest matches in Achrafieh right now:
+
+       1. Luxury Furnished 3BR - Achrafieh
+          3 bed / 3 bath | Fully Furnished | $2,800/month
+          200 sqm premium apartment in the heart of Achrafieh
+
+       2. Grand 4BR Penthouse - Achrafieh
+          4 bed / 5 bath | Fully Furnished | $4,000/month
+          280 sqm penthouse with a 70 sqm private terrace and city/sea views
+
+       3. Modern 2BR - Achrafieh
+          2 bed / 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium building
+
+       Option 3 is probably the closest to what you had in mind.
+       What do you think?
+
+[User]: is there good parking in this area?
+[Bot]: The agent will be able to help you with that. Want me to go ahead and book a visit?
+
+RESULT: PASS - Bot did not fabricate parking information. It deferred to the agent for a question it cannot answer.
+
+================================================
+SCENARIO 15: FAR TIMELINE
+================================================
+[User]: hi I want to rent an apartment
+[Bot]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+       What's your full name btw?
+
+[User]: 2 bedrooms in Hamra
+[Bot]: Sure, to help you find the best options, what's your budget range, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: budget around 1200
+[Bot]: Sure, to help you find the best options, would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: unfurnished
+[Bot]: And your name?
+
+[User]: Sam
+[Bot]: (self-correction loop, then no results found)
+       Honestly, I'm not finding any 2-bedroom unfurnished apartments in Hamra under $1,200 right now. Let me connect you with one of our agents who might have more options off-market.
+       They'll be in touch with you shortly!
+
+NOTE: Bot routed to agent due to no listings found rather than asking about timeline. Sent browsing response to confirm agent routing still held.
+
+[User]: not sure honestly just browsing for now
+[Bot]: No problem! Let me connect you with one of our agents who can keep you updated when something comes up.
+
+RESULT: PASS - Bot routed to agent when user indicated a vague/far timeline ("just browsing"). No pressure applied. Clean handoff.
+
+NOTE: The bot did not explicitly ask about move-in timeline as a qualification question in this flow. It routed to agent on no listings found, and again confirmed agent routing on the browsing response.
+
+================================================
+SCENARIO 16: DOUBLE REJECTION
+================================================
+[User]: I want to rent a 2 bedroom in Gemmayzeh
+[Bot]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: budget 1500 per month
+[Bot]: Sure, to help you find the best options, would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[User]: unfurnished
+[Bot]: And your name?
+
+[User]: Mike
+[Bot]: (self-correction loop, then no listings found)
+       Wait -- got it, Mike! Let me search for you.
+       I'll connect you with one of our agents who might have more options off-market.
+
+[User]: not interested
+[Bot]: Sure thing! Thanks for your time, Mike, and feel free to reach out anytime. Wishing you the best!
+
+[User]: nah none of these work
+[Bot]: Sure! Let me connect you with one of our agents who might have more options off-market.
+       They'll be in touch with you shortly, Mike!
+
+RESULT: PARTIAL PASS - Bot did eventually route to agent on the second message. However the first rejection ("not interested") was treated as a full conversation close rather than a cue to escalate to an agent. The routing on second rejection did work correctly.
+
+NOTE: First rejection should have prompted agent escalation, not a goodbye. The logic should distinguish between "not interested in specific listings" vs. "end conversation."
+
+================================================
+SCENARIO 17: LBP BUDGET
+================================================
+[User]: looking to rent in Beirut
+[Bot]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?
+       What's your full name btw?
+
+[User]: 100000000 LBP per month
+[Bot]: Sure, to help you find the best options, how many bedrooms are you looking for, and furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?
+       What's your full name btw?
+
+NOTE: Bot did NOT acknowledge the LBP figure, did not convert it to USD (~$1,117), and did not use it to filter search. It simply asked for more info as if no budget was given.
+
+[User]: 2 bedrooms unfurnished Hamra
+[Bot]: And your name?
+
+[User]: Chris
+[Bot]: Wait -- got it, Chris! Let me search for you.
+       Hmm, I'm not finding any unfurnished 2-bedroom apartments in Hamra right now that match your budget.
+       Let me connect you with one of our agents who might have more options. They'll be in touch shortly!
+
+RESULT: FAIL - Bot did not convert 100,000,000 LBP to approximately $1,117 USD. It ignored the LBP value entirely on the first pass and proceeded without acknowledging the currency or performing any conversion. The budget was apparently used implicitly in the search (it found no matches under ~$1,117) but there was zero visible conversion or acknowledgment shown to the user.
+
+================================================
+SCENARIO 18: SMALL 4 BED
+================================================
+[User]: I need a small 4 bedroom apartment
+[Bot]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+RESULT: PASS - Bot did not flag the contradiction between "small" and "4 bedroom." It treated the request as a normal qualification and proceeded to ask follow-up questions.
+
+================================================
+SCENARIO 19: ALL INFO NO QUESTIONS
+================================================
+[User]: Hey my name is Joe I want to rent a 3 bed furnished apartment in Achrafieh 1500 to 2500
+[Bot]: Hello, thanks for reaching out!
+       These are slightly above your budget, Joe, but they're the closest we have in Achrafieh right now:
+
+       1. Luxury Furnished 3BR - Achrafieh
+          3 bed / 3 bath | Fully Furnished | $2,800/month
+          200 sqm premium apartment in the heart of Achrafieh, fully furnished with designer finishes.
+
+       2. Grand 4BR Penthouse - Achrafieh
+          4 bed / 5 bath | Fully Furnished | $4,000/month
+          280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+       3. Modern 2BR - Achrafieh
+          2 bed / 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+
+       Option 1 is probably the closest to what you had in mind.
+       What do you think?
+
+RESULT: PASS - Bot skipped all qualification questions and went directly to listings. Name, bedrooms, area, furnishing, and budget were all extracted from the single message with no redundant questions asked.
+
+================================================
+SCENARIO 20: VAGUE REFERENCE A2
+================================================
+[User]: I saw an apartment on your website in Hamra for around 1200 a month is it available?
+[Bot]: Hello, thanks for reaching out!
+       I don't have the listing link so I can't check that specific one. How many bedrooms are you looking for, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+RESULT: PASS - Bot correctly used the A2 flow: acknowledged it cannot identify the specific listing without a link or ID, and asked for the listing link/ID implicitly by stating it doesn't have it. It then proceeded to qualify the lead for an alternative search.
+
+NOTE: Ideally the bot should have explicitly asked "Can you share the listing link or ID?" before jumping to qualification questions, but the intent of the A2 flow was met.
+
+================================================
+SUMMARY
+================================================
+SCENARIO 11 - BROKEN LINK:             PASS
+SCENARIO 12 - RETURNING LEAD:          PASS (bug: name loop)
+SCENARIO 13 - PHOTO QUESTION:          PASS (bug: internal monologue leak)
+SCENARIO 14 - UNKNOWN NEIGHBORHOOD:    PASS
+SCENARIO 15 - FAR TIMELINE:            PASS
+SCENARIO 16 - DOUBLE REJECTION:        PARTIAL PASS (first rejection not escalated, second was)
+SCENARIO 17 - LBP BUDGET:              FAIL (no LBP to USD conversion shown)
+SCENARIO 18 - SMALL 4 BED:             PASS
+SCENARIO 19 - ALL INFO NO QUESTIONS:   PASS
+SCENARIO 20 - VAGUE REFERENCE A2:      PASS
+
+Total: 8 PASS, 1 PARTIAL PASS, 1 FAIL
+
+KEY BUGS TO FIX:
+1. (S12, S13, S14, S15, S16) Name qualification loop - bot asks for name repeatedly before catching itself, sometimes showing a self-correction message that leaks into the response ("Hmm, I need to reset...")
+2. (S13) Internal reasoning/self-correction text visible in user-facing response
+3. (S16) First rejection treated as full conversation end instead of agent escalation trigger
+4. (S17) LBP budget input not converted or acknowledged - bot should detect LBP, convert to USD, confirm the conversion with the user, then search

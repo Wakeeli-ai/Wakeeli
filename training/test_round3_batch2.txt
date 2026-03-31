@@ -1,0 +1,288 @@
+WAKEELI CHATBOT TEST RESULTS - ROUND 3 BATCH 2
+Date: 2026-03-31
+Tester: Automated curl test suite
+API: https://wakeeli-ai.up.railway.app/api/chat/test
+==================================================
+
+SCENARIO 11 - NOT SURE AFTER LISTINGS
+PASS
+Notes: Flow was run on conv_id r3-b2-11b (r3-b2-11 had no listings for Hamra under $1200, so a second attempt with Achrafieh/$2000 was used to reach listings state)
+
+TRANSCRIPT:
+[r3-b2-11b] USER: Hi I am looking for an apartment to rent
+BOT: Hello, thanks for reaching out!
+     Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+     What's your full name btw?
+
+[r3-b2-11b] USER: Sara, Achrafieh, 2000 USD budget, 2 bedrooms, unfurnished
+BOT: These are slightly above your budget, but they're the closest we have in Achrafieh right now:
+
+     1. Luxury Furnished 3BR - Achrafieh
+        3 bed, 3 bath, Fully Furnished - $2,800/month
+        200 sqm premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, designer finishes.
+
+     2. Grand 4BR Penthouse - Achrafieh
+        4 bed, 5 bath, Fully Furnished - $4,000/month
+        280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+     3. Modern 2BR - Achrafieh
+        2 bed, 2 bath, Fully Furnished - $1,800/month
+        140 sqm stylishly furnished apartment in a premium Achrafieh building.
+
+     Option 3 is probably the closest to what you had in mind - it's a 2-bedroom and actually under your budget, though it is furnished rather than unfurnished.
+     What do you think?
+
+[r3-b2-11b] USER: not sure
+BOT: What's making you hesitate, Sara? Is it the price, the area, or something else?
+
+RESULT: PASS - No crash. Bot responded naturally by asking a follow-up question to understand the hesitation. Good conversational handling.
+
+---
+
+SCENARIO 12 - ADDRESS QUESTION
+PASS
+
+TRANSCRIPT:
+[r3-b2-12] USER: Hi I am looking for an apartment to rent
+BOT: Hello, thanks for reaching out!
+     Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+     What's your full name btw?
+
+[r3-b2-12] USER: Sara, Achrafieh, 2000 USD, 2 bedrooms, unfurnished
+BOT: These are slightly above your budget, but they're the closest available in Achrafieh right now Sara.
+
+     1. Luxury Furnished 3BR - Achrafieh
+        Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month
+        200 sqm premium apartment in the heart of Achrafieh.
+
+     2. Grand 4BR Penthouse - Achrafieh
+        Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month
+        280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+     3. Modern 2BR - Achrafieh
+        Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+        140 sqm stylishly furnished apartment in a premium Achrafieh building.
+
+     Option 3 is probably the closest to what you had in mind, though it's furnished rather than unfurnished.
+     What do you think?
+
+[r3-b2-12] USER: what is the exact address?
+BOT: The agent will share the address with you, Sara!
+     Want to go ahead and book a visit?
+
+RESULT: PASS - Bot correctly deferred address to agent and offered to book a visit.
+
+---
+
+SCENARIO 13 - DOUBLE REJECTION
+PARTIAL
+Notes: On first "not interested" the bot said goodbye instead of offering alternatives. On second rejection it routed to agent. Expected: first rejection triggers alternatives, second triggers agent. Actual: first went straight to goodbye, second went to agent.
+
+TRANSCRIPT:
+[r3-b2-13] USER: Hi I am looking for an apartment to rent
+BOT: Hello, thanks for reaching out!
+     Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+     What's your full name btw?
+
+[r3-b2-13] USER: Sara, Achrafieh, 2000 USD, 2 bedrooms, unfurnished
+BOT: These are slightly above your budget but are the closest matches available right now Sara!
+
+     1. Luxury Furnished 3BR - Achrafieh
+        Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month
+        200 sqm premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, fully furnished.
+
+     2. Grand 4BR Penthouse - Achrafieh
+        Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month
+        280 sqm penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 bathrooms.
+
+     3. Modern 2BR - Achrafieh
+        Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+        140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms.
+
+     Option 3 is probably the closest to what you had in mind, it is furnished instead of unfurnished.
+     What do you think?
+
+[r3-b2-13] USER: not interested
+BOT: Sure thing, Sara! Thanks for your time, and feel free to reach out anytime. Wishing you the best!
+
+[r3-b2-13] USER: nah none of these work either
+BOT: Let me connect you with one of our agents who might have more options for you.
+
+RESULT: PARTIAL - First rejection triggered goodbye instead of offering alternatives (BUG: should offer different options, not say goodbye). Second rejection correctly routed to agent. Second part of the test passed, first part failed.
+
+---
+
+SCENARIO 14 - PHOTO QUESTION
+PASS
+
+TRANSCRIPT:
+[r3-b2-14] USER: Hi I am looking for an apartment to rent
+BOT: Hello, thanks for reaching out!
+     Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+     What's your full name btw?
+
+[r3-b2-14] USER: Sara, Achrafieh, 2000 USD, 2 bedrooms, unfurnished
+BOT: Here you go, Sara!
+
+     1. Apartment in Achrafieh - Sursock
+        2 bed | Unfurnished | $1,800/month
+        Spacious layout, natural light, close to main road.
+
+     2. Apartment in Achrafieh - Rmeil
+        2 bed | Unfurnished | $1,900/month
+        Modern building, parking included, quiet street.
+
+     3. Apartment in Achrafieh - Sioufi
+        2 bed | Unfurnished | $2,000/month
+        Great views, recently renovated, walkable neighborhood.
+
+     Option 2 is probably the closest to what you had in mind.
+     What do you think?
+
+[r3-b2-14] USER: are the photos real?
+BOT: Yes they are! Best way to confirm is to see it in person though. Want to book a visit, Sara?
+
+RESULT: PASS - Bot confirmed photos are real and suggested in-person visit, matching expected response.
+
+---
+
+SCENARIO 15 - UNKNOWN NEIGHBORHOOD
+PASS
+
+TRANSCRIPT:
+[r3-b2-15] USER: Hi I am looking for an apartment to rent
+BOT: Hello, thanks for reaching out!
+     Sure, to help you find the best options, which area are you looking in, what's your budget range, how many bedrooms, and furnished or unfurnished?
+     What's your full name btw?
+
+[r3-b2-15] USER: Sara, Achrafieh, 2000 USD, 2 bedrooms, unfurnished
+BOT: These are slightly above your budget, but they're the closest we have in Achrafieh right now Sara:
+
+     1. Luxury Furnished 3BR - Achrafieh
+        3 bed, 3 bath, Fully Furnished, $2,800/month
+        200 sqm premium apartment in the heart of Achrafieh.
+
+     2. Grand 4BR Penthouse - Achrafieh
+        4 bed, 5 bath, Fully Furnished, $4,000/month
+        280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+     3. Modern 2BR - Achrafieh
+        2 bed, 2 bath, Fully Furnished, $1,800/month
+        140 sqm stylishly furnished apartment in a premium Achrafieh building.
+
+     Option 3 is probably the closest to what you had in mind, it's actually under your budget and has the same number of bedrooms, just furnished instead of unfurnished.
+     What do you think?
+
+[r3-b2-15] USER: is there good parking in this area?
+BOT: The agent will be able to help you with that!
+     Want to go ahead and book a visit so you can check it out in person?
+
+RESULT: PASS - Bot correctly deferred neighborhood-specific question to agent and offered to book a visit.
+
+---
+
+SCENARIO 16 - BOT IDENTITY
+PASS
+
+TRANSCRIPT:
+[r3-b2-16] USER: Hi I am looking for an apartment to rent
+BOT: Hello, thanks for reaching out!
+     Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+     What's your full name btw?
+
+[r3-b2-16] USER: are you a bot?
+BOT: Let me connect you with one of our agents right now.
+
+RESULT: PASS - Bot immediately escalated to agent when asked if it's a bot, no crash, no awkward denial.
+
+---
+
+SCENARIO 17 - OFF TOPIC
+PASS
+
+TRANSCRIPT:
+[r3-b2-17] USER: what is the weather in Beirut today?
+BOT: I can only help with real estate. Looking to buy or rent something in Lebanon?
+
+RESULT: PASS - Bot cleanly redirected off-topic question back to real estate with a natural prompt.
+
+---
+
+SCENARIO 18 - BROKEN LINK
+PASS
+
+TRANSCRIPT:
+[r3-b2-18] USER: hey check this property https://totally-broken-link-xyz-123
+BOT: Can you resend the link? This one isn't working. Or just give me the ID number.
+     What's your name btw?
+
+RESULT: PASS - Bot correctly identified the broken link and asked for a resend or ID number. Response matches expected behavior.
+
+---
+
+SCENARIO 19 - PHONE AS NAME
+PASS
+
+TRANSCRIPT:
+[r3-b2-19] USER: Hi I am looking for an apartment to rent
+BOT: Hello, thanks for reaching out!
+     Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+     What's your full name btw?
+
+[r3-b2-19] USER: Achrafieh, 2000 USD, 2 bedrooms, unfurnished
+BOT: And your name?
+
+[r3-b2-19] USER: 03456789
+BOT: And your name?
+
+RESULT: PASS - Bot did not accept the phone number as a name and re-asked "And your name?" cleanly without mentioning anything about phone numbers or causing confusion.
+
+---
+
+SCENARIO 20 - CORRECTION
+PASS
+
+TRANSCRIPT:
+[r3-b2-20] USER: Hi I am looking for an apartment to rent
+BOT: Hello, thanks for reaching out!
+     Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+     What's your full name btw?
+
+[r3-b2-20] USER: Sara, Achrafieh, 3000 USD, 3 bedrooms, furnished
+BOT: Here you go
+
+     1. Luxury Furnished 3BR - Achrafieh
+        Achrafieh | 3 bed, 3 bath | Fully Furnished | $2,800/month
+        200 sqm premium apartment in the heart of Achrafieh. Fully furnished with high-end design finishes.
+
+     What do you think, Sara?
+
+[r3-b2-20] USER: actually I need 2 bedrooms
+BOT: Here you go
+
+     1. Modern 2BR - Achrafieh
+        Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+        140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, modern finishes throughout.
+
+     What do you think?
+
+RESULT: PASS - Bot accepted the correction without friction and immediately showed fresh 2-bedroom results.
+
+==================================================
+SUMMARY
+==================================================
+SCENARIO 11 - NOT SURE AFTER LISTINGS:     PASS
+SCENARIO 12 - ADDRESS QUESTION:            PASS
+SCENARIO 13 - DOUBLE REJECTION:            PARTIAL
+SCENARIO 14 - PHOTO QUESTION:              PASS
+SCENARIO 15 - UNKNOWN NEIGHBORHOOD:        PASS
+SCENARIO 16 - BOT IDENTITY:                PASS
+SCENARIO 17 - OFF TOPIC:                   PASS
+SCENARIO 18 - BROKEN LINK:                 PASS
+SCENARIO 19 - PHONE AS NAME:               PASS
+SCENARIO 20 - CORRECTION:                  PASS
+
+Total: 9 PASS, 1 PARTIAL, 0 FAIL
+
+BUG FOUND:
+Scenario 13 - First rejection after listings triggers goodbye instead of offering alternative listings or adjusting search criteria. Expected behavior: bot should offer alternatives on first rejection, only route to agent on second rejection. Actual behavior: bot said goodbye on first "not interested", then routed to agent on second rejection.

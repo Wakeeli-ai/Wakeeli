@@ -10,7 +10,7 @@ from psycopg2.extras import execute_values
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql://postgres:bWEdMRWnMBlMKNefSMGdMhnqmAvxabKb@monorail.proxy.rlwy.net:28284/railway"
+    "postgresql://postgres:JthhQqNHClcjGUGKJomBjpflMctPuarN@mainline.proxy.rlwy.net:34094/railway"
 )
 
 TEST_LISTING_PREFIX = "WK-TEST-"

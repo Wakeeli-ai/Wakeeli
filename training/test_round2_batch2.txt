@@ -1,0 +1,384 @@
+================================================================================
+WAKEELI CHATBOT - TEST ROUND 2, BATCH 2
+Scenarios 11 to 20
+Date: 2026-03-31
+API: https://wakeeli-ai.up.railway.app/api/chat/test
+================================================================================
+
+
+================================================================================
+SCENARIO 11 - BROKEN LINK
+Conversation ID: r2-batch2-11
+Goal: Send a broken URL, verify clean error handling asking to resend
+Result: PASS
+================================================================================
+
+[USER]: hey check this property https://broken-xyz
+
+[BOT]: Can you resend the link? This one isn't working. Or just give me the ID number.
+       What's your full name btw?
+
+NOTES:
+- Bot cleanly identified the broken link and asked user to resend
+- Offered an alternative (give the ID number)
+- Also prompted for name in parallel, which is normal flow behavior
+- No crash, no confusion, no error leakage
+
+
+================================================================================
+SCENARIO 12 - DOUBLE REJECTION
+Conversation ID: r2-batch2-12c (final attempt after two failed attempts)
+Goal: Get listings shown, say 'not interested', get more options or response,
+      say 'nah none of these', verify routes to agent on 2nd rejection
+Result: FAIL
+================================================================================
+
+NOTE: First two attempts (r2-batch2-12, r2-batch2-12b) went straight to agent
+without showing listings. Needed to include all info including name in one
+message to trigger listings.
+
+[USER]: Looking to rent in Achrafieh, budget 5000, furnished, 2 beds, my name is Sarah
+
+[BOT]: Hello, thanks for reaching out!
+       Here you go, Sarah
+       1. Modern 2BR - Achrafieh
+          Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month | 140 sqm
+          Stylishly furnished apartment in a premium Achrafieh building with modern
+          finishes.
+       What do you think?
+
+[USER]: not interested
+
+[BOT]: Sure thing, Sarah! Thanks for your time, and feel free to reach out anytime.
+       Wishing you the best!
+
+NOTES:
+- FAIL: On the first rejection the bot ended the conversation entirely instead of:
+  a) Asking what they didn't like (price? size? location?)
+  b) Offering to adjust criteria or show alternatives
+  c) Routing to an agent
+- The scenario requires two rejections before routing to agent
+- Bot skipped the entire middle step and just closed the conversation
+- This is a significant UX issue: a lead saying "not interested" to one listing is
+  not the same as being done entirely
+
+
+================================================================================
+SCENARIO 13 - PHOTO QUESTION
+Conversation ID: r2-batch2-13
+Goal: After listings shown ask 'are the photos real?', verify bot agrees first
+      then suggests in-person
+Result: PASS
+================================================================================
+
+[USER]: Looking to rent in Achrafieh, budget 5000, furnished, 2 beds, name is Tom
+
+[BOT]: Hello, thanks for reaching out!
+       Here you go, Tom:
+       1. Modern 2BR - Achrafieh
+          Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+       What do you think?
+
+[USER]: are the photos real?
+
+[BOT]: Yes they are! Best way to confirm is to see it in person though. Want to book
+       a visit, Tom?
+
+NOTES:
+- PASS: Bot affirmed the photos are real (agreed first)
+- Then immediately suggested in-person visit to confirm
+- Clean, natural response with no defensive or awkward phrasing
+
+
+================================================================================
+SCENARIO 14 - UNKNOWN NEIGHBORHOOD
+Conversation ID: r2-batch2-14
+Goal: After listings ask 'is there good parking nearby?', verify bot says agent
+      will help with that
+Result: PASS
+================================================================================
+
+[USER]: Looking to rent in Achrafieh, budget 5000, furnished, 2 beds, name is Maya
+
+[BOT]: Hello, thanks for reaching out!
+       Here you go Maya:
+       1. Modern 2BR - Achrafieh
+          Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+       What do you think?
+
+[USER]: is there good parking nearby?
+
+[BOT]: The agent will be able to help you with that.
+       Want to go ahead and book a visit so you can check it out in person?
+
+NOTES:
+- PASS: Bot correctly deferred the hyperlocal neighborhood question to the agent
+- Also used the moment to push toward a visit/next step
+- Did not attempt to fabricate or guess parking information
+
+
+================================================================================
+SCENARIO 15 - FAR TIMELINE
+Conversation ID: r2-batch2-15
+Goal: Start normal flow, when shown listings say 'just browsing not looking anytime
+      soon', verify routes to agent
+Result: PASS
+================================================================================
+
+[USER]: Hi looking to rent an apartment in Beirut
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range, how many
+       bedrooms, and would you prefer furnished or unfurnished? Also, any specific
+       area in Beirut in mind, like Hamra, Achrafieh, or Mar Mikhael?
+       What's your full name btw?
+
+[USER]: Looking in Achrafieh, 2 beds, furnished, budget 2000
+
+[BOT]: And your name?
+
+[USER]: Alex
+
+[BOT]: Here you go
+       1. Modern 2BR - Achrafieh
+          Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building. 2
+          bedrooms, 2 bathrooms, modern finishes throughout.
+       What do you think?
+
+[USER]: just browsing honestly not looking anytime soon
+
+[BOT]: No problem! Let me connect you with one of our agents who can keep you
+       updated when something comes up.
+
+NOTES:
+- PASS: Bot correctly routed to agent on far timeline signal
+- Framing was good: "keep you updated when something comes up" is a natural soft handoff
+- Did not push back or try to convert a cold lead
+
+
+================================================================================
+SCENARIO 16 - BUDGET AVOIDANCE
+Conversation ID: r2-batch2-16
+Goal: Start flow, when asked for budget refuse once, refuse again, verify routes
+      to agent on second refusal
+Result: PASS
+================================================================================
+
+[USER]: Hi looking for apartment in Beirut
+
+[BOT]: Hello, thanks for reaching out!
+       Is this for rent or to buy?
+
+[USER]: rent
+
+[BOT]: Sure, to help you find the best options, do you have a specific area in
+       Beirut in mind, like Hamra, Achrafieh, or Mar Mikhael? Also, what's your
+       budget range, how many bedrooms, and furnished or unfurnished?
+       What's your full name btw?
+
+[USER]: I dont want to share my budget
+
+[BOT]: Sure, just a rough range helps me find the right options.
+       Like are you thinking under $500, around $1000, or more? Anything helps.
+
+[USER]: no I really dont want to say
+
+[BOT]: Let me connect you with one of our agents who can help you with that.
+
+NOTES:
+- PASS: Bot asked once more with softer framing (rough range, examples)
+- On second refusal, routed to agent without pushing further
+- Clean escalation path, no pressuring the user
+
+
+================================================================================
+SCENARIO 17 - PHONE AS NAME
+Conversation ID: r2-batch2-17
+Goal: When asked for name give a phone number, verify bot just asks for name
+      again without mentioning the phone number
+Result: PASS
+================================================================================
+
+[USER]: Looking to rent in Achrafieh, budget 5000, furnished, 2 beds
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, is that $5,000 or LBP 5,000,000
+       per month?
+       What's your full name btw?
+
+[USER]: 03456789
+
+[BOT]: And your name?
+
+NOTES:
+- PASS: Bot recognized the input was not a name and asked again
+- Crucially did NOT acknowledge the phone number, did not say "that looks like
+  a phone number" or any similar comment
+- Clean re-ask with no judgment or commentary
+
+
+================================================================================
+SCENARIO 18 - CORRECTION
+Conversation ID: r2-batch2-18
+Goal: Get listings for 3 beds, then say 'actually I meant 2 bedrooms', verify
+      bot says 'Sure' and shows new results
+Result: PASS
+================================================================================
+
+[USER]: Looking to rent in Achrafieh, budget 5000, furnished, 3 beds, name is Ramy
+
+[BOT]: Here you go
+       1. Luxury Furnished 3BR - Achrafieh
+          Achrafieh | 3 bed, 3 bath | Fully Furnished | $2,800/month
+          200 sqm premium apartment in the heart of Achrafieh. Fully furnished with
+          a design finish.
+       What do you think, Ramy?
+
+[USER]: actually I meant 2 bedrooms
+
+[BOT]: Sure! Here are some furnished 2-bedroom apartments for rent in Achrafieh
+       under $5,000/month:
+
+       1. Achrafieh, Sioufi
+          2 beds | Furnished | $2,800/month
+          Bright spacious apartment with a great view and modern finishes.
+
+       2. Achrafieh, Geitawi
+          2 beds | Furnished | $2,500/month
+          Cozy apartment on a quiet street, recently renovated.
+
+       3. Achrafieh, Tabaris
+          2 beds | Furnished | $3,200/month
+          Well-maintained unit in a prime location, close to shops and restaurants.
+
+       4. Achrafieh, Rmeil
+          2 beds | Furnished | $3,500/month
+          Stylish apartment with high ceilings and lots of natural light.
+
+       5. Achrafieh, Furn El Hayek
+          2 beds | Furnished | $2,200/month
+          Clean and well-furnished unit in a residential building with parking.
+
+       Option 5 is probably the closest to a great value pick, but Option 2 and 3
+       are solid too depending on the neighborhood you prefer.
+
+       What do you think, Ramy?
+
+NOTES:
+- PASS on core criteria: Bot said "Sure!" and showed new 2-bedroom results
+- IMPORTANT FLAG: The correction triggered a different code path that returned
+  5 listings with sub-neighborhood breakdowns (Sioufi, Geitawi, Tabaris, etc.)
+  and even made a personal recommendation ("Option 5 is probably the closest to
+  a great value pick"). The original 3-bed search returned only 1 result from
+  the database. These 5 results look like they may be AI-generated rather than
+  pulled from the real database. This should be investigated: the correction
+  flow may not be hitting the real listing search endpoint.
+
+
+================================================================================
+SCENARIO 19 - RETURNING LEAD
+Conversation ID: r2-batch2-19
+Goal: Send messages on same conversation_id, pause, then send 'hi' again, verify
+      no 'welcome back' message
+Result: PASS (with note)
+================================================================================
+
+[USER]: Hi looking to rent in Achrafieh
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range, how many
+       bedrooms, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[USER]: 2 beds, furnished, budget 2000, name Mark
+
+[BOT]: Here you go!
+       1. Modern 2BR - Achrafieh
+          Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building. 2
+          bedrooms, 2 bathrooms, modern finishes throughout.
+       What do you think, Mark?
+
+[3 second pause]
+
+[USER]: hi
+
+[BOT]: Hello! How can I help you?
+
+NOTES:
+- PASS: Bot did not say "welcome back" or any returning-user phrasing
+- NOTE: Bot also lost the conversation context entirely. It forgot the user's
+  name (Mark), forgot the listings already shown, and started a fresh greeting.
+  The test API endpoint appears to be stateless, so this may be expected behavior.
+  If the production app uses persistent sessions, this should be retested there.
+  The specific pass criteria (no "welcome back") was met.
+
+
+================================================================================
+SCENARIO 20 - VAGUE REFERENCE A2
+Conversation ID: r2-batch2-20
+Goal: 'I saw an apartment on your site in Hamra around 1200 a month is it
+      available?' - verify A2 flow (ask for link/ID, pivot to search)
+Result: PASS
+================================================================================
+
+[USER]: I saw an apartment on your site in Hamra around 1200 a month is it available?
+
+[BOT]: Could you share the listing link or property ID so I can check it for you?
+
+NOTES:
+- PASS: Bot correctly entered A2 flow by asking for the listing link or property ID
+- This matches the expected A2 behavior documented in conversation_scenarios_entry_a.md
+- Bot did not try to guess the listing or fabricate an answer
+- Did not complete the full pivot (A2 to B search) in this single exchange but the
+  entry point was handled correctly
+- Next step would be: if user says they don't have the link, bot should pivot to
+  asking what they're looking for (bedrooms, budget, furnished)
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+PASS:    9  (Scenarios 11, 13, 14, 15, 16, 17, 18, 19, 20)
+PARTIAL: 0
+FAIL:    1  (Scenario 12)
+
+--------------------------------------------------------------------------------
+CRITICAL BUGS
+--------------------------------------------------------------------------------
+
+1. SCENARIO 12 - DOUBLE REJECTION: Bot terminates conversation on first rejection
+   ("not interested" to a listing) with a goodbye message instead of asking what
+   the user didn't like or offering alternatives. A lead saying they're not
+   interested in one specific listing is not the same as being completely done.
+   The agent escalation on 2nd rejection never triggers because there is no
+   1st-rejection recovery flow.
+
+2. SCENARIO 18 - CORRECTION CODE PATH (flag, not critical): After a bedroom
+   correction the bot shows 5 AI-generated listings with sub-neighborhood
+   breakdowns and personal recommendations. This does not match the single
+   database-sourced result format used in normal search. The correction flow
+   may be bypassing the real listing database.
+
+--------------------------------------------------------------------------------
+OBSERVATIONS
+--------------------------------------------------------------------------------
+
+- Scenario 11: Broken link handling is solid. Clean recovery.
+- Scenario 13: Photo authenticity question handled well. Confirm + in-person push.
+- Scenario 14: Hyperlocal questions correctly deferred to agent.
+- Scenario 15: Far timeline detection and handoff works correctly.
+- Scenario 16: Budget avoidance escalation path is well calibrated (one retry
+  then agent).
+- Scenario 17: Phone-as-name detection is clean. No awkward acknowledgment.
+- Scenario 18: "Sure" + new results works. But listing source needs verification.
+- Scenario 19: No "welcome back" confirmed. Session persistence needs prod testing.
+- Scenario 20: A2 entry point handled correctly. Full pivot flow not tested here.
+
+================================================================================
+END OF BATCH 2 RESULTS
+================================================================================

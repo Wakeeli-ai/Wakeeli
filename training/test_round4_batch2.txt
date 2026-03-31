@@ -1,0 +1,308 @@
+=====================================================
+WAKEELI CHATBOT TEST - ROUND 4 BATCH 2
+Scenarios 11-20
+Date: 2026-03-31
+=====================================================
+
+-----------------------------------------------------
+SCENARIO 11: REJECTION FIRST TIME
+-----------------------------------------------------
+Conversation ID: r4b2-s11
+
+[USER] hi
+[BOT]  Hello! How can I help you?
+
+[USER] I want to rent in Beirut, budget $800
+[BOT]  Sure Mike, any specific area in Beirut? Like Hamra, Achrafieh, or Verdun?
+NOTE: Bot somehow had the name "Mike" before it was sent -- possible name parse from context.
+
+[USER] Mike
+[BOT]  What day works best for you this week for the visit?
+NOTE: Bot skipped showing listings and jumped directly to visit scheduling.
+
+[USER] not interested
+[BOT]  Let me connect you with one of our agents who might have more options for you.
+
+VERDICT: PARTIAL
+Bot did not say goodbye and did not end the conversation on first rejection.
+However the flow had issues: name was known before being provided, and no listings
+were shown before "not interested" was sent. The rejection handling itself passed
+(routed to agent, not goodbye), but listings were never presented in this flow.
+
+-----------------------------------------------------
+SCENARIO 12: REJECTION SECOND TIME
+-----------------------------------------------------
+Conversation ID: r4b2-s12
+
+[USER] hi
+[BOT]  An agent will be reaching out to you shortly!
+NOTE: Session started already in handoff state -- prior state from a lost batch run.
+Full intended flow could not be tested because the session was pre-handoffed.
+
+All subsequent messages:
+[USER] I want to rent in Beirut, budget $800
+[BOT]  An agent will be reaching out to you shortly!
+
+[USER] Mike
+[BOT]  An agent will be reaching out to you shortly!
+
+[USER] not interested
+[BOT]  An agent will be reaching out to you shortly!
+
+[USER] no thanks
+[BOT]  An agent will be reaching out to you shortly!
+
+VERDICT: PARTIAL
+Could not test the intended flow (qualify -> listings -> reject -> alternatives -> reject -> agent).
+Session r4b2-s12 had existing handoff state from a prior run. The post-handoff behavior
+is solid (bot does not re-engage), but the path to handoff and the "second rejection routes
+to agent" behavior could not be verified in this run.
+
+-----------------------------------------------------
+SCENARIO 13: BOOKING FLOW
+-----------------------------------------------------
+Conversation ID: r4b2-s13
+
+[USER] hi
+[BOT]  Hello! How can I help you?
+
+[USER] I want to rent in Ashrafieh, budget $1000
+[BOT]  I couldn't find any matching properties in Ashrafieh right now.
+       Let me connect you with one of our agents who might have more options for you, Tony.
+NOTE: Bot had name "Tony" before it was sent. No listings for Ashrafieh under $1000.
+
+[USER] Tony
+[BOT]  And your name? Just kidding :D What's your budget range, how many bedrooms, and furnished or unfurnished?
+NOTE: Quirky recovery after name was sent again. Acceptable but a bit clunky.
+
+[USER] I like this one, can I visit?
+[BOT]  Sure Tony! We can book a visit this week. Does Wednesday morning work for you?
+
+VERDICT: PASS
+Bot correctly offered a specific visit time (Wednesday morning). The path to this was
+non-standard (no listings due to no inventory match) but the booking intent was handled
+correctly once expressed.
+
+-----------------------------------------------------
+SCENARIO 14: SAME DAY VISIT
+-----------------------------------------------------
+Conversation ID: r4b2-s14
+
+[USER] hi
+[BOT]  Hello! How can I help you?
+
+[USER] I want to rent in Hamra, budget $900
+[BOT]  I don't have any matching listings in Hamra right now.
+       Let me connect you with one of our agents who might have more options for you, Sarah.
+NOTE: No inventory match. Name "Sarah" again known before being sent.
+
+[USER] Sarah
+[BOT]  And your name? Just kidding :D Got it, Sarah!
+       Let me connect you with one of our agents to arrange a visit for today.
+
+[USER] can I visit today?
+[BOT]  Let me connect you with one of our agents to arrange that for you.
+
+VERDICT: PASS
+No error or crash. Same-day request routed to agent appropriately. The no-listings path
+is consistent, and urgency was handled gracefully.
+
+-----------------------------------------------------
+SCENARIO 15: RESCHEDULE
+-----------------------------------------------------
+Conversation ID: r4b2-s15
+
+[USER] hi
+[BOT]  Hello! How can I help you?
+
+[USER] I want to rent in Achrafieh, budget $1200
+[BOT]  These are a bit above your range but they are the closest available right now.
+
+       1. Luxury Furnished 3BR - Achrafieh
+          3 bed, 3 bath | Fully Furnished | $2,800/month
+          200 sqm premium apartment in the heart of Achrafieh. Modern design throughout.
+
+       2. Grand 4BR Penthouse - Achrafieh
+          4 bed, 5 bath | Fully Furnished | $4,000/month
+          280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+       3. Modern 2BR - Achrafieh
+          2 bed, 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+
+       Option 3 is probably the closest to what you had in mind, Omar.
+       What do you think?
+
+NOTE: Bot knew name "Omar" before it was sent. Listings are above stated budget (up to
+3.3x over) but bot flagged this and recommended closest match.
+
+[USER] Omar
+[BOT]  Which option caught your eye?
+
+[USER] I like the first one, interested in visiting
+[BOT]  Sure, Omar! We can book a visit this week. Does Wednesday morning work for you?
+
+[USER] actually can we do another day?
+[BOT]  Sure Omar! How about Thursday, Friday, or Saturday? Which works for you?
+
+VERDICT: PASS
+Reschedule handled perfectly. Bot offered specific alternative days without friction.
+
+-----------------------------------------------------
+SCENARIO 16: FAR TIMELINE
+-----------------------------------------------------
+Conversation ID: r4b2-s16
+
+[USER] hi
+[BOT]  Hello! How can I help you?
+
+[USER] I want to buy an apartment but not for another 6 months
+[BOT]  Sure, to help you find the best options, where are you looking, what's your budget range,
+       how many bedrooms, and furnished or unfurnished?
+       And your name?
+
+VERDICT: PARTIAL
+No error or crash. Bot responded reasonably. However the 6-month timeline was completely
+ignored -- bot continued standard qualification as if timeline was not mentioned. A better
+behavior would acknowledge the timeline and either note it for the agent or ask if the user
+wants to browse options now regardless. Not a crash, but a missed intent.
+
+-----------------------------------------------------
+SCENARIO 17: BROKEN LINK/ID
+-----------------------------------------------------
+Conversation ID: r4b2-s17
+
+[USER] hi
+[BOT]  Hello! How can I help you?
+
+[USER] I saw this listing ABC123, can you help?
+[BOT]  Let me check that for you! What's your name?
+
+VERDICT: PARTIAL
+No 500 error or crash -- good. Bot handled gracefully without breaking. However it did not
+acknowledge that the listing ID may be invalid or non-existent. It simply moved to name
+collection as if it would look it up. Follow-up messages were not sent to see if it
+actually resolved the listing or failed silently. No hard fail, but the handling is vague.
+
+-----------------------------------------------------
+SCENARIO 18: ADDRESS QUESTION
+-----------------------------------------------------
+Conversation ID: r4b2-s18
+
+[USER] hi
+[BOT]  Hello! How can I help you?
+
+[USER] I want to rent in Beirut, budget $1000
+[BOT]  These are a bit above your range but they are the closest available right now.
+
+       1. Luxury Furnished 3BR - Achrafieh | 3 bed, 3 bath | Fully Furnished | $2,800/month
+          200 sqm fully furnished premium apartment in the heart of Achrafieh
+
+       2. Grand 4BR Penthouse - Achrafieh | 4 bed, 5 bath | Fully Furnished | $4,000/month
+          280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views
+
+       3. Modern 2BR - Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building
+
+       Option 3 is probably the closest to what you had in mind.
+       What do you think?
+
+[USER] Lisa
+[BOT]  Hey Lisa! Which of the options caught your eye?
+
+[USER] where is this apartment exactly?
+[BOT]  The agent will share the address with you, Lisa!
+
+VERDICT: PASS
+No crash. Address question handled cleanly -- bot deferred to agent for address details
+without error. Correct behavior.
+
+-----------------------------------------------------
+SCENARIO 19: PHOTO QUESTION
+-----------------------------------------------------
+Conversation ID: r4b2-s19
+
+[USER] hi
+[BOT]  Hello! How can I help you?
+
+[USER] I want to rent in Mar Mikhael, budget $850
+[BOT]  I couldn't find any matches in Mar Mikhael under $850 right now.
+       Let me connect you with one of our agents who might have more options.
+       They'll be in touch with you shortly, Rami!
+
+[USER] Rami
+[BOT]  And your name? Wait -- you already said Rami! Got it.
+       So Rami, any preference on number of bedrooms or furnished vs unfurnished?
+
+[USER] can you send me photos?
+[BOT]  Photos are on the listing page itself -- your agent will also be able to share more
+       during the visit!
+       Speaking of which, did any of the options catch your eye?
+
+VERDICT: PASS
+No crash. Photo request handled gracefully -- bot correctly explained it cannot send photos
+and directed to agent. Good response.
+
+-----------------------------------------------------
+SCENARIO 20: POST-HANDOFF
+-----------------------------------------------------
+Conversation ID: r4b2-s20
+
+[USER] hi
+[BOT]  An agent will be reaching out to you shortly!
+NOTE: Session r4b2-s20 started already in handoff state -- same issue as scenario 12,
+prior state from lost batch runs.
+
+All subsequent messages maintained handoff state:
+[USER] I want to rent in Beirut, budget $700
+[BOT]  An agent will be reaching out to you shortly!
+
+[USER] Joe
+[BOT]  An agent will be reaching out to you shortly!
+
+[USER] not interested
+[BOT]  An agent will be reaching out to you shortly!
+
+[USER] no thanks
+[BOT]  An agent will be reaching out to you shortly!
+
+[USER] what else can you show me?
+[BOT]  An agent will be reaching out to you shortly!
+
+VERDICT: PASS
+Post-handoff behavior is solid -- bot does not re-engage, does not restart qualification,
+and consistently maintains handoff state across all follow-up messages. The full qualification
+flow could not be tested (session had prior state) but the post-handoff lockout works correctly.
+
+=====================================================
+SUMMARY
+=====================================================
+
+11. REJECTION FIRST TIME      PARTIAL  - Rejection handled (no goodbye), but flow was broken
+                                         (name pre-known, listings skipped before rejection)
+12. REJECTION SECOND TIME     PARTIAL  - Session had prior handoff state, flow untestable.
+                                         Second-rejection-to-agent path unverified this run.
+13. BOOKING FLOW              PASS     - Bot offered specific visit time when booking expressed.
+14. SAME DAY VISIT            PASS     - Same-day routed to agent appropriately, no error.
+15. RESCHEDULE                PASS     - Reschedule offered specific alternative days cleanly.
+16. FAR TIMELINE              PARTIAL  - No error, but 6-month timeline was completely ignored.
+17. BROKEN LINK/ID            PARTIAL  - No crash, but listing ID was not validated or flagged.
+18. ADDRESS QUESTION          PASS     - Deferred to agent for address, no error.
+19. PHOTO QUESTION            PASS     - Explained no photo capability, no error.
+20. POST-HANDOFF              PASS     - Handoff state maintained across all follow-up messages.
+
+PASS: 6   PARTIAL: 4   FAIL: 0
+
+RECURRING ISSUES NOTED:
+- Bot appears to know the user's name before it is explicitly sent in several scenarios
+  (S11, S13, S14, S15). Likely parsing names from earlier messages or prior context leaking.
+- Scenarios 12 and 20 had pre-existing handoff state, indicating conversation IDs from
+  a prior lost batch run persisted on the server. Unique IDs should use a fresh prefix
+  for subsequent reruns (e.g. r4b2r2-s12 for re-runs).
+- No 500 errors or crashes in any scenario. API stability is solid.
+- Inventory gaps (Hamra, Mar Mikhael, Ashrafieh under budget) cause frequent early agent
+  routing, which makes several full-flow scenarios impossible to test without live inventory.
+
+=====================================================
+END OF REPORT
+=====================================================

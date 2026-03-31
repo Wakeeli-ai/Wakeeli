@@ -1,0 +1,311 @@
+WAKEELI CHATBOT TEST RESULTS - ROUND 2, BATCH 3
+Generated: 2026-03-31
+Scenarios: 21-30
+Endpoint: https://wakeeli-ai.up.railway.app/api/chat/test
+================================================================================
+
+SCENARIO 21 - SAME-DAY VISIT
+RESULT: PASS
+
+Flow: Get listings -> request same-day visit -> verify routes to agent
+
+[User] Hi I am looking for an apartment to rent
+[Bot] Hello, thanks for reaching out!
+      Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+      What's your full name btw?
+
+[User] Beirut, 2 bedrooms, max 1200, furnished, my name is Rania
+[Bot] These are slightly above your budget, Rania, but they're the closest matches in Beirut right now:
+
+      1. Luxury Furnished 3BR - Achrafieh
+         Achrafieh | 3 bed, 3 bath | Fully Furnished | $2,800/month
+         200 sqm premium apartment in the heart of Achrafieh.
+
+      2. Grand 4BR Penthouse - Achrafieh
+         Achrafieh | 4 bed, 5 bath | Fully Furnished | $4,000/month
+         280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+      3. Modern 2BR - Achrafieh
+         Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month
+         140 sqm stylishly furnished apartment in a premium Achrafieh building.
+
+      Option 3 is probably the closest to what you had in mind - it's a 2-bedroom furnished in Achrafieh, just a bit over your budget.
+      What do you think?
+
+[User] I want to visit option 1 today
+[Bot] Let me connect you with one of our agents to arrange that for you.
+
+NOTES: Bot correctly recognised same-day request and routed to agent immediately without asking for scheduling. PASS.
+
+================================================================================
+
+SCENARIO 22 - RESCHEDULE
+RESULT: PASS
+
+Flow: Complete booking flow -> request reschedule -> verify routes to agent
+
+[User] Hi I want to rent an apartment in Achrafieh, 2 bedrooms, furnished, budget 2000, my name is Karim
+[Bot] Hello, thanks for reaching out!
+      Here you go, Karim!
+
+      1. Modern 2BR - Achrafieh
+         Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month
+         140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, modern finishes throughout.
+
+      What do you think?
+
+[User] I want to visit option 1 on Thursday
+[Bot] Sure, Thursday works! What time is best for you?
+
+[User] 3pm please
+[Bot] Perfect, 3pm it is!
+      Here's your visit summary:
+
+      Property: Furnished 2-bedroom apartment in Achrafieh
+      Date and time: Thursday at 3:00 PM
+
+      I'll be connecting you with your agent shortly, Karim!
+
+[User] actually can we reschedule to next week?
+[Bot] Let me connect you with your agent to reschedule.
+
+NOTES: Booking flow completed cleanly. Reschedule request correctly routed to agent rather than trying to re-negotiate dates in-bot. PASS.
+
+================================================================================
+
+SCENARIO 23 - PARTIAL DRIP
+RESULT: FAIL
+
+Flow: 'hi' -> 'rent' -> 'Beirut' -> 'Achrafieh' -> '2 beds' -> '1500' -> 'furnished' -> give name -> verify each step only asks for remaining fields and eventually shows listings
+
+[User] hi
+[Bot] Hello! How can I help you?
+
+[User] rent
+[Bot] Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+      What's your full name btw?
+
+[User] Beirut
+[Bot] Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?
+      And your name?
+
+PREMATURE HANDOFF TRIGGERED HERE:
+[User] Achrafieh
+[Bot] Let me connect you with one of our agents who can help you with that.
+
+[User] 2 beds
+[Bot] An agent will be reaching out to you shortly!
+
+[User] 1500
+[Bot] An agent will be reaching out to you shortly!
+
+[User] furnished
+[Bot] An agent will be reaching out to you shortly!
+
+[User] my name is Lara
+[Bot] An agent will be reaching out to you shortly!
+
+NOTES: FAIL. Critical bug. The bot prematurely handed off to agent after receiving only the neighborhood "Achrafieh" without collecting budget, bedrooms, furnishing, or name. Once in handoff state, all subsequent messages received a dead response. The drip pattern completely broke down. Bot should have recognised "Achrafieh" as an area refinement within the ongoing Beirut rental query and continued collecting missing fields. Instead it interpreted a partial input as a complete request and bailed to agent.
+
+================================================================================
+
+SCENARIO 24 - MULTIPLE INTEREST
+RESULT: PASS (with a bug note)
+
+Flow: After seeing listings say 'I like option 1 and 3 can I visit both?' -> verify it handles multiple
+
+[User] I want to rent in Achrafieh, 2 bedrooms, furnished, budget 3000, name is Maya
+[Bot] Hello, thanks for reaching out!
+      Sure, to help you find the best options, any specific area in Achrafieh you have in mind? Like Sodeco, Gemmayzeh, or Mar Mikhael?
+      What's your full name btw?
+
+      Actually, looking at the action behavior: listings are found and I should present them.
+
+      Here you go, Maya!
+
+      1. Modern 2BR - Achrafieh
+         Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+         140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, modern finishes throughout.
+
+      What do you think?
+
+[User] I like option 1 and 3 can I visit both?
+[Bot] We can visit both on the same day back to back.
+      How about Wednesday? First at 10:00 AM and the second at 10:30 AM. Does that work, Maya?
+
+NOTES: PASS on handling multiple visit interest - bot offered a back-to-back schedule on the same day which is the right behaviour. However there is a BUG: the first response included exposed internal reasoning text "Actually, looking at the action behavior: listings are found and I should present them." - this is chain-of-thought leaking into the user-facing message. Must be fixed. Also only 1 listing was shown but user referenced options 1 and 3 - bot handled gracefully without erroring.
+
+================================================================================
+
+SCENARIO 25 - MIXED LANGUAGE
+RESULT: PARTIAL
+
+Flow: 'Hi ana baddi apartment bi Jounieh 2 beds furnished max 1500 esme Ahmad' -> verify natural code-switching response
+
+[User] Hi ana baddi apartment bi Jounieh 2 beds furnished max 1500 esme Ahmad
+[Bot] Hello, thanks for reaching out!
+      These are slightly above your budget but they're the closest we have in Jounieh right now:
+
+      1. 3BR Apartment - Jounieh
+         Jounieh, 3 bed, 2 bath, Furnished, $1,600/month
+         170 sqm furnished apartment in a well-managed building. Modern kitchen and bright rooms.
+
+      2. Furnished Sea View 3BR - Jounieh
+         Jounieh, 3 bed, 3 bath, Fully Furnished, $2,500/month
+         210 sqm with panoramic sea views over Jounieh Bay. 3 bedrooms, 3 bathrooms.
+
+      3. Luxury Seafront 4BR - Jounieh
+         Jounieh, 4 bed, 4 bath, Fully Furnished, $3,800/month
+         300 sqm seafront apartment with 30 sqm balcony and master suite.
+
+      Option 1 is probably the closest to what you had in mind, Ahmad.
+      What do you think?
+
+NOTES: PARTIAL. Bot correctly parsed the Arabic-English mixed message: extracted location (Jounieh), bedrooms (2), furnishing (furnished), budget (1500), and name (Ahmad) without asking for clarification. That is good. However the response was entirely in English without any code-switching. Ideally if the user wrote in Franco-Arab/Arabizi the bot should reply in kind or at minimum acknowledge the language naturally. The listings shown are all 3BR and 4BR despite the user asking for 2BR - the closest would be the 3BR at $1,600 which is above budget. Bot correctly flagged over-budget but should have noted the bedroom mismatch.
+
+================================================================================
+
+SCENARIO 26 - SMALL 4 BED
+RESULT: PARTIAL
+
+Flow: 'Hi I need a small 4 bedroom apartment in Beirut for rent budget 2000 to 3000 my name is Sami' -> verify no contradiction flagged, shows results
+
+[User] Hi I need a small 4 bedroom apartment in Beirut for rent budget 2000 to 3000 my name is Sami
+[Bot] These are slightly above your budget, Sami, but they're the closest options available right now.
+
+      1. Luxury Furnished 3BR - Achrafieh
+         Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month
+         200 sqm fully furnished premium apartment in the heart of Achrafieh.
+
+      2. Grand 4BR Penthouse - Achrafieh
+         Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month
+         280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views.
+
+      3. Modern 2BR - Achrafieh
+         Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+         140 sqm stylishly furnished apartment in a premium Achrafieh building.
+
+      Option 1 is probably the closest to what you had in mind. It's a 4-bedroom... wait, it's a 3BR but fits your budget best and is right in Achrafieh.
+      What do you think?
+
+NOTES: PARTIAL. No contradiction flagged for "small 4 bedroom" which is correct - user can describe it how they want. Results were shown which is correct. However two issues: (1) the bot exposed uncertain internal monologue: "It's a 4-bedroom... wait, it's a 3BR but fits your budget best" - this self-correction should never be visible to the user, it reads as confused and unprofessional. (2) The 4BR Penthouse at $4,000 is outside the stated max of $3,000 - it should not have been presented as an option. Budget filter is not strict.
+
+================================================================================
+
+SCENARIO 27 - VILLA REQUEST
+RESULT: PARTIAL
+
+Flow: 'looking for a villa in Rabieh for rent' -> verify how it handles villa
+
+[User] looking for a villa in Rabieh for rent
+[Bot] Hello, thanks for reaching out!
+      Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?
+      What's your full name btw?
+
+[User] budget around 4000, 4 bedrooms, furnished, name is Georges
+[Bot] Here you go
+
+      1. Premium 4BR - Rabieh
+         Rabieh, 4 bed, 4 bath, Fully Furnished, $3,500/month
+         300 sqm grand fully furnished apartment in the heart of Rabieh. 4 master bedrooms, spacious living area.
+
+      What do you think, Georges?
+
+NOTES: PARTIAL. The bot collected details correctly and found a Rabieh 4BR listing. However it returned an "apartment" not a "villa" without acknowledging the distinction. If the inventory does not include actual villas it should note that no villas were found but here is the closest available property. Silently returning an apartment when a villa was asked for could mislead the user. That said, the flow functioned correctly otherwise.
+
+================================================================================
+
+SCENARIO 28 - POST-HANDOFF
+RESULT: PASS
+
+Flow: Complete a flow that routes to agent -> then send another message like 'actually I found something else' -> verify it says agent will reach out, doesn't restart flow
+
+[User] I need an apartment in Achrafieh for rent, 2 beds, furnished, max 2000, name is Nour
+[Bot] Here you go!
+
+      1. Modern 2BR - Achrafieh
+         Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+         140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, modern finishes throughout.
+
+      What do you think, Nour?
+
+[User] I want to visit option 1 tomorrow
+[Bot] Let me connect you with one of our agents to arrange that for you.
+
+[User] actually I found something else never mind
+[Bot] Sure thing, Nour! Feel free to reach out anytime. Wishing you the best!
+
+NOTES: PASS. After handoff the bot gracefully acknowledged the user backing out without restarting the flow or asking for new listing details. Closed the conversation cleanly.
+
+================================================================================
+
+SCENARIO 29 - GREETING ONLY ONCE
+RESULT: FAIL
+
+Flow: 'Hellooo' -> 'looking for place in Beirut' -> 'rent' -> verify greeting appears only in first response, never repeated
+
+[User] Hellooo
+[Bot] Hello! How can I help you?
+
+[User] looking for place in Beirut
+[Bot] Hello, thanks for reaching out!    <--- REPEATED GREETING
+      Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind - like Hamra, Achrafieh, or Verdun?
+      What's your full name btw?
+
+[User] rent
+[Bot] Sure, to help you find the best options, do you have a specific area in Beirut in mind, like Hamra, Achrafieh, or Mar Mikhael? Also what's your budget range, how many bedrooms, and furnished or unfurnished?
+      What's your full name btw?
+
+NOTES: FAIL. The greeting "Hello, thanks for reaching out!" was repeated on the second message after the user had already received a "Hello! How can I help you?" on the first. This is jarring. The bot should not re-greet mid-conversation. Additionally the third message asked for the exact same fields again despite having already asked them in the second message - no memory of what was already collected or asked. The bot is not tracking conversation state between turns properly in this drip scenario.
+
+================================================================================
+
+SCENARIO 30 - INSISTENT NO
+RESULT: PASS (with a minor note)
+
+Flow: After listings shown say 'no' -> get response -> say 'no I dont like any of these' -> verify escalation to agent
+
+[User] I want to rent in Achrafieh, 2 bedrooms, max 2500, furnished, name is Tony
+[Bot] Hello, thanks for reaching out!
+      Here you go, Tony:
+
+      1. Modern 2BR - Achrafieh
+         Achrafieh | 2 bed, 2 bath | Fully Furnished
+         $1,800/month | 140 sqm
+         Stylishly furnished apartment in a premium Achrafieh building with modern finishes.
+
+      What do you think?
+
+[User] no
+[Bot] Sure! How about Thursday afternoon, Friday morning, or Saturday at 11? Which works for you?
+
+[User] no I dont like any of these
+[Bot] Let me connect you with one of our agents who might have more options for you.
+
+NOTES: PASS. After the first "no" the bot misread it as declining to visit (offered scheduling options instead of acknowledging the listings were not a fit). On the second more explicit rejection it correctly escalated to agent. Escalation trigger is working. The first "no" handling is slightly off - if a user says no after seeing listings it most likely means they don't like them, not that they're refusing a visit that wasn't offered yet. Minor UX issue but escalation ultimately worked.
+
+================================================================================
+
+SUMMARY
+--------------------------------------------------------------------------------
+SCENARIO 21 - Same-Day Visit:      PASS
+SCENARIO 22 - Reschedule:          PASS
+SCENARIO 23 - Partial Drip:        FAIL
+SCENARIO 24 - Multiple Interest:   PASS (bug: internal reasoning leaked into response)
+SCENARIO 25 - Mixed Language:      PARTIAL (no code-switching; bedroom mismatch not noted)
+SCENARIO 26 - Small 4 Bed:         PARTIAL (internal monologue leaked; budget filter too loose)
+SCENARIO 27 - Villa Request:       PARTIAL (returned apartment without acknowledging villa mismatch)
+SCENARIO 28 - Post-Handoff:        PASS
+SCENARIO 29 - Greeting Only Once:  FAIL
+SCENARIO 30 - Insistent No:        PASS
+
+PASS: 4 | PARTIAL: 3 | FAIL: 2 | (24 counted as PASS with note = 4 total PASS)
+
+CRITICAL BUGS TO FIX:
+1. Internal chain-of-thought leaking into user-facing responses (Scenarios 24, 26)
+2. Premature agent handoff on partial location input - does not continue collecting fields (Scenario 23)
+3. Repeated greeting mid-conversation when conversation already started (Scenario 29)
+4. Post-handoff state not persisted - same fields re-asked on continued messages (Scenario 29)
+5. Budget filter not enforcing max - showing listings above stated maximum (Scenario 26)
+6. Villa vs apartment distinction not acknowledged in response (Scenario 27)
+================================================================================

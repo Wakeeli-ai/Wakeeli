@@ -1,0 +1,264 @@
+WAKEELI CHATBOT TEST RESULTS
+Round 3 - Batch 1
+Date: 2026-03-31
+=========================================
+
+
+SCENARIO 1 - FULL HAPPY PATH RENT (r3-b1-01)
+STATUS: PARTIAL
+
+Lead: Hi
+Agent: Hello! How can I help you?
+
+Lead: rent
+Agent: Sure, to help you find the best options, what area are you looking in, how many bedrooms, what's your budget range, and furnished or unfurnished?
+Agent: What's your full name btw?
+
+Lead: Achrafieh, 2 bed, furnished, 1000 to 1500, my name is Alex
+Agent: These are slightly above your budget but the closest we have in Achrafieh right now:
+
+1. **Modern 2BR - Achrafieh**
+   2 bed, 2 bath, Fully Furnished - $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. Modern finishes throughout.
+
+2. **Luxury Furnished 3BR - Achrafieh**
+   3 bed, 3 bath, Fully Furnished - $2,800/month
+   200 sqm premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, designer finishes.
+
+3. **Grand 4BR Penthouse - Achrafieh**
+   4 bed, 5 bath, Fully Furnished - $4,000/month
+   280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+Option 1 is probably the closest to what you had in mind, Alex.
+Agent: What do you think?
+
+Lead: I'm interested in option 1
+Agent: Great choice, Alex! We can book a visit for this week. Does Wednesday morning work for you?
+
+Lead: yes that works
+Agent: Perfect, Alex! Your visit is set for Wednesday morning.
+Agent: I'll be connecting you with your agent shortly.
+
+NOTES: Flow completes end-to-end with booking confirmation. However, listings shown are all above the stated $1,000-$1,500 budget with no in-budget results shown. Bot also asked for name at same time as other details rather than waiting until after specs were provided. Booking confirmation achieved.
+
+
+=========================================
+
+SCENARIO 2 - FULL HAPPY PATH BUY (r3-b1-02)
+STATUS: FAIL
+
+Lead: Hello
+Agent: Hello! How can I help you?
+
+Lead: buy
+Agent: Sure, to help you find the best options, what area are you looking in, how many bedrooms, and what's your budget range?
+Agent: What's your full name btw?
+
+Lead: Jounieh 3 bed 200000 to 300000 unfurnished my name is Tony
+Agent: I've connected you with one of our agents who will be giving you a call shortly.
+
+NOTES: Bot skipped listing display entirely for buy flow. Expected behavior was to show listings and proceed through the buy flow. Instead it jumped straight to agent handoff without showing any properties. Buy path does not mirror the rent happy path in terms of listing display.
+
+
+=========================================
+
+SCENARIO 3 - BARE GREETING ENGLISH (r3-b1-03)
+STATUS: PASS
+
+Lead: Hi
+Agent: Hello! How can I help you?
+
+NOTES: Single clean greeting with one follow-up question. No additional unprompted questions. Matches expected behavior exactly.
+
+
+=========================================
+
+SCENARIO 4 - BARE GREETING ARABIC (r3-b1-04)
+STATUS: PASS
+
+Lead: Marhaba
+Agent: Marhaba kifak, shu fine a3mile la2ak?
+
+NOTES: Bot responded in Arabic (Franco-Arab style) with a greeting only, no additional questions. Matches expected behavior.
+
+
+=========================================
+
+SCENARIO 5 - ALL INFO ONE MESSAGE (r3-b1-05)
+STATUS: FAIL
+
+Lead: Hi my name is Rima I want to rent a 2 bed furnished apartment in Hamra budget 800 to 1200
+Agent: Hello, thanks for reaching out!
+Agent: Sure, to help you find the best options, what's your budget range, how many bedrooms, and furnished or unfurnished?
+Agent: What's your full name btw?
+
+Agent: Rima, I looked through our listings but nothing matches right now in Hamra within that budget.
+Agent: Let me connect you with one of our agents who might have more options off-market. They'll be in touch shortly!
+
+NOTES: Bot asked for info that was already provided (name, budget, bedrooms, furnishing). The greeting "Hello, thanks for reaching out!" was mixed together with redundant questions in the same response. Bot eventually used the name Rima but still re-asked for all details. Bot should have gone straight to searching with the provided info. This is a significant failure of the intent extraction from the initial message.
+
+
+=========================================
+
+SCENARIO 6 - NAME ENFORCEMENT (r3-b1-06)
+STATUS: PASS
+
+Lead: Hey looking for apartment in Beirut
+Agent: Hello, thanks for reaching out!
+Agent: Is this for rent or to buy?
+
+Lead: rent
+Agent: Sure, to help you find the best options, do you have a specific area in Beirut in mind - like Hamra, Achrafieh, or Gemmayzeh? Also, what's your budget range, how many bedrooms, and furnished or unfurnished?
+Agent: What's your full name btw?
+
+Lead: Beirut, 2 bed, furnished, 1000 to 1500
+Agent: And your name?
+
+Lead: Alex
+Agent: These are a bit above your budget but they're the closest we have in Achrafieh right now:
+
+1. **Modern 2BR - Achrafieh**
+   2 bed, 2 bath | Fully Furnished | $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. Modern finishes throughout.
+
+2. **Luxury 3BR - Achrafieh**
+   3 bed, 3 bath | Fully Furnished | $2,800/month
+   200 sqm premium apartment in the heart of Achrafieh. High-end design and finishes.
+
+3. **4BR Penthouse - Achrafieh**
+   4 bed, 5 bath | Fully Furnished | $4,000/month
+   280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+Option 1 is probably the closest to what you had in mind.
+Agent: What do you think?
+
+NOTES: Bot correctly held back listings until name was provided. Asked for name after specs were given. Once name was provided, listings appeared. Name enforcement gate is working correctly.
+
+
+=========================================
+
+SCENARIO 7 - RENT/BUY GATE (r3-b1-07)
+STATUS: PASS
+
+Lead: I need a place in Achrafieh
+Agent: Hello, thanks for reaching out!
+Agent: Is this for rent or to buy?
+
+Lead: rent
+Agent: Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?
+Agent: What's your full name btw?
+
+NOTES: Bot correctly asked rent or buy before anything else. After rent was given, it proceeded to ask remaining required questions. Gate is functioning as expected.
+
+
+=========================================
+
+SCENARIO 8 - LBP CONVERSION (r3-b1-08)
+STATUS: PARTIAL
+
+Lead: Hi
+Agent: Hello! How can I help you?
+
+Lead: rent
+Agent: Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?
+Agent: What's your full name btw?
+
+Lead: Beirut, 2 beds, furnished, 100000000 LBP per month, my name is Sami
+Agent: All right, noted!
+Agent: These are slightly above your budget but they're the closest available in Achrafieh:
+
+1. **Modern 2BR - Achrafieh**
+   2 bed, 2 bath, Fully Furnished - $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. Modern finishes throughout.
+
+2. **Luxury Furnished 3BR - Achrafieh**
+   3 bed, 3 bath, Fully Furnished - $2,800/month
+   200 sqm premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, designer interiors.
+
+3. **Grand 4BR Penthouse - Achrafieh**
+   4 bed, 5 bath, Fully Furnished - $4,000/month
+   280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+Option 1 is probably the closest to what you had in mind, Sami.
+Agent: What do you think?
+
+NOTES: Bot accepted the LBP figure and proceeded to show listings. At 100,000,000 LBP this equates to roughly $1,100 USD at the current parallel rate (approximately 90,000 LBP per dollar). The listings shown start at $1,800 which is above the converted value. Bot acknowledged the budget ("All right, noted!") but did not explicitly state the conversion or the converted USD amount. Listings were shown rather than a no-results message. Partial pass because bot accepted LBP and continued the flow, but no explicit conversion confirmation was shown.
+
+
+=========================================
+
+SCENARIO 9 - GREETING ONLY ONCE (r3-b1-09)
+STATUS: FAIL
+
+Lead: Hey
+Agent: Hello! How can I help you?
+
+Lead: looking for apartment in Beirut
+Agent: Hello, thanks for reaching out!
+Agent: Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind - like Hamra, Achrafieh, or Verdun?
+Agent: What's your full name btw?
+
+Lead: rent
+Agent: Sure, to help you find the best options, do you have a specific area in Beirut in mind - like Hamra, Achrafieh, or Verdun? Also, what's your budget range, how many bedrooms, and furnished or unfurnished?
+Agent: What's your full name btw?
+
+NOTES: Greeting appeared twice. First as "Hello! How can I help you?" and then as "Hello, thanks for reaching out!" on the second message. This violates the one-greeting rule. Additionally, the bot asked for budget/bedrooms/furnishing before identifying rent vs buy, and repeated the same questions on the third turn when "rent" was given. The rent/buy gate was also skipped on message 2. Multiple issues: duplicate greeting and no rent/buy gate on the second message.
+
+
+=========================================
+
+SCENARIO 10 - BUDGET AVOIDANCE (r3-b1-10)
+STATUS: PARTIAL
+
+Lead: Hi looking for apartment in Jounieh
+Agent: Hello, thanks for reaching out!
+Agent: Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?
+Agent: What's your full name btw?
+
+Lead: rent
+Agent: Sure, just a rough range helps me find the right options. What's your budget per month?
+Agent: And your name?
+
+Lead: I don't have a budget in mind
+Agent: Let me connect you with one of our agents who can help you with that.
+
+Lead: I really don't want to say
+Agent: An agent will be reaching out to you shortly!
+
+NOTES: Bot routed to human agent, but did so after the FIRST refusal rather than after TWO refusals. Expected behavior was for bot to push back once before routing. Instead it skipped the second attempt and connected to agent immediately on the first refusal. The routing behavior is correct but triggered one refusal too early. Also note: the initial message included location (Jounieh) but bot still asked for all details without acknowledging location was already provided, and rent/buy gate was skipped on the first message.
+
+
+=========================================
+
+SUMMARY
+=========================================
+
+SCENARIO 1  - FULL HAPPY PATH RENT        - PARTIAL
+SCENARIO 2  - FULL HAPPY PATH BUY         - FAIL
+SCENARIO 3  - BARE GREETING ENGLISH       - PASS
+SCENARIO 4  - BARE GREETING ARABIC        - PASS
+SCENARIO 5  - ALL INFO ONE MESSAGE        - FAIL
+SCENARIO 6  - NAME ENFORCEMENT            - PASS
+SCENARIO 7  - RENT/BUY GATE               - PASS
+SCENARIO 8  - LBP CONVERSION              - PARTIAL
+SCENARIO 9  - GREETING ONLY ONCE         - FAIL
+SCENARIO 10 - BUDGET AVOIDANCE            - PARTIAL
+
+TOTALS:
+  PASS:    4  (Scenarios 3, 4, 6, 7)
+  PARTIAL: 3  (Scenarios 1, 8, 10)
+  FAIL:    3  (Scenarios 2, 5, 9)
+
+=========================================
+KEY ISSUES IDENTIFIED:
+
+1. Buy flow (Scenario 2): No listings shown for buy intent. Jumps straight to agent handoff. Needs parity with rent flow.
+
+2. Intent extraction (Scenario 5): When all info is provided upfront in one message, bot re-asks for info already given. NLP parsing of initial messages needs improvement.
+
+3. Duplicate greeting (Scenario 9): "Hello" or "thanks for reaching out" fires again on the second message if the first message was a bare greeting. Greeting state not being tracked.
+
+4. Budget refusal threshold (Scenario 10): Agent handoff triggers after first refusal instead of second. Counter logic for refusals needs a +1 fix.
+
+5. LBP conversion transparency (Scenario 8): Bot accepts LBP but does not show the conversion math. User has no confirmation of what USD equivalent was used.
+

@@ -1,0 +1,517 @@
+WAKEELI CHATBOT TEST RESULTS - BATCH 3
+Endpoint: https://wakeeli-ai.up.railway.app/api/chat/test
+Date: 2026-03-31
+Scenarios: 21-30
+================================================================================
+
+================================================================================
+SCENARIO 21 - NOT SURE AFTER LISTINGS
+Conversation ID: test-batch3-21
+Goal: Get listings shown, then say 'not sure', verify no 500 error and bot asks
+      what they're unsure about
+================================================================================
+
+[USER]: Hi I am looking to rent an apartment
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, where are you looking, what's
+       your budget range, how many bedrooms, and furnished or unfurnished?
+       What's your full name btw?
+
+[USER]: John Smith, looking in Achrafieh, 2 bedrooms, furnished, budget around 1500
+
+[BOT]: These are slightly above your budget, John, but they're the closest we
+       have in Achrafieh right now:
+
+       1. Modern 2BR - Achrafieh
+          Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+          Modern finishes throughout.
+
+       2. Luxury Furnished 3BR - Achrafieh
+          Achrafieh | 3 bed, 3 bath | Fully Furnished | $2,800/month
+          200 sqm fully furnished premium apartment in the heart of Achrafieh.
+          3 bedrooms, 3 bathrooms, designer interiors.
+
+       3. Grand 4BR Penthouse - Achrafieh
+          Achrafieh | 4 bed, 5 bath | Fully Furnished | $4,000/month
+          280 sqm fully furnished penthouse with a 70 sqm private terrace and
+          city/sea views.
+
+       Option 1 is probably the closest to what you had in mind.
+       What do you think?
+
+[USER]: not sure
+
+[BOT]: Internal Server Error (HTTP 500)
+
+RESULT: FAIL
+ISSUES FOUND:
+- 500 error triggered when user says "not sure" after seeing listings
+- Bot should ask what they're unsure about (price? location? size?)
+- Instead crashes with unhandled server error
+- Critical UX breakpoint: this is a very natural user response after seeing options
+
+================================================================================
+SCENARIO 22 - MIXED LANGUAGE
+Conversation ID: test-batch3-22
+Goal: Send Arabic/English mixed message, verify bot responds naturally without
+      asking for language preference
+================================================================================
+
+[USER]: Hi ana baddi apartment bi Achrafieh 2 beds furnished
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range?
+       What's your full name btw?
+
+[USER]: Sarah, budget around 1500 to 2000
+
+[BOT]: Here you go!
+       1. Modern 2BR - Achrafieh
+          Achrafieh | 2 bed, 2 bath | Fully Furnished | $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+          2 bedrooms, 2 bathrooms, modern finishes throughout.
+
+       What do you think, Sarah?
+
+RESULT: PARTIAL PASS
+NOTES:
+- Bot correctly extracted intent from mixed Arabic/English message (apartment,
+  Achrafieh, 2 beds, furnished) without asking for language preference - GOOD
+- Bot responded in English only, which is acceptable
+- Bot only asked for budget and name (already had location, beds, furnished) - GOOD
+- Bot showed only 1 listing within budget (not showing above-budget options like
+  it did in scenario 21) - possible inconsistency in listing logic
+- No language confusion, no awkward language-preference question - PASS
+
+================================================================================
+SCENARIO 23 - SAME-DAY VISIT
+Conversation ID: test-batch3-23
+Goal: After seeing listings say 'I want to visit option 1 today', verify it
+      routes to agent for same-day
+================================================================================
+
+[USER]: Hi looking to rent in Achrafieh, 2 beds, furnished, budget 2000, name is Mike
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, any specific area in Achrafieh
+       you have in mind, like Sodeco, Gemmayzeh, or Sassine?
+       What's your full name btw?
+
+       Wait - you already gave me everything including your name. Let me just go
+       straight to results.
+
+       Here you go
+
+       1. Modern 2BR - Achrafieh
+          Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+          2 bedrooms, 2 bathrooms, modern finishes throughout.
+
+       What do you think, Mike?
+
+[USER]: I want to visit option 1 today
+
+[BOT]: Let me connect you with one of our agents to arrange that for you.
+
+RESULT: PASS
+NOTES:
+- Bot correctly identified same-day visit request and routed to agent
+- The initial response had some self-correction behavior ("Wait - you already
+  gave me everything...") which is a minor prompt instability but recovered well
+- Agent routing for same-day is correct behavior
+
+================================================================================
+SCENARIO 24 - BOOKING FLOW
+Conversation ID: test-batch3-24
+Goal: Express interest, agree to suggested time, verify booking confirmation format
+================================================================================
+
+[USER]: Hi, I want to rent in Achrafieh, 2 beds, furnished, budget 2000, name is Lisa
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range, how
+       many bedrooms, and furnished or unfurnished?
+       What's your full name btw?
+
+       Wait, I already have all that info. Let me redo this properly.
+
+       Here you go, Lisa!
+       1. Modern 2BR - Achrafieh
+          Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+          2 bedrooms, 2 bathrooms, modern finishes throughout.
+
+       What do you think?
+
+[USER]: I like option 1 can I visit?
+
+[BOT]: Sure, we can book a visit this week. Does Wednesday morning work for you?
+
+[USER]: Yes Wednesday morning works for me
+
+[BOT]: Internal Server Error (HTTP 500)
+
+RESULT: FAIL
+ISSUES FOUND:
+- 500 error triggered when user confirms a booking time
+- This is a critical failure in the core booking flow
+- The bot successfully gets to the confirmation step but crashes on final confirm
+- Same self-correction issue noted in scenario 23 ("Wait, I already have all
+  that info") - prompt instability with bundled info messages
+- Booking confirmation format could not be verified due to the crash
+
+================================================================================
+SCENARIO 25 - BUDGET AVOIDANCE
+Conversation ID: test-batch3-25
+Goal: When asked for budget say 'I dont really have a budget in mind', verify
+      bot says 'just a rough range helps me find the right options'
+================================================================================
+
+[USER]: Hi I am looking to rent an apartment in Achrafieh
+
+[BOT]: Sure, to help you find the best options, what's your budget range, how
+       many bedrooms, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[USER]: I dont really have a budget in mind
+
+[BOT]: Sure, just a rough range helps me find the right options - are we talking
+       under $500, around $500-$1000, or more?
+
+RESULT: PASS
+NOTES:
+- Bot responded with the expected "just a rough range helps me find the right
+  options" language - PASS
+- Bot also offered helpful bracket options ($500 range tiers) which is good UX
+- Message was slightly longer than minimal but helpful in guiding the user
+
+================================================================================
+SCENARIO 26 - RESCHEDULE
+Conversation ID: test-batch3-26
+Goal: After booking say 'actually can we reschedule to next week?', verify it
+      routes to agent
+================================================================================
+
+[USER]: Hi, rent, Achrafieh, 2 beds, furnished, budget 2000, name is Tom
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range, how
+       many bedrooms, and furnished or unfurnished?
+       What's your full name btw?
+
+       Wait, I already have all that info. Let me restart properly.
+
+       Here you go, Tom!
+       1. Modern 2BR - Achrafieh
+          Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+          140 sqm stylishly furnished apartment in a premium Achrafieh building.
+          2 bedrooms, 2 bathrooms, modern finishes throughout.
+
+       What do you think?
+
+[USER]: I like option 1 can I visit?
+
+[BOT]: Sure, we can book a visit this week. Does Wednesday morning work for you?
+
+[USER]: yes works for me
+
+[BOT]: Perfect, I've scheduled your visit!
+       Property: Furnished 2-bedroom apartment in Achrafieh
+       Date and time: Wednesday morning
+       I'll be connecting you with your agent shortly.
+
+[USER]: actually can we reschedule to next week?
+
+[BOT]: Internal Server Error (HTTP 500)
+
+RESULT: FAIL
+ISSUES FOUND:
+- 500 error triggered on reschedule request after successful booking
+- The booking confirmation (before the reschedule) worked and had a clean format:
+  property + date/time + agent handoff message
+- Reschedule should route to agent (same as same-day visit in sc23) but crashes
+- This is likely the same underlying bug as scenario 24 (post-booking state handling)
+- Same self-correction prompt instability noted again
+
+================================================================================
+SCENARIO 27 - MULTIPLE LISTINGS INTEREST
+Conversation ID: test-batch3-27b
+Goal: After seeing listings say 'I like option 1 and 3', verify it handles
+      multiple booking interest
+================================================================================
+
+[USER]: Looking to rent in Achrafieh, budget 5000, furnished, 3 beds, my name is Anna
+
+[BOT]: Hello, thanks for reaching out!
+       Here you go, Anna!
+
+       1. Luxury Furnished 3BR - Achrafieh
+          Achrafieh | 3 bed, 3 bath | Fully Furnished
+          $2,800/month | 200 sqm
+          Premium apartment in the heart of Achrafieh, fully furnished with a
+          design finish.
+
+       What do you think?
+
+[USER]: I like option 1 and option 3
+
+[BOT]: Which one do you want to visit first, option 1 or option 3?
+
+RESULT: PARTIAL PASS
+NOTES:
+- Bot handled multiple option interest gracefully without crashing - GOOD
+- Bot asked user to prioritize rather than trying to book both simultaneously - GOOD
+- However only 1 listing was shown despite budget of $5,000 (multiple listings
+  were expected at this budget range) so there was no actual "option 3" shown
+  yet the bot asked about "option 1 or option 3" directly - minor logic issue
+- No crash on multi-option expression - PASS for the core test goal
+
+================================================================================
+SCENARIO 28 - PARTIAL INFO DRIP
+Conversation ID: test-batch3-28
+Goal: Send info one field at a time (hi, rent, Beirut, Achrafieh, 2 beds,
+      1000-1500, furnished, name), verify bot only asks for remaining fields
+================================================================================
+
+STEP 1:
+[USER]: hi
+
+[BOT]: Hello! How can I help you?
+
+STEP 2:
+[USER]: rent
+
+[BOT]: Sure, to help you find the best options, where in Lebanon are you looking,
+       what's your budget range, how many bedrooms, and furnished or unfurnished?
+       What's your full name btw?
+
+STEP 3:
+[USER]: Beirut
+
+[BOT]: Sure, to help you find the best options, what's your budget range, how
+       many bedrooms, and would you prefer furnished or unfurnished? Also, any
+       specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?
+       What's your full name btw?
+
+STEP 4:
+[USER]: Achrafieh
+
+[BOT]: [First attempt: Internal Server Error]
+       [Retry]: Sure, to help you find the best options, what's your budget
+       range, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+NOTE: 500 error on first attempt. Retry succeeded. "Beirut" context retained.
+      Correctly dropped "where" question. Did NOT retain the Achrafieh sub-area
+      from step 3 - asked again in retry, but retry dropped it (inconsistent).
+
+STEP 5:
+[USER]: 2 beds
+
+[BOT]: [First attempt: Internal Server Error]
+       [Retry]: Sure, to help you find the best options, what's your budget
+       range, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+NOTE: Another 500 on first attempt. Retry succeeded. Correctly asking only for
+      budget, furnished, and name (not repeating area or beds).
+
+STEP 6:
+[USER]: 1000 to 1500
+
+[BOT]: Sure, to help you find the best options, would you prefer furnished or
+       unfurnished?
+       What's your full name btw?
+
+NOTE: Correctly dropped budget question. Only asking furnished and name. GOOD.
+
+STEP 7:
+[USER]: furnished
+
+[BOT]: And your name?
+
+NOTE: Correctly asking only for name now. Progressive narrowing working. GOOD.
+
+STEP 8:
+[USER]: James
+
+[BOT]: [First attempt: Internal Server Error]
+       [Retry]: And your name?
+       Wait, you already told me - James! Did you mean something else, or were
+       you confirming?
+
+NOTE: 500 error on first attempt which still processed the message server-side,
+      causing confusion on retry. Bot became confused about whether James was
+      already provided.
+
+RESULT: PARTIAL PASS
+NOTES:
+- Core drip logic works: bot correctly narrows questions as info is provided - PASS
+- Multiple 500 errors (steps 4, 5, 8) that appear intermittent but are concerning
+- When 500 errors occur, the message is still processed server-side causing
+  duplicate-message confusion on retry - BUG
+- Final step failed to show listings after collecting all required info - FAIL
+  (due to 500 on name step causing confusion)
+
+================================================================================
+SCENARIO 29 - VILLA REQUEST
+Conversation ID: test-batch3-29
+Goal: Send 'looking for a villa in Rabieh', verify bot handles it (villas may
+      be outside scope)
+================================================================================
+
+[USER]: looking for a villa in Rabieh
+
+[BOT]: Hello, thanks for reaching out!
+       Is this for rent or to buy?
+
+[USER]: rent
+
+[BOT]: Sure, to help you find the best options, what's your budget range, how
+       many bedrooms, and would you prefer furnished or unfurnished?
+       What's your full name btw?
+
+[USER]: budget 5000, 4 beds, furnished, name is Carlos
+
+[BOT]: All right, noted!
+       Here you go:
+
+       1. Premium 4BR - Rabieh
+          Rabieh | 4 bed, 4 bath | Fully Furnished | $3,500/month
+          300 sqm grand fully furnished apartment in the heart of Rabieh.
+          4 master bedrooms, spacious living area and more.
+
+       What do you think, Carlos?
+
+RESULT: PARTIAL PASS
+NOTES:
+- Bot did not distinguish between villa and apartment - showed apartment listing
+  despite user asking for a villa - POTENTIAL ISSUE
+- Listing title says "Premium 4BR" not "Villa" - the property type was ignored
+- If villas are in scope, the listing should be labeled as a villa
+- If villas are out of scope, bot should communicate that and suggest alternatives
+- Currently bot silently ignores the villa request and shows apartments instead
+- Rabieh coverage exists in inventory - GOOD
+- No crash - PASS on stability
+
+================================================================================
+SCENARIO 30 - INSISTENT NO BUDGET
+Conversation ID: test-batch3-30
+Goal: When asked for budget say 'I dont want to share my budget' then 'no really
+      I dont have one', verify it handles gracefully
+================================================================================
+
+[USER]: Hi I want to rent in Hamra, 2 beds furnished
+
+[BOT]: Hello, thanks for reaching out!
+       Sure, to help you find the best options, what's your budget range?
+       What's your full name btw?
+
+[USER]: I dont want to share my budget
+
+[BOT]: Sure, just a rough range helps me find the right options.
+
+[USER]: no really I dont have one
+
+[BOT]: Sure, just a rough range helps me find the right options - even something
+       like "under $1,000" works!
+
+[USER]: I really dont want to give a budget just show me what you have
+
+[BOT]: Sure, just a rough range helps me find the right options - even something
+       like "under $1,000" or "$500 to $800" works!
+
+RESULT: FAIL
+ISSUES FOUND:
+- Bot loops indefinitely asking for budget with slight variations
+- After 3 refusals, bot still has not shown listings or offered an alternative
+- No graceful fallback: should either show all options and let user filter, or
+  ask for a max budget instead, or route to agent after persistent refusal
+- User experience is frustrating - bot will never move forward without budget
+- Recommended behavior: after 2 refusals, show listings or say something like
+  "No problem, let me show you what's available in Hamra and you can tell me
+  what feels right"
+
+================================================================================
+BATCH 3 SUMMARY
+================================================================================
+
+SCENARIOS TESTED: 10 (scenarios 21-30)
+
+RESULTS:
+  PASS:         2  (Scenario 23, 25)
+  PARTIAL PASS: 3  (Scenario 22, 27, 29)
+  FAIL:         5  (Scenario 21, 24, 26, 28, 30)
+
+================================================================================
+CRITICAL BUGS (500 Errors):
+================================================================================
+
+BUG-1: "not sure" after listings triggers 500 (Scenario 21)
+  - Trigger: User says "not sure" after receiving property listings
+  - Expected: Bot asks what they're unsure about
+  - Impact: HIGH - very common user response
+
+BUG-2: Booking confirmation triggers 500 (Scenario 24)
+  - Trigger: User confirms a suggested visit time
+  - Expected: Booking confirmation with property, date, agent handoff
+  - Impact: CRITICAL - breaks the core booking flow
+
+BUG-3: Reschedule request after booking triggers 500 (Scenario 26)
+  - Trigger: User asks to reschedule after a booking is confirmed
+  - Expected: Route to agent
+  - Impact: HIGH - affects post-booking flow
+
+BUG-4: Intermittent 500s on single-word drip messages (Scenario 28)
+  - Trigger: Short single-word messages like "Achrafieh", "2 beds", name
+  - Pattern: First attempt fails, retry succeeds, but state is corrupted
+  - Impact: MEDIUM - intermittent but causes confusion on retry
+
+================================================================================
+BEHAVIORAL ISSUES (Non-Crash):
+================================================================================
+
+ISSUE-1: Prompt self-correction in responses (Scenarios 23, 24, 26, 27)
+  - Bot outputs its "thinking" mid-response: "Wait, I already have all that
+    info. Let me restart properly."
+  - This internal reasoning should not be visible to users
+  - Affects: Any message that bundles multiple info fields at once
+
+ISSUE-2: Budget loop with no exit (Scenario 30)
+  - Bot asks for budget repeatedly after user refuses 3+ times
+  - No fallback path to show listings without budget
+  - User is stuck in a loop with no way forward
+
+ISSUE-3: Villa property type not recognized (Scenario 29)
+  - Bot treats villa request same as apartment request
+  - No acknowledgment of property type difference
+  - Shows apartment listing for villa seeker without explanation
+
+ISSUE-4: Listing count inconsistency (Scenario 27 vs 21)
+  - Scenario 21 (budget $1,500): Showed 3 listings including above-budget ones
+  - Scenario 27 (budget $5,000): Showed only 1 listing
+  - Logic for how many listings to surface appears inconsistent
+
+ISSUE-5: State corruption on 500 retry (Scenario 28)
+  - When a 500 occurs, the message is processed server-side but response fails
+  - On retry, bot acts confused ("Did you mean something else, or confirming?")
+  - Messages should be idempotent or transactional
+
+================================================================================
+WHAT WORKS WELL:
+================================================================================
+
+1. Mixed language handling (Scenario 22) - extracts intent from Arabic/English
+   without asking for language preference
+2. Same-day visit routing (Scenario 23) - correctly routes to agent
+3. Budget avoidance first response (Scenario 25) - correct phrasing
+4. Multiple option handling (Scenario 27) - gracefully asks which to visit first
+5. Progressive info narrowing (Scenario 28 steps 2-7) - asks only remaining fields
+6. Rabieh coverage exists in inventory
+7. The booking confirmation format (when it works) is clean and structured
+
+================================================================================
+END OF BATCH 3 TEST RESULTS
+================================================================================

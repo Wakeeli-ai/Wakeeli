@@ -1,0 +1,428 @@
+================================================================================
+WAKEELI CHATBOT TEST RESULTS - BATCH 1
+Date: 2026-03-31
+API: https://wakeeli-ai.up.railway.app/api/chat/test
+================================================================================
+
+NOTE ON ERRORS: Some requests returned "Internal Server Error" from the server.
+These are documented as-is. The phrase "exact address" consistently triggered
+500 errors regardless of conversation context (see Scenario 10 analysis).
+Some timeouts and 500s were transient and resolved on retry.
+
+================================================================================
+=== SCENARIO 1: BARE GREETING (conv id: test-batch1-01) ===
+================================================================================
+
+[USER]: Hi
+[BOT]: Hello! How can I help you?
+
+[USER]: looking for an apartment in Beirut
+[BOT]: Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Achrafieh, Hamra, or Verdun?
+What's your full name btw?
+
+[USER]: rent
+[BOT]: Sure, to help you find the best options, do you have a specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun? Also, what's your budget range, how many bedrooms, and furnished or unfurnished?
+What's your full name btw?
+
+[USER]: 2 bedrooms, furnished, budget 1000 to 1500
+[BOT]: And your name?
+
+ANALYSIS:
+PASS - Bot asked for name before proceeding with search. Even after all key
+details were provided (bedrooms, furnishing, budget, location), the bot held
+the search and asked for the user name. Name enforcement is working correctly.
+NOTE: The bot asked for name multiple times during earlier steps before the
+final step, which may feel repetitive. The bot also did not ask for rent/buy
+clarification explicitly when told "looking for an apartment in Beirut" and
+then "rent" separately.
+
+================================================================================
+=== SCENARIO 2: FULL SPECS IN ONE MESSAGE (conv id: test-batch1-02) ===
+================================================================================
+
+[USER]: Hello im looking to rent a 2 bed furnished apartment in Achrafieh budget 1000 to 1500 my name is Sarah
+[BOT]: Hello, thanks for reaching out!
+These are slightly above your budget Sarah, but they're the closest we have in Achrafieh right now:
+
+1. Modern 2BR - Achrafieh
+   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. Modern finishes throughout.
+
+2. Luxury Furnished 3BR - Achrafieh
+   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month
+   200 sqm fully furnished premium apartment in the heart of Achrafieh.
+
+3. Grand 4BR Penthouse - Achrafieh
+   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month
+   280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+Option 1 is probably the closest to what you had in mind.
+What do you think?
+
+ANALYSIS:
+PASS - Bot went straight to search results without asking extra questions.
+All info was captured from a single message: name (Sarah), intent (rent),
+bedrooms (2), furnishing (furnished), area (Achrafieh), budget (1000-1500).
+NOTE: Listings shown are over budget (cheapest is $1,800 vs $1,500 max). Bot
+did acknowledge this ("slightly above your budget"). No exact matches within
+budget were returned, which could be a data issue or intentional fallback.
+
+================================================================================
+=== SCENARIO 3: ARABIC GREETING (conv id: test-batch1-03) ===
+================================================================================
+
+[USER]: Marhaba
+[BOT]: Marhaba kifak, shu fine a3mile la2ak?
+
+[USER]: baddi ista2jar shi bi Beirut
+[BOT]: Sure, to help you find the best options, kam ghurfit noom badda, shu l budget, w furnished aw unfurnished? W eza 3andak manta2a mo3ayyana bi Beirut bi balik, like Hamra, Achrafieh, aw Verdun?
+Shu l esem btw?
+
+[USER]: ista2jar, 2 ghorf, 1200 dollar, Karim
+[BOT]: (All answers processed - bot identified user as Karim and returned to
+asking "Which one caught your eye, Karim?" indicating search already ran.)
+
+Results shown (retrieved via follow-up message):
+1. Apartment in Hamra - 2 bedrooms | Unfurnished | $900/month
+   Spacious layout, close to AUB and main roads.
+2. Apartment in Achrafieh - 2 bedrooms | Furnished | $1,150/month
+   Modern finish, great natural light, quiet street.
+3. Apartment in Badaro - 2 bedrooms | Furnished | $1,100/month
+   Charming building, walking distance to cafes and shops.
+4. Apartment in Ras Beirut - 2 bedrooms | Unfurnished | $850/month
+   Good-sized rooms, sea view from balcony.
+5. Apartment in Mar Mikhael - 2 bedrooms | Furnished | $1,200/month
+   Trendy area, recently renovated, close to nightlife and restaurants.
+
+Option 4 is probably the closest to what you had in mind if you want the most
+value for your budget.
+What do you think?
+
+ANALYSIS:
+PASS - Bot responded in Lebanese Franco-Arab from the first message. It
+matched the Arabic greeting and continued in Arabizi. Bot extracted all four
+answers (rent intent, 2 bedrooms, $1200, name Karim) from a single message
+and ran the search. Results were within budget. Language handling is solid.
+NOTE: Initial response to combined answers had a blank/empty body before the
+follow-up "Which one caught your eye" message, suggesting the search output
+message may have been dropped in that exchange.
+
+================================================================================
+=== SCENARIO 4: RENT/BUY CHECK (conv id: test-batch1-04) ===
+================================================================================
+
+[USER]: Hey looking for a place in Jounieh
+[BOT]: Hello, thanks for reaching out!
+Is this for rent or to buy?
+
+[USER]: rent
+[BOT]: Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?
+What's your full name btw?
+
+[USER]: 2 bedrooms
+[BOT]: Sure, to help you find the best options, what's your budget range, and would you prefer furnished or unfurnished?
+What's your full name btw?
+
+[USER]: 1500
+[BOT]: Sure, to help you find the best options, would you prefer furnished or unfurnished?
+What's your full name btw?
+
+[USER]: Maya
+[BOT]: And your name?
+
+Wait - got it, Maya! Let me pull up some options for you.
+
+These are slightly above your budget but they're the closest we have in Jounieh right now:
+
+1. 3BR Apartment - Jounieh
+   Jounieh | 3 bed, 2 bath | Furnished | $1,600/month
+   170 sqm furnished apartment in a well-managed building. Modern kitchen and bright living spaces.
+
+2. Furnished Sea View 3BR - Jounieh
+   Jounieh | 3 bed, 3 bath | Fully Furnished | $2,500/month
+   210 sqm with panoramic sea views over Jounieh Bay.
+
+3. Luxury Seafront 4BR - Jounieh
+   Jounieh | 4 bed, 4 bath | Fully Furnished | $3,800/month
+   300 sqm seafront apartment with a 30 sqm balcony and master suite.
+
+Option 1 is probably the closest to what you had in mind.
+What do you think?
+
+ANALYSIS:
+PASS - Bot asked rent or buy FIRST before anything else, confirming correct
+question ordering. It then collected bedrooms, budget, and name step by step.
+ISSUES NOTED:
+1. Bot asked "What's your full name btw?" at every single step (after
+   bedrooms, after budget, after furnishing question). Very repetitive.
+2. Bot said "And your name?" again AFTER Maya gave her name "Maya", then
+   self-corrected mid-message ("Wait - got it, Maya!"). This is a bug in
+   name detection or state tracking.
+3. No exact 2-bedroom matches within $1,500 budget shown - all results are
+   3+ bedrooms and over budget. May be a data issue.
+4. Furnishing preference was never answered by Maya but bot searched anyway.
+
+================================================================================
+=== SCENARIO 5: BUDGET SKIP (conv id: test-batch1-05) ===
+================================================================================
+
+[USER]: Hi
+[BOT]: Hello! How can I help you?
+
+[USER]: Mar Elias, 3 bedrooms (location and bedrooms but no budget)
+[BOT]: Sure, to help you find the best options, what's your budget range, and would you prefer furnished or unfurnished?
+Also, is this for rent or to buy?
+
+[USER]: rent, 3 bedrooms (answered rent/buy but still no budget)
+[BOT]: Sure, to help you find the best options, what's your budget range, and would you prefer furnished or unfurnished?
+What's your full name btw?
+
+[USER]: no budget, just find me something
+[BOT]: Sure, just a rough range helps me find the right options - even something like "under $1000" or "around $800" works!
+
+ANALYSIS:
+PASS - Bot correctly and consistently asked for budget even when the user
+tried to skip it. It did not proceed to search without a budget. When the
+user pushed back saying they have no budget, the bot asked nicely for even a
+rough range rather than giving up or searching without it.
+
+================================================================================
+=== SCENARIO 6: NAME ENFORCEMENT (conv id: test-batch1-06) ===
+================================================================================
+
+[USER]: Hi I want to rent a 2 bedroom apartment in Hamra budget 800 to 1200
+[BOT]: Hello, thanks for reaching out!
+Sure, to help you find the best options, would you prefer furnished or unfurnished?
+What's your full name btw?
+
+[USER]: 03123456 (phone number instead of name)
+[BOT]: And your name?
+
+[USER]: Joseph
+[BOT]: I couldn't find any matching apartments in Hamra right now. Let me connect you with one of our agents who might have more options.
+
+ANALYSIS:
+PASS (partial) - When the user sent a phone number instead of a name, the bot
+re-asked for a name ("And your name?") without accepting the phone number as
+valid. Name enforcement worked correctly.
+ISSUE: Bot then searched and found no results in Hamra within $800-1200
+budget and immediately handed off to agent. No "close but over budget" fallback
+was offered for Hamra specifically, unlike other scenarios. This may be a
+data gap for Hamra listings in this price range.
+NOTE: Bot also asked about furnished/unfurnished but the user never answered
+that - bot searched anyway (or tried to). Inconsistent with how it handled
+missing info in Scenario 5 (budget).
+
+================================================================================
+=== SCENARIO 7: OFF TOPIC (conv id: test-batch1-07, confirmed via test-batch1-07-v2) ===
+================================================================================
+
+[USER]: What is the weather today?
+[BOT]: I can only help with real estate. Looking to buy or rent something in Lebanon?
+
+[USER]: Can you help me write a poem?
+[BOT]: I can only help with real estate. Looking to buy or rent something in Lebanon?
+
+NOTE: Original conversation ID test-batch1-07 returned Internal Server Error
+on the second message. The behavior was confirmed using conversation ID
+test-batch1-07-v2 where both off-topic messages got the same redirect response.
+
+ANALYSIS:
+PASS - Bot consistently refused off-topic requests and redirected to real
+estate. The response is clear and not rude. It redirected with a question to
+re-engage the user.
+NOTE: Both off-topic queries got the exact same word-for-word response. The
+redirect is functional but could be slightly varied to feel less robotic on
+repeat. Also the original conv ID test-batch1-07 became unstable after the
+first message and started returning 500 errors.
+
+================================================================================
+=== SCENARIO 8: BOT IDENTITY (conv id: test-batch1-08) ===
+================================================================================
+
+[USER]: Hi looking to rent in Beirut
+[BOT]: Hello, thanks for reaching out!
+Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?
+What's your full name btw?
+
+[USER]: rent
+[BOT]: Sure, to help you find the best options, do you have a specific area in Beirut in mind - like Hamra, Achrafieh, or Verdun? Also, what's your budget range, how many bedrooms, and furnished or unfurnished?
+What's your full name btw?
+
+[USER]: are you a bot?
+[BOT]: Let me connect you with one of our agents right now.
+They'll be in touch with you shortly!
+
+[USER]: 2 bedrooms budget 1500 my name is Rania
+[BOT]: These are slightly above your budget, Rania, but they're the closest we have in Achrafieh right now:
+
+1. Modern 2BR - Achrafieh
+   2 bed, 2 bath, Fully Furnished, $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. Modern finishes throughout.
+
+2. Luxury Furnished 3BR - Achrafieh
+   3 bed, 3 bath, Fully Furnished, $2,800/month
+   200 sqm fully furnished premium apartment in the heart of Achrafieh.
+
+3. Grand 4BR Penthouse - Achrafieh
+   4 bed, 5 bath, Fully Furnished, $4,000/month
+   280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+Option 1 is probably the closest to what you had in mind.
+What do you think?
+
+ANALYSIS:
+PARTIAL PASS - Bot handled "are you a bot?" by saying it would connect to an
+agent, which is an acceptable and human-feeling deflection. It did not say
+"Yes I am a bot" or deny being one awkwardly.
+ISSUES NOTED:
+1. After claiming to connect to an agent ("They'll be in touch shortly"), the
+   bot continued accepting messages and ran a search anyway. This is
+   contradictory behavior - it cannot simultaneously be handing off to a human
+   agent AND still taking search requests.
+2. Area defaulted to Achrafieh even though the original request was Beirut
+   generally with no specific area given.
+3. Same over-budget listing issue as other scenarios.
+
+================================================================================
+=== SCENARIO 9: CORRECTION (conv id: test-batch1-09) ===
+================================================================================
+
+[USER]: Hi looking to rent 3 bedroom apartment in Achrafieh budget 2000 my name is Tarek
+[BOT]: Hello, thanks for reaching out!
+These are slightly above your budget but are the closest matches I found in Achrafieh:
+
+1. Luxury Furnished 3BR - Achrafieh
+   3 bed, 3 bath | Fully Furnished | $2,800/month
+   200 sqm premium apartment in the heart of Achrafieh. Modern design, fully furnished.
+
+2. Grand 4BR Penthouse - Achrafieh
+   4 bed, 5 bath | Fully Furnished | $4,000/month
+   280 sqm penthouse with a 70 sqm private terrace and city/sea views.
+
+3. Modern 2BR - Achrafieh
+   2 bed, 2 bath | Fully Furnished | $1,800/month
+   140 sqm stylish apartment in a premium Achrafieh building. (Note: this one is 2 bedrooms, slightly under your requirement but within budget.)
+
+Option 1 is probably the closest to what you had in mind.
+What do you think?
+
+[USER]: actually I meant 2 bedrooms
+[BOT]: Sure! Here are some 2-bedroom options in Achrafieh under $2,000/month:
+
+1. Apartment - Achrafieh, Sioufi
+   2 beds | Unfurnished | $1,500/month
+   Spacious layout, natural light, close to amenities.
+
+2. Apartment - Achrafieh, Rmeil
+   2 beds | Furnished | $1,800/month
+   Modern finishes, balcony, quiet street.
+
+3. Apartment - Achrafieh, Tabaris
+   2 beds | Semi-furnished | $1,700/month
+   Great location, recently renovated.
+
+Option 2 is probably the closest to a solid pick given the furnishing and location.
+What do you think, Tarek?
+
+ANALYSIS:
+PASS - Bot correctly understood the correction and updated the search from 3
+bedrooms to 2 bedrooms without requiring the user to re-enter all other
+details. The new results matched the corrected criteria (2 bedrooms, Achrafieh,
+within $2,000). Bot retained the user name (Tarek) and addressed him in the
+follow-up. Smooth correction handling.
+NOTE: First search for 3BR/$2000 returned nothing within budget and showed
+over-budget options. Second search for 2BR/$2000 did return within-budget
+results, suggesting inventory exists. This is worth noting for calibration.
+
+================================================================================
+=== SCENARIO 10: ADDRESS QUESTION (conv id: test-batch1-10 / test-batch1-10-v2) ===
+================================================================================
+
+[USER]: Hi I want to rent a 1 bedroom in Hamra budget 600 to 900 my name is Lara
+[BOT]: Hello, thanks for reaching out!
+Sure, to help you find the best options, would you prefer furnished or unfurnished?
+What's your full name btw?
+
+Wait - you already gave me your name, Lara! Let me skip that last part.
+
+Let me restart cleanly:
+
+Hello, thanks for reaching out!
+Would you prefer the apartment furnished or unfurnished, Lara?
+
+[USER]: furnished
+[BOT]: All right, noted!
+I don't have any furnished 1-bedroom apartments in Hamra within that range right now. Let me connect you with one of our agents who might have more options.
+
+[USER]: what is the exact address of the first listing?
+[BOT]: Internal Server Error (500) - repeated across multiple attempts and
+conversation IDs. The phrase "exact address" consistently triggered a 500
+server error. This was reproduced on completely fresh conversation IDs with
+no prior context.
+
+ANALYSIS:
+CRITICAL BUG - The phrase "what is the exact address" (or similar address
+queries) causes a 500 Internal Server Error on the server. This is reproducible
+and not context-dependent. Multiple fresh conversation IDs all failed with the
+same error when an address-type query was sent.
+
+ADDITIONAL ISSUES:
+1. Bot self-corrected mid-message again ("Wait - you already gave me your
+   name, Lara!") and restarted its greeting. This is the same bug seen in
+   Scenario 4 - the name detection runs after the template message has already
+   been partially composed, causing a visible correction in the response.
+2. No listings found in Hamra for 1BR furnished at $600-900. Bot correctly
+   offered agent handoff.
+3. Since the bot connected Lara to an agent before the address question was
+   asked, the expected behavior (redirecting address request to agent) could
+   not be verified due to the 500 error.
+
+================================================================================
+OVERALL SUMMARY
+================================================================================
+
+SCENARIOS PASSED: 7 out of 10 scenarios completed full flows
+SCENARIOS WITH ISSUES: All scenarios had at least minor issues
+
+CRITICAL BUGS:
+1. "Exact address" query causes 500 Internal Server Error - reproducible,
+   crash-level bug. Any message containing address-related queries about
+   specific listing addresses crashes the server.
+2. Self-correction pattern in bot responses - bot generates "What's your full
+   name btw?" as a template, then detects the name was already given and
+   appends a correction mid-message. Seen in Scenarios 4 and 10. The name
+   should be extracted BEFORE composing the response.
+
+SIGNIFICANT ISSUES:
+3. Repetitive name prompting - bot asked for the name 3-4 times in some
+   conversations (Scenarios 1 and 4) before the user got to provide it.
+   Should track that it has already asked.
+4. Post-agent-handoff continuation - in Scenario 8, bot said "connecting to
+   agent" then immediately continued processing the next search message as
+   normal. The two behaviors are contradictory.
+
+MINOR ISSUES:
+5. Over-budget results - several scenarios showed only over-budget listings
+   when within-budget inventory may not exist. Bot acknowledges this but
+   it happened frequently, suggesting inventory gaps.
+6. Furnishing preference sometimes bypassed - in Scenario 6, bot searched
+   without getting furnishing preference. Inconsistent with Scenario 5
+   where budget was enforced strictly.
+7. Area defaulting - in Scenario 8, general "Beirut" request defaulted to
+   Achrafieh in results without user specifying.
+8. Transient 500 errors on some requests (not reproducible, likely server load).
+
+WHAT WORKED WELL:
+- Rent vs buy question asked first (Scenario 4)
+- Full-spec parsing from a single message (Scenario 2)
+- Arabic/Franco-Arab language handling (Scenario 3)
+- Budget enforcement - bot refused to search without budget (Scenario 5)
+- Name enforcement - phone number was rejected, name re-asked (Scenario 6)
+- Off-topic redirect - consistent and clear (Scenario 7)
+- Correction handling - bedroom count update worked cleanly (Scenario 9)
+- "Are you a bot?" graceful redirect to agent (Scenario 8)
+
+================================================================================
+END OF TEST RESULTS BATCH 1
+================================================================================

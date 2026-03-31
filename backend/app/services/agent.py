@@ -310,6 +310,7 @@ Example:
             furnishing = property_info.get("furnishing")
 
             msg = ""
+            alternatives_instruction = ""
 
             if link_or_id:
                 listing = db.query(Listing).filter(
@@ -461,16 +462,15 @@ Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with
                             # so that a second dismissive message in _check_routing_conditions
                             # can detect it and route to agent correctly.
                             alternatives_instruction = (
-                                "\nCRITICAL: The user just rejected the previous options but is NOT leaving. "
-                                "They want to see different options. "
-                                "Do NOT say goodbye. Do NOT end the conversation. Do NOT route to an agent. "
-                                "Say exactly: 'Sure, want me to look at different options?' or "
-                                "'Want me to adjust the search?' Keep it to one short sentence."
+                                "CRITICAL OVERRIDE: The user said they are not interested. "
+                                "DO NOT say goodbye. DO NOT wish them well. DO NOT end the conversation. "
+                                "Instead, you MUST say: I have other options in different areas or price ranges. "
+                                "Want me to take a look? "
+                                "This is MANDATORY. Ignore any other instructions about saying goodbye."
                             )
 
                         msg = f"""
 The user has already seen listings. This is a follow-up message in the ongoing conversation.
-{alternatives_instruction}
 Respond naturally based on what the user just said. Possible scenarios:
 - If they expressed interest in a specific option: move to booking a visit. Ask what day works.
 - If they confirmed a visit time (e.g. 'Wednesday works', 'yeah that works', 'sure'): send a clean booking confirmation summary. Format: "Your visit is set for [day] at [time]" ||| "I'll be connecting you with the agent shortly"
@@ -592,8 +592,12 @@ If location is already known, ask only for the budget range.
 Bundle it into one short message.
 """
 
+            alt_override_prefix = ""
+            if alternatives_instruction:
+                alt_override_prefix = f"{alternatives_instruction}\n\n"
+
             message = f"""
-Be natural and conversational.
+{alt_override_prefix}Be natural and conversational.
 Present property information clearly.
 Help the user move toward booking a visit.
 Do NOT echo or summarize the user's requirements before presenting results. If you need to acknowledge their last input, say something brief like "All right, noted!" then go straight to the listings.
@@ -1033,16 +1037,22 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         # If the bot previously asked for the user's name and the extractor still
         # returned null for name, treat the current message as a name if it is
         # short (1-3 words) and contains no property-related keywords.
+        # Also reject messages that look like budget amounts or numeric inputs.
         _PROPERTY_KEYWORDS = re.compile(
             r'\b(rent|buy|bedroom|studio|apartment|furnished|location|budget|'
             r'ista2jar|ishtari|baddi|wein|shu)\b',
+            re.IGNORECASE
+        )
+        _BUDGET_PATTERN = re.compile(
+            r'(\d|\$|usd|lbp|dollars?|thousand|k\b|per month|monthly)',
             re.IGNORECASE
         )
         if (session.name_asked
                 and not session.user_info.get("name")
                 and not extracted.get("user_info", {}).get("name")
                 and len(user_message.split()) <= 4
-                and not _PROPERTY_KEYWORDS.search(user_message)):
+                and not _PROPERTY_KEYWORDS.search(user_message)
+                and not _BUDGET_PATTERN.search(user_message)):
             extracted.setdefault("user_info", {})
             extracted["user_info"]["name"] = user_message.strip()
 

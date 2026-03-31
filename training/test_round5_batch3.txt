@@ -1,0 +1,65 @@
+=== WAKEELI TEST ROUND 5 BATCH 3 ===
+Date: Tue Mar 31 21:43:47 EEST 2026
+
+------------------------------------------------------------
+SCENARIO 11: REJECTION FIRST (r5-s11)
+PASS condition: After 'not interested', bot offers alternatives (NOT goodbye, NOT route to agent)
+------------------------------------------------------------
+[MSG 1] hi
+RESPONSE: {"messages":["Hello! How can I help you?"],"conversation_id":"r5-s11"}
+
+[MSG 2] rent in Hamra, $900
+RESPONSE: {"messages":["I've connected you with one of our agents who will be in touch shortly."],"conversation_id":"r5-s11"}
+
+[MSG 3] Mike
+RESPONSE: {"messages":["Hello! How can I help you?"],"conversation_id":"r5-s11"}
+
+[MSG 4] show me listings
+RESPONSE: {"messages":["I wasn't able to find any matching listings in Hamra right now for a furnished 1-bedroom under $900/month.\n\nLet me connect you with one of our agents who might have more options available. They'll be in touch shortly!"],"conversation_id":"r5-s11"}
+
+[MSG 5] not interested
+RESPONSE: {"messages":["Sure thing Mike! Thanks for your time, and feel free to reach out anytime. Wishing you the best!"],"conversation_id":"r5-s11"}
+
+EVALUATION: Check if bot offered alternatives vs said goodbye or routed to agent
+
+------------------------------------------------------------
+SCENARIO 12: REJECTION SECOND (r5-s12)
+PASS condition: After second rejection ('no thanks'), bot routes to agent
+------------------------------------------------------------
+[MSG 1] hi
+RESPONSE: {"messages":["Hello! How can I help you?"],"conversation_id":"r5-s12"}
+
+[MSG 2] rent in Hamra, $900
+RESPONSE: {"messages":["I've connected you with one of our agents who will be in touch shortly."],"conversation_id":"r5-s12"}
+
+[MSG 3] Mike
+RESPONSE: {"messages":["Sure, to help you find the best options in Hamra, what's your budget range and do you prefer furnished or unfurnished? Also, how many bedrooms are you looking for?\n\n\nI'm going to connect you with one of our agents who might have more options. Let me get someone to reach out to you shortly, Mike!"],"conversation_id":"r5-s12"}
+
+[MSG 4] show me listings
+RESPONSE: first byte timeout
+
+[MSG 5] not interested
+RESPONSE: {"messages":["Sure thing Mike! Thanks for your time, and feel free to reach out anytime. Wishing you the best!"],"conversation_id":"r5-s12"}
+
+[MSG 6] no thanks
+RESPONSE: {"messages":["Sure thing, Mike! Feel free to reach out anytime. Wishing you the best!"],"conversation_id":"r5-s12"}
+
+EVALUATION: Check if bot routed to agent after second rejection
+
+------------------------------------------------------------
+SCENARIO 13: BOOKING (r5-s13)
+PASS condition: After 'I like this, can I visit?', bot asks about timing
+------------------------------------------------------------
+[MSG 1] hi
+RESPONSE: {"messages":["Hello! How can I help you?"],"conversation_id":"r5-s13"}
+
+[MSG 2] rent in Verdun $1200
+RESPONSE: {"messages":["I've connected you with one of our agents who will be in touch shortly."],"conversation_id":"r5-s13"}
+
+[MSG 3] Tony
+RESPONSE: {"messages":["Already have your name, Tony! Let me check what's available.\n\nI wasn't able to find any matching apartments in Verdun right now. Let me connect you with one of our agents who might have more options."],"conversation_id":"r5-s13"}
+
+[MSG 4] show me listings
+RESPONSE: {"messages":["Here you go, Tony!\n\nI wasn't able to find matching apartments in Verdun right now. Let me connect you with one of our agents who might have more options."],"conversation_id":"r5-s13"}
+
+[MSG 5] I like this, can I visit?

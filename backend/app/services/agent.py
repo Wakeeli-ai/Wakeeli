@@ -765,7 +765,7 @@ Greet the user naturally and ask how you can help them find a property in Lebano
         raw_reply = _strip_internal_reasoning(raw_reply)
     except Exception as e:
         print(f"generate_reply: LLM call failed (action={action}): {e}")
-        return ["Bear with me for a second, something went wrong. Please try again."]
+        return [f"[DEBUG] LLM call failed (action={action}): {type(e).__name__}: {e}"]
 
     # Split on ||| delimiter and clean each part, stripping any stray quotation marks
     parts = [p.strip().strip('"').strip("'").strip() for p in raw_reply.split("|||") if p.strip()]

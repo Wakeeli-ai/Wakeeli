@@ -36,8 +36,13 @@ def search_listings(db: Session, filters: dict):
                 )
             )
 
-    if filters.get("bedrooms"):
-        query = query.filter(Listing.bedrooms == filters["bedrooms"])
+    if filters.get("bedrooms") is not None and filters["bedrooms"] != [] and filters["bedrooms"] != "":
+        bedrooms_val = filters["bedrooms"]
+        if isinstance(bedrooms_val, list):
+            # User specified multiple types e.g. "studio or 1-bedroom" -> [0, 1]
+            query = query.filter(Listing.bedrooms.in_(bedrooms_val))
+        else:
+            query = query.filter(Listing.bedrooms == bedrooms_val)
 
     if filters.get("furnishing"):
         query = query.filter(Listing.furnishing.ilike(f"%{filters['furnishing']}%"))

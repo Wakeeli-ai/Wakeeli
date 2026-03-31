@@ -41,10 +41,18 @@ _RESCHEDULE_PATTERNS = re.compile(
     re.IGNORECASE
 )
 
+# Specific future timeline mentions: user wants to buy/rent but not for a while.
+# These should NOT route to agent. The bot should acknowledge and continue qualification.
 _FAR_TIMELINE_PATTERNS = re.compile(
-    r"(just browsing|not sure when|not sure yet|not looking (yet|now|anytime soon)|"
-    r"next year|no rush|no hurry|not urgent|few months|several months|"
+    r"(next year|few months|several months|not for|not until|"
     r"\b[3-9]\s*months?\b|\b1[0-9]\s*months?\b)",
+    re.IGNORECASE
+)
+
+# Pure browsing with no timeline: route to agent
+_JUST_BROWSING_PATTERNS = re.compile(
+    r"(just browsing|not sure when|not sure yet|not looking (yet|now|anytime soon)|"
+    r"no rush|no hurry|not urgent)",
     re.IGNORECASE
 )
 
@@ -99,9 +107,13 @@ def _check_routing_conditions(session: SessionState, user_message: str):
     if session.listings_shown and _TODAY_PATTERNS.search(user_message):
         return True, "Let me connect you with one of our agents to arrange that for you."
 
-    # Far timeline check (only meaningful once listings have been shown or user is qualified)
-    if session.listings_shown and _FAR_TIMELINE_PATTERNS.search(user_message):
+    # "Just browsing" with no real timeline: route to agent regardless of stage
+    if _JUST_BROWSING_PATTERNS.search(user_message):
         return True, "No problem! Let me connect you with one of our agents who can keep you updated when something comes up."
+
+    # Far timeline (e.g. "not for 6 months", "next year"): do NOT route.
+    # The prompt's FAR TIMELINE RULE tells the bot to acknowledge and continue qualification.
+    # We just let the normal action flow handle it. No routing needed here.
 
     # Dismissive check after listings shown
     # Use show_alternatives flag state to track rejection sequence:
@@ -109,13 +121,16 @@ def _check_routing_conditions(session: SessionState, user_message: str):
     # Second rejection: flag is already True -> route to agent
     if session.listings_shown and _DISMISSIVE_PATTERNS.search(user_message):
         session.rejection_count += 1
-        if not session.show_alternatives:
-            # First rejection: offer alternatives instead of routing
+        if session.show_alternatives:
+            # show_alternatives was already True (set on the previous rejection),
+            # meaning the bot already offered alternatives. This is the second
+            # rejection, so route to agent now.
+            return True, "Let me connect you with one of our agents who might have more options for you."
+        else:
+            # First rejection: set the flag so the alternatives block fires in
+            # generate_reply, and do NOT route yet.
             session.show_alternatives = True
             return False, ""
-        else:
-            # Second rejection: flag was already True, route to agent
-            return True, "Let me connect you with one of our agents who might have more options for you."
 
     return False, ""
 
@@ -442,7 +457,9 @@ Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with
                     else:
                         alternatives_instruction = ""
                         if session.show_alternatives:
-                            session.show_alternatives = False
+                            # Do NOT reset show_alternatives here. The flag must stay True
+                            # so that a second dismissive message in _check_routing_conditions
+                            # can detect it and route to agent correctly.
                             alternatives_instruction = (
                                 "\nCRITICAL: The user just rejected the previous options but is NOT leaving. "
                                 "They want to see different options. "

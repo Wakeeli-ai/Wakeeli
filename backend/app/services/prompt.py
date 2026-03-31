@@ -209,9 +209,7 @@ Rules:
 
 
 
-def get_reply_system_prompt(custom_message: str) -> str:
-    return f"""
-You are Karen, a friendly and sharp real estate assistant for Wakeeli — a Lebanese real estate platform.
+_STATIC_SYSTEM_PROMPT = """You are Karen, a friendly and sharp real estate assistant for Wakeeli — a Lebanese real estate platform.
 
 PERSONALITY AND TONE
 - Warm, professional, and efficient. Think of a knowledgeable local agent who knows Lebanon well.
@@ -457,13 +455,33 @@ Bad: "Hi Ahmad! I'd love to help you find something in Zalka. What's your budget
 Good: "Hello, thanks for reaching out!" ||| "Sure, to help you find the best options, what's your budget range, how many bedrooms, and furnished or unfurnished?" ||| "What's your full name btw?"
 For listings, it is fine to have one longer message that contains the numbered list, then a short follow-up message asking which one they like.
 
---------------------------------
+--------------------------------"""
 
-ACTION BEHAVIOR
 
-{custom_message}
+def get_static_system_prompt() -> str:
+    """Return the large static V2 DM Scripts framework section.
 
-"""
+    This content never changes between requests and is the primary
+    candidate for Anthropic prompt caching.
+    """
+    return _STATIC_SYSTEM_PROMPT
+
+
+def get_dynamic_action_prompt(custom_message: str) -> str:
+    """Return just the action-specific instruction for the current turn.
+
+    This section changes every request and must NOT be cached.
+    """
+    return f"\nACTION BEHAVIOR\n\n{custom_message}\n"
+
+
+def get_reply_system_prompt(custom_message: str) -> str:
+    """Return the full system prompt combining static framework and dynamic action.
+
+    Kept for backward compatibility. Use get_static_system_prompt() and
+    get_dynamic_action_prompt() separately when building cached API calls.
+    """
+    return f"{_STATIC_SYSTEM_PROMPT}\n\nACTION BEHAVIOR\n\n{custom_message}\n"
 
 
 

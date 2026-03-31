@@ -7,8 +7,15 @@ from app.services.matching import search_listings, recommend_alternatives
 from app.services.geography import REGION_MAP, GOVERNORATE_MAP, DISTRICT_MAP, GOVERNORATE_NAMES, DISTRICT_NAMES, get_location_type, get_area_examples
 from app.services.routing import find_best_agent, assign_agent
 from app.models import Conversation, Message, Event, Listing
-from app.services.prompt import intent_detection_prompt, get_reply_system_prompt, Normal_conversation_prompt
+from app.services.prompt import (
+    intent_detection_prompt,
+    get_reply_system_prompt,
+    get_static_system_prompt,
+    get_dynamic_action_prompt,
+    Normal_conversation_prompt,
+)
 from app.services.session import SessionState, STAGES
+from app.services.token_tracker import log_usage, check_token_budget
 from pprint import pprint
 
 client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
@@ -751,16 +758,36 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             + message
         )
 
-    system_prompt = get_reply_system_prompt(message)
-    combined_system = f"{system_prompt}\n\nCurrent session state: {state}"
+    static_prompt = get_static_system_prompt()
+    dynamic_prompt = get_dynamic_action_prompt(message)
+    session_state_text = f"\nCurrent session state: {state}"
+
+    # Build system as a list of content blocks so the large static framework
+    # is eligible for Anthropic prompt caching. The dynamic action instruction
+    # and session state change every turn and are NOT cached.
+    system_blocks = [
+        {
+            "type": "text",
+            "text": static_prompt,
+            "cache_control": {"type": "ephemeral"},
+        },
+        {
+            "type": "text",
+            "text": dynamic_prompt + session_state_text,
+        },
+    ]
+
+    check_token_budget(len(static_prompt.split()) * 2, "claude-sonnet-4-6")
 
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1024,
-            system=combined_system,
-            messages=[{"role": "user", "content": user_message}]
+            system=system_blocks,
+            messages=[{"role": "user", "content": user_message}],
+            extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
         )
+        log_usage("claude-sonnet-4-6", response.usage, call_label="generate_reply")
         raw_reply = response.content[0].text
         raw_reply = _strip_internal_reasoning(raw_reply)
     except Exception as e:
@@ -775,22 +802,47 @@ Greet the user naturally and ask how you can help them find a property in Lebano
 
 
 def extract_entities(message, history):
-
-    messages = [
-        *history,
-        {"role": "user", "content": message}
-    ]
+    # Build message list with cache_control on the last history message so
+    # incremental conversation turns benefit from caching.
+    messages: list[dict] = []
+    if history:
+        for hist_msg in history[:-1]:
+            messages.append({"role": hist_msg["role"], "content": hist_msg["content"]})
+        last_hist = history[-1]
+        messages.append({
+            "role": last_hist["role"],
+            "content": [
+                {
+                    "type": "text",
+                    "text": last_hist["content"],
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
+        })
+    messages.append({"role": "user", "content": message})
 
     try:
         # Use Sonnet for long complex messages so all fields are reliably extracted
         word_count = len(message.split())
         extraction_model = "claude-sonnet-4-6" if word_count > 30 else "claude-haiku-4-5"
+
+        # Cache the large static intent_detection_prompt
+        system_blocks = [
+            {
+                "type": "text",
+                "text": intent_detection_prompt,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+
         response = client.messages.create(
             model=extraction_model,
             max_tokens=1024,
-            system=intent_detection_prompt,
-            messages=messages
+            system=system_blocks,
+            messages=messages,
+            extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
         )
+        log_usage(extraction_model, response.usage, call_label="extract_entities")
 
         raw_text = response.content[0].text.strip()
         # Strip markdown code fences if Claude wraps the JSON

@@ -27,6 +27,7 @@ class SessionState:
         self.name_asked = False
         self.name_ask_count = 0
         self.budget_ask_count = 0
+        self.show_alternatives = False
 
         self.user_info = {
             "name": None,
@@ -58,6 +59,7 @@ class SessionState:
             "name_asked": self.name_asked,
             "name_ask_count": self.name_ask_count,
             "budget_ask_count": self.budget_ask_count,
+            "show_alternatives": self.show_alternatives,
             "user_info": self.user_info,
             "property_info": self.property_info
         }

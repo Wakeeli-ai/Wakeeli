@@ -46,14 +46,32 @@ _THINKING_LINE_PATTERN = re.compile(
     r'^(?:Wait[,.]|Hmm[,.]?|Hm[,.]?|Actually,\s+(?:let|I|wait)|'
     r'Let me restart|Let me re-think|Let me reconsider|Let me start over|'
     r'I need to reset|I need to reconsider|I realize[d]?\s+I|'
-    r'Rethinking this|Re-reading this)[^\n]*(?:\n|$)',
+    r'Rethinking this|Re-reading this|'
+    r'I already\b|I should\b|I notice[d]?\b|Looking at\b|Based on\b|'
+    r'Oh,|Okay,|OK,|Right,|So,)[^\n]*(?:\n|$)',
     re.IGNORECASE | re.MULTILINE
+)
+
+# Phrases that indicate self-referential reasoning leaking into a response part
+_SELF_REF_PHRASES = re.compile(
+    r'\b(let me restart|i need to|i realize[d]?|wait[,\s]+i|hmm[,\s]+i)\b',
+    re.IGNORECASE
 )
 
 
 def _strip_internal_reasoning(text: str) -> str:
     """Remove chain-of-thought reasoning that leaked into the bot response."""
-    return _THINKING_LINE_PATTERN.sub('', text).strip()
+    # First pass: remove lines that start with known thinking prefixes
+    cleaned = _THINKING_LINE_PATTERN.sub('', text).strip()
+    # Second pass: after splitting on |||, drop any segment containing self-referential phrases
+    segments = cleaned.split('|||')
+    filtered = []
+    for seg in segments:
+        if _SELF_REF_PHRASES.search(seg):
+            continue
+        if seg.strip():
+            filtered.append(seg)
+    return '|||'.join(filtered).strip()
 
 
 def _check_routing_conditions(session: SessionState, user_message: str):
@@ -67,13 +85,17 @@ def _check_routing_conditions(session: SessionState, user_message: str):
     if session.listings_shown and _TODAY_PATTERNS.search(user_message):
         return True, "Let me connect you with one of our agents to arrange that for you."
 
-    # Far timeline check
-    if _FAR_TIMELINE_PATTERNS.search(user_message):
+    # Far timeline check (only meaningful once listings have been shown or user is qualified)
+    if session.listings_shown and _FAR_TIMELINE_PATTERNS.search(user_message):
         return True, "No problem! Let me connect you with one of our agents who can keep you updated when something comes up."
 
     # Dismissive check after listings shown
     if session.listings_shown and _DISMISSIVE_PATTERNS.search(user_message):
         session.rejection_count += 1
+        if session.rejection_count == 1:
+            # First rejection: do not route yet, offer alternatives instead
+            session.show_alternatives = True
+            return False, ""
         if session.rejection_count >= 2:
             return True, "Let me connect you with one of our agents who might have more options for you."
 
@@ -305,9 +327,86 @@ Offer to search for similar properties based on their preferences.
                 has_budget = budget_min or budget_max
 
                 if session.listings_shown:
-                    msg = f"""
-The user has already seen listings. This is a follow-up message in the ongoing conversation.
+                    # Correction detection: if the user sent updated criteria that differ
+                    # from the previous property_info, run a fresh DB search instead of
+                    # letting Claude guess or hallucinate listings.
+                    prev = getattr(session, '_prev_property_info', {})
+                    correction_keys = ('bedrooms', 'location', 'budget_min', 'budget_max',
+                                       'furnishing', 'listing_type')
+                    criteria_changed = any(
+                        session.property_info.get(k) != prev.get(k)
+                        and session.property_info.get(k) is not None
+                        for k in correction_keys
+                    )
 
+                    if criteria_changed:
+                        # Reset listings_shown so the search branch below runs fresh
+                        session.listings_shown = False
+                        results = search_listings(db, session.property_info)
+                        if results:
+                            session.listings_shown = True
+                            results_to_show = results[:5]
+                            result_count = len(results_to_show)
+                            formatted_listings = "\n\n".join([
+                                _format_listing(r, i) for i, r in enumerate(results_to_show, 1)
+                            ])
+                            area_label = session.property_info.get("location") or "your area"
+
+                            if result_count == 1:
+                                opening_instruction = "Send a short opening like 'Here you go' or 'Check this one out'. Do NOT say 'options'."
+                                recommendation_instruction = "Skip the recommendation line since there is only one result."
+                            else:
+                                opening_instruction = "Send a short opening like 'On it' or 'Here you go'. Do NOT say 'Found some great options', 'searching now', or any variation."
+                                recommendation_instruction = "Then recommend which option is closest to their criteria."
+
+                            msg = f"""
+CORRECTION FLOW: The user updated their search criteria. Fresh results from the database:
+{opening_instruction}
+Then send the numbered listings as one message.
+{recommendation_instruction}
+Then send a final separate message saying 'What do you think?'
+Use ||| to separate these parts.
+Do NOT comment on the criteria change. Do NOT say 'let me redo the search'. Just present the new results.
+
+LISTINGS:
+{formatted_listings}
+"""
+                        else:
+                            alt_results = recommend_alternatives(db, session.property_info)
+                            if alt_results:
+                                session.listings_shown = True
+                                alt_to_show = alt_results[:5]
+                                formatted_listings = "\n\n".join([
+                                    _format_listing(r, i) for i, r in enumerate(alt_to_show, 1)
+                                ])
+                                msg = f"""
+CORRECTION FLOW: No exact match for updated criteria. Present these alternatives.
+Tell the user these are slightly above their budget but are the closest available.
+Then send a final separate message: 'What do you think?'
+Use ||| to separate.
+
+ALTERNATIVE LISTINGS:
+{formatted_listings}
+"""
+                            else:
+                                msg = """
+CORRECTION FLOW: No listings match the updated criteria.
+Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with one of our agents who might have more options for you.'
+"""
+                    else:
+                        alternatives_instruction = ""
+                        if session.show_alternatives:
+                            session.show_alternatives = False
+                            alternatives_instruction = (
+                                "\nCRITICAL: The user just rejected the previous options. "
+                                "Do NOT route to an agent. Do NOT say goodbye. "
+                                "Offer to search with different criteria or show alternative listings. "
+                                "Say something like 'Sure, want me to look at different options?' Keep it short."
+                            )
+
+                        msg = f"""
+The user has already seen listings. This is a follow-up message in the ongoing conversation.
+{alternatives_instruction}
 Respond naturally based on what the user just said. Possible scenarios:
 - If they expressed interest in a specific option: move to booking a visit. Ask what day works.
 - If they confirmed a visit time (e.g. 'Wednesday works', 'yeah that works', 'sure'): send a clean booking confirmation summary. Format: "Your visit is set for [day] at [time]" ||| "I'll be connecting you with the agent shortly"
@@ -436,6 +535,7 @@ One question. Nothing else. Do not bundle with other questions. No greeting.
 """
                     elif not has_name:
                         # First contact. Send greeting + question.
+                        session.greeted = True
                         message = """
 Entry B: listing type unknown. This is first contact. Send exactly 2 messages using ||| as separator:
 
@@ -456,11 +556,20 @@ One question. Nothing else. Do not bundle with other questions.
                         missing_fields.append("preferred location")
                     if not property_info.get("bedrooms"):
                         missing_fields.append("number of bedrooms")
-                    if not property_info.get("budget_min") and not property_info.get("budget_max"):
+                    asking_for_budget = (
+                        not property_info.get("budget_min") and not property_info.get("budget_max")
+                    )
+                    if asking_for_budget:
                         missing_fields.append("budget range")
-                        session.budget_ask_count += 1
                     if not property_info.get("furnishing"):
                         missing_fields.append("furnished or unfurnished")
+
+                    # Only increment budget_ask_count when we are actually about to send
+                    # a message that asks for budget. Prevents double-counting on turns
+                    # where the user provided a different field (e.g. location) but budget
+                    # is still missing.
+                    if asking_for_budget and missing_fields:
+                        session.budget_ask_count += 1
 
                     if missing_fields and already_greeted and not has_name:
                         # Already greeted. Send bundled question + name ask. No greeting.
@@ -537,6 +646,7 @@ Keep it casual and brief.
 
                         if session.name_ask_count >= 2:
                             # Already asked for name twice. Skip name ask.
+                            session.greeted = True
                             message = f"""
 Entry B: listing type is known. First contact. Send exactly 2 messages using ||| as separator:
 
@@ -551,6 +661,7 @@ NEVER ask fields separately. NEVER write one big paragraph.
                         else:
                             session.name_asked = True
                             session.name_ask_count += 1
+                            session.greeted = True
                             message = f"""
 Entry B: listing type is known. First contact or early stage. Send exactly 3 messages using ||| as separator:
 
@@ -644,12 +755,6 @@ Greet the user naturally and ask how you can help them find a property in Lebano
     # Split on ||| delimiter and clean each part, stripping any stray quotation marks
     parts = [p.strip().strip('"').strip("'").strip() for p in raw_reply.split("|||") if p.strip()]
 
-    # Mark session as greeted if a greeting was just sent via Entry B first contact paths.
-    # Covers the listing_type-unknown and missing_fields first-contact branches above.
-    if action == "more_info_needed" and not session.greeted:
-        classification = state.get("classification")
-        if classification == "B" and not state.get("bare_greeting", False):
-            session.greeted = True
 
     return parts if parts else [raw_reply]
 
@@ -744,6 +849,9 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             return [response_msg]
 
         extracted = extract_entities(user_message, history)
+
+        # Stash previous property_info before merging so correction detection can compare
+        session._prev_property_info = dict(session.property_info)
 
         # Update session memory with extracted info
         update_memory(session, extracted)

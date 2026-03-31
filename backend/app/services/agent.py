@@ -63,6 +63,18 @@ def generate_reply(action, user_message, db, conversation, conversation_id, sess
 
     message = ""
 
+    # Short-circuit: bare greeting gets a deterministic hardcoded response.
+    # No LLM call needed. This prevents Claude from ignoring the instruction
+    # and dumping qualification questions when the user just says hi/hello.
+    if session.bare_greeting:
+        arabic_patterns = re.compile(
+            r'\b(marhaba|ahla|salam|kifak|bonjour|ahlan|yiiii|ya3ne|hayde|shu|wein|baddi)\b',
+            re.IGNORECASE
+        )
+        if arabic_patterns.search(user_message):
+            return ["Marhaba kifak, shu fine a3mile la2ak?"]
+        return ["Hello! How can I help you?"]
+
     if action == "intent_detection":
         message = """
 Important behavior rules:

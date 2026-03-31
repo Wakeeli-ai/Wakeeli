@@ -41,6 +41,20 @@ _FAR_TIMELINE_PATTERNS = re.compile(
     re.IGNORECASE
 )
 
+# Pattern to strip internal chain-of-thought reasoning that leaks into responses
+_THINKING_LINE_PATTERN = re.compile(
+    r'^(?:Wait[,.]|Hmm[,.]?|Hm[,.]?|Actually,\s+(?:let|I|wait)|'
+    r'Let me restart|Let me re-think|Let me reconsider|Let me start over|'
+    r'I need to reset|I need to reconsider|I realize[d]?\s+I|'
+    r'Rethinking this|Re-reading this)[^\n]*(?:\n|$)',
+    re.IGNORECASE | re.MULTILINE
+)
+
+
+def _strip_internal_reasoning(text: str) -> str:
+    """Remove chain-of-thought reasoning that leaked into the bot response."""
+    return _THINKING_LINE_PATTERN.sub('', text).strip()
+
 
 def _check_routing_conditions(session: SessionState, user_message: str):
     """Check if any special routing condition is met. Returns (should_route, message)."""
@@ -75,6 +89,14 @@ def get_session(conversation_id: int) -> SessionState:
 
 def update_memory(session: SessionState, extracted):
     pprint(extracted)
+    # LBP fallback: if budget values look like LBP (over 50,000), auto-convert to USD
+    # Rate: 89,500 LBP = 1 USD
+    prop_info = extracted.get("property_info", {})
+    if prop_info:
+        for key in ("budget_min", "budget_max"):
+            val = prop_info.get(key)
+            if val and isinstance(val, (int, float)) and val > 50000:
+                prop_info[key] = round(val / 89500)
     session.update_agent_state(extracted)
 
 
@@ -153,6 +175,7 @@ def _generate_reply_inner(action, user_message, db, conversation, conversation_i
         db.add(event)
         db.commit()
 
+        session.handed_off = True
         return [route_message]
 
     elif action == "intent_detection":
@@ -435,6 +458,7 @@ One question. Nothing else. Do not bundle with other questions.
                         missing_fields.append("number of bedrooms")
                     if not property_info.get("budget_min") and not property_info.get("budget_max"):
                         missing_fields.append("budget range")
+                        session.budget_ask_count += 1
                     if not property_info.get("furnishing"):
                         missing_fields.append("furnished or unfurnished")
 
@@ -453,13 +477,24 @@ One question. Nothing else. Do not bundle with other questions.
                                 examples = get_area_examples(loc_canonical, 'district')
                                 area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
 
-                        message = f"""
+                        if session.name_ask_count >= 2:
+                            # Already asked for name twice. Proceed without asking again.
+                            message = f"""
+Ask only for these missing details in one short message: {missing_str}.{area_note}
+Do NOT include a greeting. Do NOT re-ask for anything already known.
+Keep it casual and brief.
+"""
+                        else:
+                            name_phrase = "What's your full name btw?" if session.name_ask_count == 0 else "And your name?"
+                            session.name_asked = True
+                            session.name_ask_count += 1
+                            message = f"""
 Already greeted. Do NOT repeat "Hello, thanks for reaching out!" or any greeting. Send exactly 2 messages using ||| as separator:
 
 Message 1: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
-Message 2: "What's your full name btw?"
+Message 2: "{name_phrase}"
 
-Example: "Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
+Example: "Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "{name_phrase}"
 
 NEVER include a greeting in Message 1. NEVER write one big paragraph.
 """
@@ -486,7 +521,7 @@ Keep it casual and brief.
 """
 
                     elif missing_fields and not has_name:
-                        # First contact with missing fields. Full 3-message format.
+                        # First contact with missing fields.
                         missing_str = ", ".join(missing_fields)
 
                         location_val = property_info.get("location", "")
@@ -500,7 +535,23 @@ Keep it casual and brief.
                                 examples = get_area_examples(loc_canonical, 'district')
                                 area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
 
-                        message = f"""
+                        if session.name_ask_count >= 2:
+                            # Already asked for name twice. Skip name ask.
+                            message = f"""
+Entry B: listing type is known. First contact. Send exactly 2 messages using ||| as separator:
+
+Message 1: "Hello, thanks for reaching out!" — use this exact phrase or a natural variation in their language. NOTHING ELSE.
+Message 2: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
+
+WRONG examples (NEVER do this):
+- "Marhaba! Looking for a place in Zalka, nice area." — NO, don't echo the user
+
+NEVER ask fields separately. NEVER write one big paragraph.
+"""
+                        else:
+                            session.name_asked = True
+                            session.name_ask_count += 1
+                            message = f"""
 Entry B: listing type is known. First contact or early stage. Send exactly 3 messages using ||| as separator:
 
 Message 1: "Hello, thanks for reaching out!" — use this exact phrase or a natural variation in their language. NOTHING ELSE.
@@ -524,7 +575,15 @@ Do NOT re-ask for anything already known.
 Keep it casual and brief.
 """
                     elif not has_name:
-                        message = """
+                        if session.name_ask_count >= 2:
+                            # Asked twice already. Proceed without name.
+                            message = """
+All required info is collected. Let the user know you are finding options for them.
+"""
+                        else:
+                            session.name_asked = True
+                            session.name_ask_count += 1
+                            message = """
 All property details are collected but the name is still missing.
 Send ONLY this exact message: "And your name?"
 Nothing else. No other question. No filler.
@@ -577,6 +636,7 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             messages=[{"role": "user", "content": user_message}]
         )
         raw_reply = response.content[0].text
+        raw_reply = _strip_internal_reasoning(raw_reply)
     except Exception as e:
         print(f"generate_reply: LLM call failed (action={action}): {e}")
         return ["Bear with me for a second, something went wrong. Please try again."]
@@ -675,6 +735,14 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         db.add(new_msg)
         db.commit()
 
+        # If already handed off to agent, don't process further
+        if session.handed_off:
+            response_msg = "An agent will be reaching out to you shortly!"
+            ai_msg = Message(conversation_id=conversation_id, role="assistant", content=response_msg)
+            db.add(ai_msg)
+            db.commit()
+            return [response_msg]
+
         extracted = extract_entities(user_message, history)
 
         # Update session memory with extracted info
@@ -687,6 +755,14 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         should_route, route_message = _check_routing_conditions(session, user_message)
         if should_route:
             session.pending_route_message = route_message
+            action = "route_to_agent"
+
+        # Budget refusal: if budget was asked 2+ times and still not provided, route to agent
+        if (action == "more_info_needed"
+                and not session.property_info.get("budget_min")
+                and not session.property_info.get("budget_max")
+                and session.budget_ask_count >= 2):
+            session.pending_route_message = "Let me connect you with one of our agents who can help you with that."
             action = "route_to_agent"
 
         # Generate reply based on the action

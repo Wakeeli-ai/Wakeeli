@@ -23,6 +23,10 @@ class SessionState:
         self.rejection_count = 0
         self.listings_shown = False
         self.pending_route_message = None
+        self.handed_off = False
+        self.name_asked = False
+        self.name_ask_count = 0
+        self.budget_ask_count = 0
 
         self.user_info = {
             "name": None,
@@ -50,6 +54,10 @@ class SessionState:
             "greeted": self.greeted,
             "rejection_count": self.rejection_count,
             "listings_shown": self.listings_shown,
+            "handed_off": self.handed_off,
+            "name_asked": self.name_asked,
+            "name_ask_count": self.name_ask_count,
+            "budget_ask_count": self.budget_ask_count,
             "user_info": self.user_info,
             "property_info": self.property_info
         }

@@ -142,10 +142,22 @@ def get_session(conversation_id: int) -> SessionState:
     return _sessions[conversation_id]
 
 
-def update_memory(session: SessionState, extracted):
+# Pattern to detect LBP currency indicators in user input
+_LBP_INDICATOR_PATTERN = re.compile(
+    r"(lbp|lira|lirat|lire|ليرة|lebanese pound|lebanese pounds)",
+    re.IGNORECASE
+)
+
+
+def update_memory(session: SessionState, extracted, user_message: str = ""):
     pprint(extracted)
-    # LBP fallback: if budget values look like LBP (over 50,000), auto-convert to USD
+    # LBP fallback: if budget values look like LBP (over 50,000) AND the user
+    # explicitly used an LBP indicator, auto-convert to USD.
     # Rate: 89,500 LBP = 1 USD
+    # The conversion MATH always runs for large values, but lbp_converted (which
+    # triggers the conversion mention to the user) is only set when the user
+    # actually said LBP, lira, or the Arabic equivalent.
+    user_said_lbp = bool(_LBP_INDICATOR_PATTERN.search(user_message))
     prop_info = extracted.get("property_info", {})
     session.lbp_converted = {}
     if prop_info:
@@ -153,8 +165,9 @@ def update_memory(session: SessionState, extracted):
             val = prop_info.get(key)
             if val and isinstance(val, (int, float)) and val > 50000:
                 usd_val = round(val / 89500)
-                session.lbp_converted[key] = usd_val
                 prop_info[key] = usd_val
+                if user_said_lbp:
+                    session.lbp_converted[key] = usd_val
     session.update_agent_state(extracted)
 
 
@@ -1091,7 +1104,7 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         session._prev_property_info = dict(session.property_info)
 
         # Update session memory with extracted info
-        update_memory(session, extracted)
+        update_memory(session, extracted, user_message)
 
         # Decide next action based on current session state
         action = decide_next_action(session)

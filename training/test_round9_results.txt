@@ -1,0 +1,155 @@
+=== WAKEELI ROUND 9 TEST RESULTS ===
+Date: Wed Apr  1 00:13:38 EEST 2026
+
+--- S1: BARE GREETING ---
+USER: hi
+BOT: {"messages":["Hello! How can I help you?"],"conversation_id":"r9-s1"}
+
+--- S2: RENT OR BUY FIRST ---
+USER: hi -> I want an apartment in Beirut
+BOT: {"messages":["Bear with me for a second, something went wrong. Please try again."],"conversation_id":"r9-s2"}
+
+--- S3: NAME ENFORCEMENT ---
+USER: hi -> rent Beirut 800 dollars
+BOT: {"messages":["Bear with me for a second, something went wrong. Please try again."],"conversation_id":"r9-s3"}
+
+--- S4: FULL HAPPY PATH RENT ---
+USER: hi -> rent Ashrafieh 1000 dollars
+BOT: {"messages":["Bear with me for a second, something went wrong. Please try again."],"conversation_id":"r9-s4"}
+USER: John
+BOT: {"messages":["Hello! How can I help you?"],"conversation_id":"r9-s4"}
+
+--- S5: FULL HAPPY PATH BUY ---
+USER: hi -> buy Dbayeh 300000 dollars
+BOT: {"messages":["That's about $300,000. Sure, to help you find the best options, how many bedrooms are you looking for, and would you prefer furnished or unfurnished?","What's your full name btw?"],"conversation_id":"r9-s5"}
+USER: Sara
+BOT: {"messages":["These are a bit above your range but they are the closest available right now.\n\nOption 2 is probably the closest to what you had in mind","1. Partial Sea View 3BR – Dbayeh Waterfront\n   Dbayeh Waterfront, 3 bed, 5 bath, Unfurnished, $1,300,000\n   350 sqm prime waterfront apartment with 3 master bedrooms, 5 bathrooms, 2 living rooms and dining ar...\n\n2. Full Sea View Penthouse – Dbayeh Waterfront\n   Dbayeh Waterfront, 4 bed, 5 bath, Unfurnished, $1,500,000\n   400 sqm luxury penthouse with 100 sqm terrace. Breathtaking panoramic sea views, premium marble floo...\n\n3. Contemporary 3BR Sea View – Dbayeh Waterfront\n   Dbayeh Waterfront, 3 bed, 4 bath, Unfurnished, $980,000\n   310 sqm elegant apartment with sea-facing balconies, high-end kitchen, marble floors and premium fix...","What do you think?"],"conversation_id":"r9-s5"}
+
+--- S6: LBP CONVERSION ---
+USER: hi -> rent Beirut 50000000 LBP
+BOT: {"messages":["Sure, to help you find the best options, how many bedrooms are you looking for, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?","What's your full name btw?"],"conversation_id":"r9-s6"}
+USER: 2 bedrooms unfurnished, name Lara
+BOT: {"messages":["These are a bit above your range but they are the closest available right now.","1. Luxury Furnished 3BR – Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n2. Grand 4BR Penthouse – Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n3. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","Option 2 is probably the closest to what you had in mind","What do you think?"],"conversation_id":"r9-s6"}
+
+--- S7: OFF TOPIC ---
+USER: hi -> weather?
+BOT: {"messages":["I can only help with real estate. Looking to buy or rent something in Lebanon?"],"conversation_id":"r9-s7"}
+
+--- S8: BOT IDENTITY ---
+USER: hi -> are you a bot?
+BOT: {"messages":["Let me connect you with one of our agents right now."],"conversation_id":"r9-s8"}
+
+--- S9: ARABIC GREETING ---
+USER: مرحبا
+BOT: {"messages":["أهلاً! كيف بقدر ساعدك؟"],"conversation_id":"r9-s9"}
+
+--- S10: MIXED LANGUAGE ---
+USER: hi -> badde apartment bBeirut lal rent, budget 700
+BOT: {"messages":["Sure, to help you find the best options, kam ghurfit nawm badak, w furnished aw unfurnished? W 3andak area specific bi Beirut bi balek, mitl Hamra, Achrafieh, aw Verdun?","Shu l esem btw?"],"conversation_id":"r9-s10"}
+USER: Alex
+BOT: {"messages":["These are a bit above your range but they are the closest available right now.","1. Luxury Furnished 3BR – Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n2. Grand 4BR Penthouse – Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n3. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","Option 2 is probably the closest to what you had in mind","What do you think?"],"conversation_id":"r9-s10"}
+
+--- S11: REJECTION FIRST ---
+USER: hi -> rent Beirut 1500 -> Mike
+BOT after name: {"messages":["These are a bit above your range but they are the closest available right now.\n\nOption 2 is probably the closest to what you had in mind","1. Luxury Furnished 3BR – Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n2. Grand 4BR Penthouse – Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n3. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","What do you think?"],"conversation_id":"r9-s11"}
+USER: not interested
+BOT: {"messages":["I have other options in different areas or price ranges. Want me to take a look?"],"conversation_id":"r9-s11"}
+
+--- S12: REJECTION SECOND ---
+USER: hi -> rent Beirut 2000 -> Joe -> not interested
+BOT first rejection: {"messages":["I have other options in different areas or price ranges. Want me to take a look?"],"conversation_id":"r9-s12"}
+USER: no thanks
+BOT second rejection: {"messages":["Let me connect you with one of our agents who might have more options for you."],"conversation_id":"r9-s12"}
+
+--- S13: BOOKING ---
+USER: hi -> rent Achrafieh 2500 -> Tony
+BOT after name: {"messages":["Here you go","1. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","What do you think, Tony?"],"conversation_id":"r9-s13"}
+USER: I like this, can I visit?
+BOT: {"messages":["Sure Tony! We can book a visit this week. Does Wednesday morning work for you?"],"conversation_id":"r9-s13"}
+
+--- S14: SAME DAY VISIT ---
+USER: hi -> rent Achrafieh 3000 -> Sarah -> visit today?
+BOT: {"messages":["Let me connect you with one of our agents to arrange that for you."],"conversation_id":"r9-s14"}
+
+--- S15: RESCHEDULE ---
+USER: hi -> rent Achrafieh 2000 -> Omar -> like first -> another day?
+BOT: {"messages":["Sure Omar! How about Thursday or Friday, which works better for you?"],"conversation_id":"r9-s15"}
+
+--- S16: FAR TIMELINE ---
+USER: hi -> buy but 6 months away
+BOT: {"messages":["No problem, I can show you what's available now so you get an idea of the market.","Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?","What's your full name btw?"],"conversation_id":"r9-s16"}
+
+--- S17: BROKEN LINK ---
+USER: hi -> listing ABC123
+BOT: {"messages":["What's your name?"],"conversation_id":"r9-s17"}
+
+--- S18: ADDRESS QUESTION ---
+USER: hi -> rent Achrafieh 2800 -> Lisa -> where exactly?
+BOT: {"messages":["The agent will share the address with you.","1. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","Want to go ahead and book a visit?"],"conversation_id":"r9-s18"}
+
+--- S19: PHOTO QUESTION ---
+USER: hi -> rent Achrafieh 2500 -> Rami -> photos?
+BOT: {"messages":["The photos are on the listing pages, Rami! Which property caught your eye and I can point you to it.","Or if you want to see it in person, we can book a quick visit!"],"conversation_id":"r9-s19"}
+
+--- S20: POST-HANDOFF ---
+USER: full flow -> 2 rejections -> hello after handoff
+BOT: {"messages":["An agent will be reaching out to you shortly!"],"conversation_id":"r9-s20"}
+
+--- S21: VILLA REQUEST ---
+USER: hi -> villa Beit Mery 500k
+BOT: {"messages":["We currently focus on apartments and houses. Want me to search for houses in Beit Mery instead? Or I can connect you with an agent who might have villa listings."],"conversation_id":"r9-s21"}
+
+--- S22: DRIP INPUT ---
+USER: hi -> rent
+BOT: {"messages":["Sure, to help you find the best options, where are you looking, what's your budget range, how many bedrooms, and furnished or unfurnished?","What's your full name btw?"],"conversation_id":"r9-s22"}
+USER: Beirut
+BOT: {"messages":["Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?","And your name?"],"conversation_id":"r9-s22"}
+USER: 700 dollars
+BOT: {"messages":["How many bedrooms are you looking for, and furnished or unfurnished? Also, any specific area in Beirut in mind?"],"conversation_id":"r9-s22"}
+USER: Sarah
+BOT: {"messages":["These are a bit above your range but they are the closest available right now.\n\nOption 2 is probably the closest to what you had in mind","1. Luxury Furnished 3BR – Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n2. Grand 4BR Penthouse – Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n3. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","What do you think?"],"conversation_id":"r9-s22"}
+
+--- S23: ALL INFO ONE MESSAGE ---
+USER: hi -> all info in one message
+BOT: {"messages":["These are a bit above your range but they are the closest available right now.","1. Luxury Furnished 3BR – Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n2. Grand 4BR Penthouse – Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n3. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","Option 2 is probably the closest to what you had in mind","What do you think?"],"conversation_id":"r9-s23"}
+
+--- S24: BUDGET REFUSAL ---
+USER: hi -> rent Beirut -> refuse budget
+BOT: {"messages":["Sure, just a rough range helps me find the right options.","Even something like 'under $1,000' or '$500–$800' works!"],"conversation_id":"r9-s24"}
+USER: refuse again
+BOT: {"messages":["Let me connect you with one of our agents who can help you with that."],"conversation_id":"r9-s24"}
+
+--- S25: NAME AS PHONE ---
+USER: hi -> rent Beirut 1000 -> phone number as name
+BOT: {"messages":["And your name?"],"conversation_id":"r9-s25"}
+
+--- S26: RETURNING LEAD ---
+USER: hi -> returning lead
+BOT: {"messages":["What are you looking for? Rent or buy?"],"conversation_id":"r9-s26"}
+
+--- S27: OVER BUDGET ---
+USER: hi -> rent Beirut 50000 per month
+BOT: {"messages":["That's $50,000/month. Just to confirm, are you looking for something in that range or did you mean a different amount?"],"conversation_id":"r9-s27"}
+USER: Mark
+BOT: {"messages":["On it","1. Luxury Furnished 3BR – Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n2. Grand 4BR Penthouse – Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n3. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","Option 2 is probably the closest to what you had in mind","What do you think?"],"conversation_id":"r9-s27"}
+
+--- S28: MULTIPLE TYPES ---
+USER: hi -> studio or 1-bed Hamra 600
+BOT: {"messages":["Sure, to help you find the best options, would you prefer furnished or unfurnished?","What's your full name btw?"],"conversation_id":"r9-s28"}
+USER: Nadia
+BOT: {"messages":["I couldn't find any matching listings in Hamra right now for your criteria.\n\nLet me connect you with one of our agents who might have more options.","I've connected you with one of our agents who will be giving you a call shortly."],"conversation_id":"r9-s28"}
+
+--- S29: CORRECTION ---
+USER: hi -> rent Achrafieh 2000 -> Sami
+BOT after name: {"messages":["Here you go","1. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","What do you think, Sami?"],"conversation_id":"r9-s29"}
+USER: correction to Jounieh
+BOT: {"messages":["Sure, Sami! Let me check what's available in Jounieh under $2,000/month."],"conversation_id":"r9-s29"}
+
+--- S30: EMOJI/SPECIAL CHARS ---
+USER: hi -> apartment Beirut rent 800
+BOT: {"messages":["Sure, to help you find the best options, how many bedrooms are you looking for, and would you prefer furnished or unfurnished? Also, any specific area in Beirut in mind, like Hamra, Achrafieh, or Verdun?","What's your full name btw?"],"conversation_id":"r9-s30"}
+USER: Chris
+BOT: {"messages":["These are a bit above your range but they are the closest available right now.","1. Luxury Furnished 3BR – Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n2. Grand 4BR Penthouse – Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n3. Modern 2BR – Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","Option 2 is probably the closest to what you had in mind","What do you think?"],"conversation_id":"r9-s30"}
+
+=== TESTS COMPLETE ===
+Done at Wed Apr  1 00:26:03 EEST 2026

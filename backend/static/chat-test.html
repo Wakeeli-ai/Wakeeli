@@ -83,6 +83,20 @@
 
     .btn-new:hover { background: rgba(255,255,255,0.25); }
 
+    .btn-download {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-download:hover { background: rgba(255,255,255,0.25); }
+
     /* Messages area */
     .messages {
       flex: 1;
@@ -277,6 +291,7 @@
       <div class="header-name">Wakeeli AI</div>
       <div class="header-status" id="status-text">Ready to chat</div>
     </div>
+    <button class="btn-download" onclick="downloadConversation()">Download</button>
     <button class="btn-new" onclick="newConversation()">New Chat</button>
   </div>
 
@@ -462,6 +477,35 @@
       </div>
     `;
     setStatus('Ready to chat');
+  }
+
+  function downloadConversation() {
+    const bubbles = document.querySelectorAll('.bubble-wrap');
+    if (!bubbles.length) return;
+
+    const lines = [];
+    bubbles.forEach(function(wrap) {
+      const bubble = wrap.querySelector('.bubble');
+      if (!bubble) return;
+      const timeEl = bubble.querySelector('.time');
+      const text = timeEl
+        ? bubble.textContent.replace(timeEl.textContent, '').trim()
+        : bubble.textContent.trim();
+      const role = wrap.classList.contains('user') ? 'Lead' : 'Agent';
+      lines.push(role + ': ' + text);
+    });
+
+    if (!lines.length) return;
+
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10);
+    const filename = 'wakeeli-chat-' + dateStr + '.txt';
+    const content = lines.join('\n');
+
+    const a = document.createElement('a');
+    a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    a.download = filename;
+    a.click();
   }
 
   document.getElementById('msg-input').focus();

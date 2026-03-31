@@ -125,7 +125,13 @@ Note: If the message contains ANY real estate-related content, do NOT classify a
 
 
 Information Extraction Rules:
-- listing_type: infer from context whether the user wants to rent or buy. "I want to rent" = rent. "I want to buy" / "looking to purchase" = buy.
+- listing_type: infer from context whether the user wants to rent or buy. Set to "rent" or "buy" exactly.
+  - "rent", "renting", "to rent", "for rent", "ista2jar", "looking to rent" = "rent"
+  - "buy", "buying", "to buy", "purchase", "for sale", "sale", "ishtari", "looking to buy" = "buy"
+  - A single word reply of "rent" or "buy" after being asked the question = use that value directly
+  - Monthly budget (e.g. $800/month, $1500) = strong signal for "rent"
+  - Budget in hundreds of thousands (e.g. $200,000, $350K) = strong signal for "buy"
+  - If truly ambiguous and no signal exists, return null
 - timeline: infer from context. "within the next month", "ASAP", "next year", etc.
 - Extract ALL available fields from the message, even if they appear mid-sentence.
 - For Lebanese Arabic: "ista2jar" = rent, "ishtari" = buy, "shi" = something, "wein" = where.

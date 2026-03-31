@@ -275,34 +275,53 @@ Just ask how you can help.
 Lebanese Arabic variation: "Marhaba kifak, shu fine a3mile la2ak?"
 """
             else:
-                missing_fields = []
-                if not property_info.get("location"):
-                    missing_fields.append("preferred location")
-                if not property_info.get("bedrooms"):
-                    missing_fields.append("number of bedrooms")
-                if not property_info.get("budget_min") and not property_info.get("budget_max"):
-                    missing_fields.append("budget range")
-                if not property_info.get("furnishing"):
-                    missing_fields.append("furnished or unfurnished")
+                # listing_type must be known before anything else.
+                # If missing, ask only that one question and stop.
+                if not property_info.get("listing_type"):
+                    if not has_name:
+                        message = """
+Entry B: listing type unknown. This is first contact. Send exactly 2 messages using ||| as separator:
 
-                if missing_fields and not has_name:
-                    missing_str = ", ".join(missing_fields)
+Message 1: "Hello, thanks for reaching out!" - use this exact phrase or a natural variation in their language. NOTHING ELSE.
+Message 2: "Is this for rent or to buy?"
 
-                    # Check if location is a governorate or district and ask for more specificity
-                    location_val = property_info.get("location", "")
-                    area_note = ""
-                    if location_val:
-                        loc_type, loc_canonical = get_location_type(location_val)
-                        if loc_type == 'governorate':
-                            examples = get_area_examples(loc_canonical, 'governorate')
-                            area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, like {examples}."
-                        elif loc_type == 'district':
-                            examples = get_area_examples(loc_canonical, 'district')
-                            area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
-                        # If city or unknown, no area_note needed
+Example: "Hello, thanks for reaching out!" ||| "Is this for rent or to buy?"
+"""
+                    else:
+                        message = """
+Ask ONLY: "Is this for rent or to buy?"
+One question. Nothing else. Do not bundle with other questions.
+"""
 
-                    message = f"""
-Entry B — first contact or early stage. Send exactly 3 messages using ||| as separator:
+                else:
+                    missing_fields = []
+                    if not property_info.get("location"):
+                        missing_fields.append("preferred location")
+                    if not property_info.get("bedrooms"):
+                        missing_fields.append("number of bedrooms")
+                    if not property_info.get("budget_min") and not property_info.get("budget_max"):
+                        missing_fields.append("budget range")
+                    if not property_info.get("furnishing"):
+                        missing_fields.append("furnished or unfurnished")
+
+                    if missing_fields and not has_name:
+                        missing_str = ", ".join(missing_fields)
+
+                        # Check if location is a governorate or district and ask for more specificity
+                        location_val = property_info.get("location", "")
+                        area_note = ""
+                        if location_val:
+                            loc_type, loc_canonical = get_location_type(location_val)
+                            if loc_type == 'governorate':
+                                examples = get_area_examples(loc_canonical, 'governorate')
+                                area_note = f" Also ask if they have a specific area in {location_val.title()} in mind, like {examples}."
+                            elif loc_type == 'district':
+                                examples = get_area_examples(loc_canonical, 'district')
+                                area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
+                            # If city or unknown, no area_note needed
+
+                        message = f"""
+Entry B: listing type is known. First contact or early stage. Send exactly 3 messages using ||| as separator:
 
 Message 1: "Hello, thanks for reaching out!" — use this exact phrase or a natural variation in their language. NOTHING ELSE.
 Message 2: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
@@ -317,19 +336,19 @@ WRONG examples (NEVER do this):
 
 NEVER ask name first. NEVER ask fields separately. NEVER write one big paragraph.
 """
-                elif missing_fields:
-                    missing_str = ", ".join(missing_fields)
-                    message = f"""
+                    elif missing_fields:
+                        missing_str = ", ".join(missing_fields)
+                        message = f"""
 Ask only for these missing details in one short message: {missing_str}
 Do NOT re-ask for anything already known.
 Keep it casual and brief.
 """
-                elif not has_name:
-                    message = """
+                    elif not has_name:
+                        message = """
 Ask for the user's full name naturally and briefly.
 """
-                else:
-                    message = """
+                    else:
+                        message = """
 All required info is collected. Let the user know you are finding options for them.
 """
 

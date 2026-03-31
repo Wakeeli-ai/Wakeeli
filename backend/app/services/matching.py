@@ -15,7 +15,9 @@ def search_listings(db: Session, filters: dict):
     query = db.query(Listing).filter(Listing.is_available == True)
 
     if filters.get("listing_type"):
-        query = query.filter(Listing.listing_type == filters["listing_type"])
+        # Intent detection returns "buy" but the DB stores "sale" for purchase listings
+        db_listing_type = "sale" if filters["listing_type"] == "buy" else filters["listing_type"]
+        query = query.filter(Listing.listing_type == db_listing_type)
 
     if filters.get("location"):
         location_lower = filters['location'].lower()

@@ -163,6 +163,9 @@ def _generate_reply_inner(action, user_message, db, conversation, conversation_i
     property_info = state.get("property_info", {})
 
     message = ""
+    # Capture greeted status BEFORE any action block modifies it.
+    # Used at the end to decide whether to prepend the anti-greeting safety prefix.
+    was_greeted = session.greeted
 
     # Short-circuit: bare greeting gets a deterministic hardcoded response.
     # No LLM call needed. This prevents Claude from ignoring the instruction
@@ -240,6 +243,8 @@ Example:
 """
 
     elif action == "collect_property_info":
+        # Mark as greeted so subsequent turns in the A1 flow don't re-greet
+        session.greeted = True
         missing = []
 
         if not property_info.get("link_or_id"):
@@ -381,7 +386,7 @@ LISTINGS:
                                 ])
                                 msg = f"""
 CORRECTION FLOW: No exact match for updated criteria. Present these alternatives.
-Tell the user these are slightly above their budget but are the closest available.
+You MUST tell the user these are slightly above their budget BEFORE listing them. Start with: 'These are a bit above your range but they are the closest available right now.' Then present the listings.
 Then send a final separate message: 'What do you think?'
 Use ||| to separate.
 
@@ -398,10 +403,11 @@ Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with
                         if session.show_alternatives:
                             session.show_alternatives = False
                             alternatives_instruction = (
-                                "\nCRITICAL: The user just rejected the previous options. "
-                                "Do NOT route to an agent. Do NOT say goodbye. "
-                                "Offer to search with different criteria or show alternative listings. "
-                                "Say something like 'Sure, want me to look at different options?' Keep it short."
+                                "\nCRITICAL: The user just rejected the previous options but is NOT leaving. "
+                                "They want to see different options. "
+                                "Do NOT say goodbye. Do NOT end the conversation. Do NOT route to an agent. "
+                                "Say exactly: 'Sure, want me to look at different options?' or "
+                                "'Want me to adjust the search?' Keep it to one short sentence."
                             )
 
                         msg = f"""
@@ -460,10 +466,10 @@ LISTINGS:
                                 _format_listing(r, i) for i, r in enumerate(alt_to_show, 1)
                             ])
                             if alt_count == 1:
-                                alt_opening = "Tell the user this is slightly above their budget but is the closest match available, and let them decide if they want to stretch."
+                                alt_opening = "You MUST tell the user this listing is slightly above their budget BEFORE presenting it. Start with: 'This one is a bit above your range but it is the closest available right now.' Then present the listing."
                                 alt_recommendation = "Skip the recommendation line since there is only one result."
                             else:
-                                alt_opening = "Tell the user these are slightly above their budget but are the closest matches available, and let them decide if they want to stretch."
+                                alt_opening = "You MUST tell the user these are slightly above their budget BEFORE listing them. Start with: 'These are a bit above your range but they are the closest available right now.' Then present the listings."
                                 alt_recommendation = "Then recommend which option is closest to their criteria by saying something like 'Option X is probably the closest to what you had in mind'."
                             msg = f"""
 No exact match found for their criteria. Present these alternative listings.
@@ -736,6 +742,15 @@ All info collected. Tell the user you are searching for options.
 Greet the user naturally and ask how you can help them find a property in Lebanon.
 """
 
+    # Safety net: if the user was already greeted before this turn, prepend an explicit
+    # instruction so the LLM cannot include any greeting regardless of which path ran.
+    if was_greeted:
+        message = (
+            "IMPORTANT: Do NOT include any greeting like 'Hello' or 'Thanks for reaching out'. "
+            "The user has already been greeted. Start directly with the question or information.\n\n"
+            + message
+        )
+
     system_prompt = get_reply_system_prompt(message)
     combined_system = f"{system_prompt}\n\nCurrent session state: {state}"
 
@@ -767,8 +782,11 @@ def extract_entities(message, history):
     ]
 
     try:
+        # Use Sonnet for long complex messages so all fields are reliably extracted
+        word_count = len(message.split())
+        extraction_model = "claude-sonnet-4-6" if word_count > 30 else "claude-haiku-4-5"
         response = client.messages.create(
-            model="claude-haiku-4-5",
+            model=extraction_model,
             max_tokens=1024,
             system=intent_detection_prompt,
             messages=messages

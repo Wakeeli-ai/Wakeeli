@@ -14,7 +14,7 @@ import Settings from './pages/Settings';
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useRole();
   const isAuth = typeof window !== 'undefined' && localStorage.getItem('wakeeli_authenticated') === '1';
-  
+
   // Show loading spinner while checking auth
   if (loading) {
     return (
@@ -23,9 +23,24 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   // Redirect to login if not authenticated
   if (!isAuth && !user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { role, loading } = useRole();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+      </div>
+    );
+  }
+
+  if (role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -44,9 +59,9 @@ function AppRoutes() {
                 <Route path="/conversations" element={<Conversations />} />
                 <Route path="/listings" element={<Listings />} />
                 <Route path="/tours" element={<Tours />} />
-                <Route path="/agents" element={<Agents />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/settings" element={<Settings />} />
+                <Route path="/agents" element={<AdminRoute><Agents /></AdminRoute>} />
+                <Route path="/analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
+                <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
               </Routes>
             </AppLayout>
           </ProtectedRoute>

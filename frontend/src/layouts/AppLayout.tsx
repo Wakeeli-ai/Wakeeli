@@ -40,9 +40,6 @@ const agentNav: NavItem[] = [
   { to: '/conversations', icon: MessageSquare, label: 'Inbox' },
   { to: '/listings', icon: Building2, label: 'Listings' },
   { to: '/tours', icon: Calendar, label: 'Tours' },
-  { to: '/agents', icon: Users, label: 'Agents' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -75,15 +72,25 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-slate-100 text-slate-900">
       {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 flex flex-col" style={{ backgroundColor: '#0f1729' }}>
-        {/* Logo block */}
+      <aside className="w-60 flex-shrink-0 flex flex-col" style={{ backgroundColor: '#1a2744' }}>
+        {/* Logo block with frosted glass effect */}
         <div className="flex flex-col items-center pt-8 pb-5 px-4">
-          <img
-            src="/logo-icon.png"
-            alt="Wakeeli"
-            className="w-14 h-14 object-contain"
-          />
-          <span className="mt-3 text-white text-base font-semibold tracking-[0.14em] uppercase">Wakeeli</span>
+          <div
+            className="flex flex-col items-center rounded-2xl px-6 py-4 w-full"
+            style={{
+              background: 'rgba(255,255,255,0.07)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.10)',
+            }}
+          >
+            <img
+              src="/logo-icon.png"
+              alt="Wakeeli"
+              className="w-12 h-12 object-contain"
+            />
+            <span className="mt-2 text-white text-sm font-semibold tracking-[0.16em] uppercase">Wakeeli</span>
+          </div>
         </div>
         {/* Divider */}
         <div className="mx-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.10)' }} />

@@ -52,176 +52,140 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left: Hero Panel */}
-      <div className="hidden md:flex md:w-1/2 relative overflow-hidden flex-col items-center justify-center bg-slate-900">
-        {/* Subtle property grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)
-            `,
-            backgroundSize: '40px 40px',
-          }}
-        />
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-3">
+      <div className="w-full max-w-5xl flex rounded-2xl overflow-hidden shadow-xl" style={{ minHeight: '600px' }}>
 
-        {/* Gradient orbs for depth */}
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-brand-600 rounded-full opacity-10 blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-brand-400 rounded-full opacity-10 blur-3xl" />
-
-        {/* Content */}
-        <div className="relative z-10 text-center px-12">
-          {/* Logo mark */}
-          <div className="flex items-center justify-center mb-6">
-            <img
-              src="/logo.png"
-              alt="Wakeeli"
-              className="w-48 object-contain"
-            />
+        {/* Left: Hero Photo Panel */}
+        <div className="hidden md:flex md:w-1/2 flex-col relative overflow-hidden rounded-l-2xl">
+          {/* Login label top-left */}
+          <div className="absolute top-4 left-4 z-10">
+            <span className="text-white text-xs font-medium bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
+              Login
+            </span>
           </div>
 
-          <p className="text-slate-300 text-lg font-light leading-relaxed max-w-xs mx-auto">
-            AI-Powered Real Estate Lead Conversion
-          </p>
-
-          {/* Decorative divider */}
-          <div className="mt-10 flex items-center justify-center gap-3">
-            <div className="h-px w-12 bg-slate-600" />
-            <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
-            <div className="h-px w-12 bg-slate-600" />
-          </div>
-
-          {/* Feature hints */}
-          <div className="mt-10 space-y-4 text-left">
-            {[
-              'Smart lead scoring & prioritization',
-              'Automated follow-up sequences',
-              'Real-time pipeline analytics',
-            ].map((feat) => (
-              <div key={feat} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-brand-600/30 border border-brand-500/40 flex items-center justify-center flex-shrink-0">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-400" />
-                </div>
-                <span className="text-slate-400 text-sm">{feat}</span>
-              </div>
-            ))}
-          </div>
+          {/* Hero image */}
+          <img
+            src="/login-hero.jpg"
+            alt="Luxury property"
+            className="w-full h-full object-cover"
+          />
         </div>
-      </div>
 
-      {/* Right: Login Form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center bg-white px-6 py-12">
-        <div className="w-full max-w-sm">
-          {/* Header */}
-          <div className="mb-8">
-            <p className="text-slate-500 text-base mb-1">Welcome to</p>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Wakeeli</h1>
-            <p className="text-slate-500 text-sm">
-              Sign in to access your real estate dashboard
-            </p>
-          </div>
+        {/* Right: Login Form */}
+        <div className="w-full md:w-1/2 flex items-center justify-center bg-white px-10 py-12 rounded-r-2xl md:rounded-l-none rounded-l-2xl">
+          <div className="w-full max-w-sm">
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Username
-              </label>
-              <input
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your username"
-                autoComplete="username"
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
-              />
-            </div>
-
-            {/* Remember me + Forgot password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+            {/* Header: "Welcome to" + wordmark logo inline */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-brand-600 text-xl font-semibold">Welcome to</span>
+                <img
+                  src="/logo-wordmark.png"
+                  alt="Wakeeli"
+                  className="h-8 object-contain"
                 />
-                <span className="text-sm text-slate-600">Remember me</span>
-              </label>
-              <a
-                href="#"
-                className="text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
-              >
-                Forgot Password?
-              </a>
+              </div>
+              <p className="text-slate-500 text-sm">
+                Sign in to access your real estate dashboard
+              </p>
             </div>
 
-            {/* Error */}
-            {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-lg">
-                {error}
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email Address */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Email Address
+                </label>
+                <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  autoComplete="username"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
+                />
               </div>
-            )}
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-12 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <svg
-                    className="w-4 h-4 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
+                />
+              </div>
+
+              {/* Remember me + Forgot password */}
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-slate-600">Remember me</span>
+                </label>
+                <a
+                  href="#"
+                  className="text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
+                >
+                  Forgot Password?
+                </a>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-lg">
+                  {error}
+                </div>
               )}
-            </button>
-          </form>
 
-          {/* Footer */}
-          <p className="mt-8 text-center text-sm text-slate-400">
-            Don't have an account?{' '}
-            <span className="text-slate-500 font-medium">Contact your admin</span>
-          </p>
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <svg
+                      className="w-4 h-4 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      />
+                    </svg>
+                    Logging in...
+                  </>
+                ) : (
+                  'Login'
+                )}
+              </button>
+            </form>
+          </div>
         </div>
+
       </div>
     </div>
   );

@@ -8,7 +8,6 @@ import {
   Calendar,
   Settings,
   BarChart3,
-  Bot,
   Search,
   Bell,
   LogOut,
@@ -33,7 +32,6 @@ const adminNav: NavItem[] = [
   { to: '/listings', icon: Building2, label: 'Listings' },
   { to: '/tours', icon: Calendar, label: 'Tours' },
   { to: '/agents', icon: Users, label: 'Agents' },
-  { to: '/ai-routing', icon: Bot, label: 'AI & Routing' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
@@ -45,7 +43,6 @@ const agentNav: NavItem[] = [
   { to: '/listings', icon: Building2, label: 'Listings' },
   { to: '/tours', icon: Calendar, label: 'Tours' },
   { to: '/agents', icon: Users, label: 'Agents' },
-  { to: '/ai-routing', icon: Bot, label: 'AI & Routing' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];

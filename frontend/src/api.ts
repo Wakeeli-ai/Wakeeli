@@ -60,9 +60,28 @@ export const matchListings = (requirements: {
   property_type?: string;
 }) => api.get<MatchListingsResponse>('/listings/match', { params: requirements });
 
+export interface Agent {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  total_leads: number;
+  live_load_today: number;
+  conversion_rate: number;
+  avg_response_time: number;
+  phone: string;
+  specialization: string;
+  active_leads: number;
+  tours_completed: number;
+  deals_closed: number;
+}
+
 export const getAgents = () => api.get('/agents/');
 export const createAgent = (data: any) => api.post('/agents/', data);
 export const deleteAgent = (id: number) => api.delete(`/agents/${id}`);
+export const getAgentDetails = (agentId: number) => api.get<Agent>(`/agents/${agentId}`);
+export const updateAgent = (agentId: number, data: any) => api.put(`/agents/${agentId}`, data);
 
 export const getConversations = (search?: string) => 
   api.get('/conversations/', { params: search ? { search } : undefined });

@@ -1,373 +1,435 @@
 import { useState, useEffect } from 'react';
-import { getListings, createListing, deleteListing, API_URL } from '../api';
-import { Plus, Trash2, Home, MapPin, Bed, Bath, Search, Square } from 'lucide-react';
+import { getListings, createListing, deleteListing } from '../api';
+import {
+  Building2, Bed, Bath, Maximize, X, MapPin, Search, Loader2,
+} from 'lucide-react';
 
-const formatPrice = (value: any) => {
+// Types
+
+type Listing = {
+  id: number;
+  title: string;
+  listing_type: string;
+  property_type: string;
+  city: string;
+  area: string | null;
+  bedrooms: number;
+  bathrooms: number;
+  built_up_area: number | null;
+  sale_price: number | null;
+  rent_price: number | null;
+  furnishing: string | null;
+  property_id?: string;
+};
+
+type ListingStatus = 'Active' | 'Hot Listing' | 'Pending' | 'Inactive';
+
+// Helpers
+
+const STATUS_COLORS: Record<ListingStatus, string> = {
+  Active: 'bg-emerald-500 text-white',
+  'Hot Listing': 'bg-red-500 text-white',
+  Pending: 'bg-amber-500 text-white',
+  Inactive: 'bg-slate-400 text-white',
+};
+
+const STATUSES: ListingStatus[] = ['Active', 'Hot Listing', 'Pending', 'Inactive'];
+
+function mockStatus(id: number): ListingStatus {
+  return STATUSES[id % STATUSES.length];
+}
+
+const AMENITY_POOL = [
+  'Swimming Pool', 'Gym', 'Parking', 'Balcony', 'Sea View',
+  'Security', 'Elevator', 'Generator', 'Storage', 'Central AC',
+];
+
+function mockAmenities(id: number): string[] {
+  return AMENITY_POOL.filter((_, i) => (id + i) % 3 === 0).slice(0, 5);
+}
+
+const AI_RULES = [
+  'Matches buyers looking for family homes in coastal areas',
+  'Suitable for investors seeking rental yield above 5%',
+  'Fits profiles requiring 3+ bedrooms with parking',
+];
+
+const TOUR_SLOTS = [
+  'Mon Apr 7 at 10:00 AM',
+  'Wed Apr 9 at 2:00 PM',
+  'Sat Apr 12 at 11:00 AM',
+];
+
+const formatPrice = (value: any): string => {
   if (value === null || value === undefined || value === '') return 'N/A';
   const num = Number(value);
   return Number.isFinite(num) ? num.toLocaleString() : 'N/A';
 };
 
-const formatNumberInput = (value: string) => {
+const formatNumberInput = (value: string): string => {
   const digits = value.replace(/[^\d]/g, '');
   if (!digits) return '';
   return Number(digits).toLocaleString();
 };
 
-const parseNumberInput = (value: string) => {
+const parseNumberInput = (value: string): number | null => {
   const digits = value.replace(/[^\d]/g, '');
   if (!digits) return null;
   const num = Number(digits);
   return Number.isFinite(num) ? num : null;
 };
 
-export default function Listings() {
-  const [listings, setListings] = useState<any[]>([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({
-    listing_type: 'rent',
-    property_type: 'Apartment',
-    title: '',
-    category: 'Residential',
-    city: '',
-    area: '',
-    building_name: '',
-    property_id: '',
-    bedrooms: 1,
-    bathrooms: 1,
-    built_up_area: '',
-    plot_area: '',
-    floor_number: '',
-    parking: 'None',
-    property_age: '',
-    furnishing: 'Unfurnished',
-    view: '',
-    condition: '',
-    sale_price: '',
-    rent_price: '',
-    rental_duration: 'Monthly',
-    security_deposit: '',
-    negotiable: '',
-    description: ''
-  });
+// Listing Detail Drawer
 
-  useEffect(() => {
-    loadListings();
-  }, []);
+function ListingDrawer({
+  listing,
+  onClose,
+  onDelete,
+}: {
+  listing: Listing;
+  onClose: () => void;
+  onDelete: (id: number) => void;
+}) {
+  const status = mockStatus(listing.id);
+  const amenities = mockAmenities(listing.id);
+  const price = listing.listing_type === 'buy' ? listing.sale_price : listing.rent_price;
+  const pricePerSqm =
+    price && listing.built_up_area
+      ? Math.round(price / listing.built_up_area).toLocaleString()
+      : 'N/A';
 
-  const loadListings = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const res = await getListings();
-      setListings(res.data);
-    } catch (err: any) {
-      console.error(err);
-      const errorMsg = err.response?.data?.detail || err.message || 'Failed to load listings. Check if backend is running and API URL is correct.';
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
+
+      {/* Drawer panel */}
+      <div className="fixed right-0 top-0 h-full w-[500px] max-w-full bg-white shadow-xl z-50 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center flex-shrink-0">
+              <Building2 size={28} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 line-clamp-2">{listing.title}</h2>
+              <div className="flex items-center gap-1.5 mt-1 text-sm text-slate-500">
+                <MapPin size={13} />
+                <span>
+                  {listing.city}
+                  {listing.area ? `, ${listing.area}` : ''}
+                </span>
+              </div>
+              <span
+                className={`inline-flex mt-1.5 px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[status]}`}
+              >
+                {status}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 mt-1 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 px-6 py-5 space-y-7">
+          {/* Listing Details */}
+          <section>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              Listing Details
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Property ID', value: listing.property_id || `#${listing.id}` },
+                { label: 'Type', value: listing.property_type },
+                { label: 'Bedrooms', value: String(listing.bedrooms) },
+                { label: 'Bathrooms', value: String(listing.bathrooms) },
+                {
+                  label: 'Area',
+                  value: listing.built_up_area ? `${listing.built_up_area} m\u00b2` : 'N/A',
+                },
+                { label: 'Furnishing', value: listing.furnishing || 'N/A' },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="bg-slate-50 rounded-lg p-3 border border-slate-100"
+                >
+                  <p className="text-xs text-slate-500">{item.label}</p>
+                  <p className="text-sm font-semibold text-slate-900 mt-0.5">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Pricing */}
+          <section>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              Pricing
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                <p className="text-xs text-slate-500">List Price</p>
+                <p className="text-xl font-bold text-slate-900 mt-0.5">${formatPrice(price)}</p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                <p className="text-xs text-slate-500">Price per m&sup2;</p>
+                <p className="text-xl font-bold text-slate-900 mt-0.5">${pricePerSqm}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Amenities */}
+          {amenities.length > 0 && (
+            <section>
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                Amenities
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {amenities.map((a) => (
+                  <span
+                    key={a}
+                    className="px-3 py-1 bg-brand-50 text-brand-700 rounded-full text-xs font-medium border border-brand-100"
+                  >
+                    {a}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* AI Matching Rules */}
+          <section>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              AI Matching Rules
+            </h3>
+            <div className="space-y-2">
+              {AI_RULES.map((rule, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-2 py-2 px-3 bg-slate-50 rounded-lg border border-slate-100"
+                >
+                  <span className="w-2 h-2 rounded-full bg-brand-500 mt-1.5 flex-shrink-0" />
+                  <p className="text-sm text-slate-600">{rule}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Tour Availability */}
+          <section>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              Tour Availability
+            </h3>
+            <div className="space-y-2">
+              {TOUR_SLOTS.map((slot, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 border border-slate-100"
+                >
+                  <span className="text-sm text-slate-700">{slot}</span>
+                  <span className="text-xs px-2 py-0.5 rounded font-medium bg-emerald-100 text-emerald-700">
+                    Available
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-100 flex gap-3 flex-shrink-0">
+          <button className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors">
+            Edit Listing
+          </button>
+          <button
+            onClick={() => {
+              onDelete(listing.id);
+              onClose();
+            }}
+            className="flex-1 px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+          >
+            Delete Listing
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Add Listing Modal
+
+const EMPTY_FORM = {
+  title: '',
+  listing_type: 'rent',
+  property_type: 'Apartment',
+  city: '',
+  area: '',
+  price: '',
+  bedrooms: 1,
+  bathrooms: 1,
+  built_up_area: '',
+  furnishing: 'Unfurnished',
+};
+
+function AddListingModal({
+  onClose,
+  onSave,
+}: {
+  onClose: () => void;
+  onSave: (data: typeof EMPTY_FORM) => Promise<void>;
+}) {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     try {
-      setError('');
-      if (form.listing_type === 'buy' && !form.sale_price) {
-        setError('Sale price is required for buy listings.');
-        return;
-      }
-      if (form.listing_type === 'rent' && !form.rent_price) {
-        setError('Rent price is required for rent listings.');
-        return;
-      }
-
-      const payload = {
-        ...form,
-        built_up_area: parseNumberInput(form.built_up_area),
-        plot_area: parseNumberInput(form.plot_area),
-        floor_number: parseNumberInput(form.floor_number),
-        sale_price: parseNumberInput(form.sale_price),
-        rent_price: parseNumberInput(form.rent_price),
-        security_deposit: parseNumberInput(form.security_deposit),
-        negotiable: form.negotiable === '' ? null : form.negotiable === 'Yes',
-      };
-
-      await createListing(payload);
-      setForm({
-        listing_type: 'rent',
-        property_type: 'Apartment',
-        title: '',
-        category: 'Residential',
-        property_id: '',
-        city: '',
-        area: '',
-        building_name: '',
-        bedrooms: 1,
-        bathrooms: 1,
-        built_up_area: '',
-        plot_area: '',
-        floor_number: '',
-        parking: 'None',
-        property_age: '',
-        furnishing: 'Unfurnished',
-        view: '',
-        condition: '',
-        sale_price: '',
-        rent_price: '',
-        rental_duration: 'Monthly',
-        security_deposit: '',
-        negotiable: '',
-        description: ''
-      });
-      setIsFormOpen(false);
-      loadListings();
-    } catch (err: any) {
-      console.error(err);
-      const errorMsg = err.response?.data?.detail || err.message || 'Failed to create listing. Check if backend is running and API URL is correct.';
-      setError(errorMsg);
-      alert(`Error: ${errorMsg}`);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure?')) return;
-    try {
-      await deleteListing(id);
-      loadListings();
-    } catch (err) {
-      console.error(err);
+      await onSave(form);
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Debug Info */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
-        <p className="text-yellow-800">
-          <strong>API URL:</strong> {API_URL}
-        </p>
-      </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800 font-medium">Error: {error}</p>
-          <p className="text-red-600 text-sm mt-1">
-            Check browser console (F12) for details.
-          </p>
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Property Listings
-          </h1>
-          <p className="text-slate-500">Manage your property portfolio.</p>
-        </div>
-        <button
-          onClick={() => setIsFormOpen(!isFormOpen)}
-          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          <Plus size={20} />
-          Add Listing
-        </button>
-      </div>
-
-      {isFormOpen && (
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm animate-in fade-in slide-in-from-top-4">
-          <h3 className="text-lg font-semibold mb-4 text-slate-800">
-            New Property Details
-          </h3>
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Listing Title
-              </label>
+    <>
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+            <h3 className="text-base font-semibold text-slate-900">Add Listing</h3>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
               <input
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                placeholder="e.g. Modern Apartment in Downtown"
+                required
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="e.g. Modern 3BR Apartment in Achrafieh"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                required
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Listing Type
-              </label>
-              <select
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                value={form.listing_type}
-                onChange={(e) =>
-                  setForm({ ...form, listing_type: e.target.value })
-                }
-              >
-                <option value="rent">For Rent</option>
-                <option value="buy">For Sale</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Property ID
-              </label>
-              <input
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                placeholder="e.g. 126225"
-                value={form.property_id}
-                onChange={(e) =>
-                  setForm({ ...form, property_id: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Property Type
-              </label>
-              <select
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                value={form.property_type}
-                onChange={(e) =>
-                  setForm({ ...form, property_type: e.target.value })
-                }
-              >
-                <option>Apartment</option>
-                <option>Villa</option>
-                <option>Duplex</option>
-                <option>Penthouse</option>
-                <option>Office</option>
-                <option>Retail</option>
-                <option>Land</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Category
-              </label>
-              <select
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              >
-                <option>Residential</option>
-                <option>Commercial</option>
-                <option>Land</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                City
-              </label>
-              <input
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                placeholder="e.g. Beirut"
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                required
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Bedrooms
+                  Listing Type
                 </label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={form.bedrooms}
-                  onChange={(e) =>
-                    setForm({ ...form, bedrooms: Number(e.target.value) })
-                  }
-                  required
-                />
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.listing_type}
+                  onChange={(e) => setForm({ ...form, listing_type: e.target.value })}
+                >
+                  <option value="rent">For Rent</option>
+                  <option value="buy">For Sale</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Bathrooms
+                  Property Type
                 </label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={form.bathrooms}
-                  onChange={(e) =>
-                    setForm({ ...form, bathrooms: Number(e.target.value) })
-                  }
-                  required
-                />
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.property_type}
+                  onChange={(e) => setForm({ ...form, property_type: e.target.value })}
+                >
+                  <option>Apartment</option>
+                  <option>House</option>
+                  <option>Studio</option>
+                  <option>Villa</option>
+                </select>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Built-Up Area (m²)
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
                 <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={form.built_up_area}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      built_up_area: formatNumberInput(e.target.value),
-                    })
-                  }
                   required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="e.g. Beirut"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Plot Area (m²)
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={form.plot_area}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      plot_area: formatNumberInput(e.target.value),
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Area / Neighborhood
                 </label>
                 <input
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="e.g. Achrafieh"
                   value={form.area}
                   onChange={(e) => setForm({ ...form, area: e.target.value })}
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {form.listing_type === 'buy' ? 'Sale Price ($)' : 'Rent Price ($)'}
+              </label>
+              <input
+                required
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="e.g. 250,000"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: formatNumberInput(e.target.value) })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Bedrooms</label>
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.bedrooms}
+                  onChange={(e) => setForm({ ...form, bedrooms: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Bathrooms</label>
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.bathrooms}
+                  onChange={(e) => setForm({ ...form, bathrooms: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Furnishing
+                  Built-up Area (m&sup2;)
                 </label>
-                <select
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                  value={form.furnishing}
+                <input
+                  required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="e.g. 120"
+                  value={form.built_up_area}
                   onChange={(e) =>
-                    setForm({ ...form, furnishing: e.target.value })
+                    setForm({ ...form, built_up_area: formatNumberInput(e.target.value) })
                   }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Furnishing</label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.furnishing}
+                  onChange={(e) => setForm({ ...form, furnishing: e.target.value })}
                 >
                   <option>Unfurnished</option>
                   <option>Furnished</option>
@@ -375,338 +437,241 @@ export default function Listings() {
                 </select>
               </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Building Name
-                </label>
-                <input
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={form.building_name}
-                  onChange={(e) =>
-                    setForm({ ...form, building_name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Floor Number
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={form.floor_number}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      floor_number: formatNumberInput(e.target.value),
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Parking
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                  value={form.parking}
-                  onChange={(e) =>
-                    setForm({ ...form, parking: e.target.value })
-                  }
-                >
-                  <option>None</option>
-                  <option>1</option>
-                  <option>2</option>
-                  <option>Covered</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Property Age
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                  value={form.property_age}
-                  onChange={(e) =>
-                    setForm({ ...form, property_age: e.target.value })
-                  }
-                >
-                  <option value="">Select</option>
-                  <option>1-5 years</option>
-                  <option>5-10 years</option>
-                  <option>10+ years</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  View
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                  value={form.view}
-                  onChange={(e) => setForm({ ...form, view: e.target.value })}
-                >
-                  <option value="">Select</option>
-                  <option>Sea</option>
-                  <option>City</option>
-                  <option>Mountain</option>
-                  <option>Open</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Condition
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                  value={form.condition}
-                  onChange={(e) =>
-                    setForm({ ...form, condition: e.target.value })
-                  }
-                >
-                  <option value="">Select</option>
-                  <option>Ready to Move In</option>
-                  <option>Under Construction</option>
-                  <option>Needs Renovation</option>
-                </select>
-              </div>
-            </div>
-
-            {form.listing_type === "buy" && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Sale Price ($)
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={form.sale_price}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      sale_price: formatNumberInput(e.target.value),
-                    })
-                  }
-                  required
-                />
-              </div>
-            )}
-
-            {form.listing_type === "rent" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Rent Price ($)
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    value={form.rent_price}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        rent_price: formatNumberInput(e.target.value),
-                      })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Rental Duration
-                  </label>
-                  <select
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                    value={form.rental_duration}
-                    onChange={(e) =>
-                      setForm({ ...form, rental_duration: e.target.value })
-                    }
-                  >
-                    <option>Daily</option>
-                    <option>Monthly</option>
-                    <option>Yearly</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {form.listing_type === "rent" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Security Deposit ($)
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    value={form.security_deposit}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        security_deposit: formatNumberInput(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Negotiable
-                  </label>
-                  <select
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                    value={form.negotiable}
-                    onChange={(e) =>
-                      setForm({ ...form, negotiable: e.target.value })
-                    }
-                  >
-                    <option value="">Select</option>
-                    <option>Yes</option>
-                    <option>No</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Description
-              </label>
-              <textarea
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                rows={3}
-                placeholder="Additional details..."
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="col-span-2 flex justify-end gap-3 mt-2">
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setIsFormOpen(false)}
-                className="px-4 py-2 text-slate-700 font-medium hover:bg-slate-100 rounded-lg"
+                onClick={onClose}
+                className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg"
+                disabled={saving}
+                className="px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60"
               >
-                Save Listing
+                {saving ? 'Saving...' : 'Save Listing'}
               </button>
             </div>
           </form>
         </div>
-      )}
+      </div>
+    </>
+  );
+}
 
-      {/* Loading State */}
+// Main Page
+
+export default function Listings() {
+  const [listings, setListings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedListing, setSelectedListing] = useState<any | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  useEffect(() => {
+    loadListings();
+  }, []);
+
+  const loadListings = async () => {
+    setLoading(true);
+    try {
+      const res = await getListings();
+      setListings(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this listing?')) return;
+    try {
+      await deleteListing(id);
+      setSelectedListing(null);
+      loadListings();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddListing = async (data: typeof EMPTY_FORM) => {
+    const parsed = parseNumberInput(data.price);
+    await createListing({
+      title: data.title,
+      listing_type: data.listing_type,
+      property_type: data.property_type,
+      city: data.city,
+      area: data.area || null,
+      bedrooms: data.bedrooms,
+      bathrooms: data.bathrooms,
+      built_up_area: parseNumberInput(data.built_up_area),
+      furnishing: data.furnishing,
+      sale_price: data.listing_type === 'buy' ? parsed : null,
+      rent_price: data.listing_type === 'rent' ? parsed : null,
+    });
+    setShowAddModal(false);
+    loadListings();
+  };
+
+  const filtered = listings.filter((l) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      l.title?.toLowerCase().includes(q) ||
+      l.city?.toLowerCase().includes(q) ||
+      l.area?.toLowerCase().includes(q)
+    );
+  });
+
+  const getPrice = (l: any) =>
+    l.listing_type === 'buy' ? l.sale_price : l.rent_price;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-bold text-slate-900">Listings</h1>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+            />
+            <input
+              className="pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 w-56"
+              placeholder="Search listings..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Building2 size={16} />
+            Add Listing
+          </button>
+        </div>
+      </div>
+
+      {/* Loading */}
       {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-2 text-slate-500">Loading listings...</p>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
         </div>
       )}
 
-      {/* Grid Layout for Listings */}
+      {/* Grid */}
       {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {listings.map((l) => (
-            <div
-              key={l.id}
-              className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-            >
-              <div className="h-48 bg-slate-200 relative">
-                {/* Placeholder for Image */}
-                <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-                  <Home size={48} />
-                </div>
-                <div className="absolute top-4 left-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                      l.listing_type === "rent"
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-brand-100 text-brand-700"
-                    }`}
-                  >
-                    {l.listing_type === "rent" ? "For Rent" : "For Sale"}
-                  </span>
-                </div>
-                <div className="absolute top-4 right-4">
-                  <span className="px-3 py-1 bg-white/90 backdrop-blur rounded-full text-xs font-bold text-slate-900 shadow-sm">
-                    $
-                    {l.listing_type === "buy"
-                      ? formatPrice(l.sale_price)
-                      : formatPrice(l.rent_price)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-bold text-slate-900 line-clamp-1">
-                    {l.title}
-                  </h3>
-                </div>
-
-                <div className="flex items-center text-slate-500 text-sm mb-2">
-                  <MapPin size={16} className="mr-1" />
-                  {l.city}
-                  {l.area ? `, ${l.area}` : ""}
-                </div>
-
-                <div className="flex items-center gap-4 text-sm text-slate-600 mb-4 pb-4 border-b border-slate-100">
-                  <div className="flex items-center gap-1">
-                    <Square size={16} />
-                    <span>{formatPrice(l.built_up_area)} m²</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Bed size={16} />
-                    <span>{l.bedrooms} Beds</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Bath size={16} />
-                    <span>{l.bathrooms} Baths</span>
-                  </div>
-                  {l.furnishing && (
-                    <div className="capitalize px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600">
-                      {l.furnishing}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-400">ID: {l.id}</span>
-                  <button
-                    onClick={() => handleDelete(l.id)}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
+        <>
+          {filtered.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-dashed border-slate-300">
+              <Building2 className="mx-auto h-12 w-12 text-slate-300 mb-3" />
+              <h3 className="text-lg font-medium text-slate-900">No listings found</h3>
+              <p className="text-slate-500 text-sm mt-1">
+                Add a listing or adjust your search.
+              </p>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filtered.map((l) => {
+                const status = mockStatus(l.id);
+                const price = getPrice(l);
+
+                return (
+                  <div
+                    key={l.id}
+                    className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setSelectedListing(l)}
+                  >
+                    {/* Image placeholder */}
+                    <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 relative">
+                      <div className="absolute inset-0 flex items-center justify-center text-slate-300">
+                        <Building2 size={52} />
+                      </div>
+
+                      {/* Status badge top-left */}
+                      <div className="absolute top-3 left-3">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${STATUS_COLORS[status]}`}
+                        >
+                          {status}
+                        </span>
+                      </div>
+
+                      {/* Price badge top-right */}
+                      <div className="absolute top-3 right-3">
+                        <span className="px-3 py-1 bg-slate-900/80 backdrop-blur rounded-full text-xs font-bold text-white shadow-sm">
+                          ${formatPrice(price)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card body */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-slate-900 line-clamp-1 mb-1">{l.title}</h3>
+                      <div className="flex items-center gap-1 text-sm text-slate-500 mb-3">
+                        <MapPin size={13} className="flex-shrink-0" />
+                        <span className="line-clamp-1">
+                          {l.city}
+                          {l.area ? `, ${l.area}` : ''}
+                        </span>
+                      </div>
+
+                      {/* Stats row */}
+                      <div className="flex items-center gap-3 text-sm text-slate-600 mb-3">
+                        <span className="flex items-center gap-1">
+                          <Bed size={14} />
+                          {l.bedrooms}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Bath size={14} />
+                          {l.bathrooms}
+                        </span>
+                        {l.built_up_area && (
+                          <span className="flex items-center gap-1">
+                            <Maximize size={14} />
+                            {l.built_up_area} m&sup2;
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Listing type badge */}
+                      <span
+                        className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          l.listing_type === 'buy'
+                            ? 'bg-brand-100 text-brand-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {l.listing_type === 'buy' ? 'For Sale' : 'For Rent'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
-      {!loading && listings.length === 0 && !error && (
-        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
-          <Home className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-          <h3 className="text-lg font-medium text-slate-900">
-            No properties yet
-          </h3>
-          <p className="text-slate-500">Get started by adding a new listing.</p>
-        </div>
+      {/* Detail Drawer */}
+      {selectedListing && (
+        <ListingDrawer
+          listing={selectedListing}
+          onClose={() => setSelectedListing(null)}
+          onDelete={handleDelete}
+        />
+      )}
+
+      {/* Add Listing Modal */}
+      {showAddModal && (
+        <AddListingModal
+          onClose={() => setShowAddModal(false)}
+          onSave={handleAddListing}
+        />
       )}
     </div>
   );

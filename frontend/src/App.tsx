@@ -10,7 +10,6 @@ import Leads from './pages/Leads';
 import Tours from './pages/Tours';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
-import AiRouting from './pages/AiRouting';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useRole();
@@ -46,7 +45,6 @@ function AppRoutes() {
                 <Route path="/listings" element={<Listings />} />
                 <Route path="/tours" element={<Tours />} />
                 <Route path="/agents" element={<Agents />} />
-                <Route path="/ai-routing" element={<AiRouting />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
               </Routes>

@@ -64,12 +64,30 @@ class AdminUser:
         self.is_active = True
 
 
-def authenticate_user(db: Session, username: str, password: str) -> User | AdminUser | bool:
-    """Authenticate user against database or admin settings."""
-    # First check admin credentials from settings
+class AgentUser:
+    """Mock agent user object for built-in agent login."""
+    def __init__(self):
+        self.id = 1
+        self.username = "Agent"
+        self.email = "agent@wakeeli.com"
+        self.role = "agent"
+        self.is_active = True
+
+
+# Built-in agent credentials
+AGENT_USERNAME = "Agent"
+AGENT_PASSWORD = "Agent123"
+
+
+def authenticate_user(db: Session, username: str, password: str) -> User | AdminUser | AgentUser | bool:
+    """Authenticate user against database or built-in credentials."""
+    # Check admin credentials
     if username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD:
-        # Return a mock admin user object
         return AdminUser()
+
+    # Check built-in agent credentials
+    if username == AGENT_USERNAME and password == AGENT_PASSWORD:
+        return AgentUser()
 
     # Then check database users
     try:
@@ -198,7 +216,7 @@ async def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depen
         if username is None:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        # Check if it's the admin user from settings
+        # Check built-in users
         if username == settings.ADMIN_USERNAME:
             return UserResponse(
                 id=0,
@@ -207,7 +225,16 @@ async def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depen
                 role="admin",
                 is_active=True
             )
-        
+
+        if username == AGENT_USERNAME:
+            return UserResponse(
+                id=1,
+                username=AGENT_USERNAME,
+                email="agent@wakeeli.com",
+                role="agent",
+                is_active=True
+            )
+
         # Otherwise, fetch from database
         user = db.query(User).filter(User.username == username).first()
         if not user:

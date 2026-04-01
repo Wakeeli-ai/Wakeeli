@@ -149,6 +149,16 @@ async def signup(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 
+@router.get("/debug-config")
+async def debug_config():
+    """Temporary debug endpoint to check admin config. REMOVE AFTER DEBUGGING."""
+    return {
+        "admin_username": settings.ADMIN_USERNAME,
+        "admin_password_length": len(settings.ADMIN_PASSWORD),
+        "admin_password_first2": settings.ADMIN_PASSWORD[:2] if settings.ADMIN_PASSWORD else "",
+    }
+
+
 @router.post("/login", response_model=TokenWithUser)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """Login endpoint."""

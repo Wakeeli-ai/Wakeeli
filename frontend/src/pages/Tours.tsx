@@ -1,164 +1,244 @@
 import { useState } from 'react';
 import { useRole } from '../context/RoleContext';
-import { Calendar, Plus } from 'lucide-react';
+import { Plus, MapPin, User } from 'lucide-react';
 
-const weekDays = ['Mon 18', 'Tue 19', 'Wed 20', 'Thu 21', 'Fri 22', 'Sat 23', 'Sun 24'];
-const timeSlots = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'];
-
-const mockTours = [
-  { day: 1, start: 0, end: 1, lead: 'Marcus Rodriguez', property: 'Sunset Villa', color: 'bg-emerald-500' },
-  { day: 1, start: 3, end: 4, lead: 'Latoya Washington', property: 'Harbor View Condos', color: 'bg-amber-500' },
-  { day: 2, start: 1, end: 2, lead: 'Patricia O\'Brien', property: 'Riverside Luxury Lofts', color: 'bg-emerald-500' },
-  { day: 2, start: 2, end: 3, lead: 'Gregory', property: '', color: 'bg-red-500' },
-  { day: 2, start: 4, end: 5, lead: 'Amanda Foster', property: 'Parkside Townhomes', color: 'bg-emerald-500' },
-  { day: 3, start: 2, end: 3, lead: 'Robert Jackson', property: 'Mountain View Estates', color: 'bg-amber-500' },
-  { day: 4, start: 1, end: 2, lead: 'Christine Anderson', property: 'Lakefront', color: 'bg-emerald-500' },
+const TOURS = [
+  {
+    id: 1,
+    client: 'Rami Khoury',
+    phone: '+961 71 234 567',
+    property: '3BR Apartment in Achrafieh',
+    address: 'Rue Sursock, Achrafieh, Beirut',
+    date: 'Apr 2, 2026',
+    time: '9:00 AM',
+    agent: 'Joelle Rizk',
+    status: 'Scheduled',
+  },
+  {
+    id: 2,
+    client: 'Nadia Saade',
+    phone: '+961 76 891 234',
+    property: '4BR Villa in Broummana',
+    address: 'Main Road, Broummana, Metn',
+    date: 'Apr 3, 2026',
+    time: '11:00 AM',
+    agent: 'Elie Khoury',
+    status: 'Scheduled',
+  },
+  {
+    id: 3,
+    client: 'Tony Frem',
+    phone: '+961 70 345 678',
+    property: 'Studio in Mar Mikhael',
+    address: 'Armenia Street, Mar Mikhael, Beirut',
+    date: 'Apr 4, 2026',
+    time: '10:00 AM',
+    agent: 'Roula Bou Jawde',
+    status: 'Completed',
+  },
+  {
+    id: 4,
+    client: 'Maya Nassar',
+    phone: '+961 03 567 890',
+    property: '2BR Apartment in Hamra',
+    address: 'Bliss Street, Hamra, Beirut',
+    date: 'Apr 5, 2026',
+    time: '2:00 PM',
+    agent: 'Joelle Rizk',
+    status: 'Scheduled',
+  },
+  {
+    id: 5,
+    client: 'Hassan Mourad',
+    phone: '+961 71 123 456',
+    property: 'Sea View Apt in Kaslik',
+    address: "Rue de l'Eglise, Kaslik, Jounieh",
+    date: 'Apr 6, 2026',
+    time: '3:30 PM',
+    agent: 'Elie Khoury',
+    status: 'Cancelled',
+  },
+  {
+    id: 6,
+    client: 'Lara Bou Jawde',
+    phone: '+961 76 234 567',
+    property: '5BR Villa in Beit Mery',
+    address: 'Old Village Road, Beit Mery, Metn',
+    date: 'Apr 7, 2026',
+    time: '10:30 AM',
+    agent: 'Joelle Rizk',
+    status: 'Completed',
+  },
+  {
+    id: 7,
+    client: 'Georges Karam',
+    phone: '+961 70 456 789',
+    property: '3BR Duplex in Verdun',
+    address: 'Verdun Street, Ras Beirut',
+    date: 'Apr 9, 2026',
+    time: '11:00 AM',
+    agent: 'Roula Bou Jawde',
+    status: 'Scheduled',
+  },
+  {
+    id: 8,
+    client: 'Rita Haddad',
+    phone: '+961 03 678 901',
+    property: '2BR Apartment in Dbayeh',
+    address: 'Highway Road, Dbayeh, Metn',
+    date: 'Apr 10, 2026',
+    time: '4:00 PM',
+    agent: 'Elie Khoury',
+    status: 'Scheduled',
+  },
+  {
+    id: 9,
+    client: 'Marwan Khalil',
+    phone: '+961 71 345 678',
+    property: '1BR Apartment in Badaro',
+    address: 'Badaro Street, Beirut',
+    date: 'Apr 12, 2026',
+    time: '9:30 AM',
+    agent: 'Joelle Rizk',
+    status: 'Scheduled',
+  },
+  {
+    id: 10,
+    client: 'Celine Abi Zeid',
+    phone: '+961 76 567 890',
+    property: '4BR Penthouse in Raouche',
+    address: 'Corniche Al Manara, Raouche, Beirut',
+    date: 'Apr 14, 2026',
+    time: '1:00 PM',
+    agent: 'Roula Bou Jawde',
+    status: 'Scheduled',
+  },
 ];
 
-const upcomingTours = [
-  { property: 'Sunset Villa Estates', lead: 'Marcus Rodriguez', date: 'Mar 19', time: '9:00 AM' },
-  { property: 'Riverside Luxury Lofts', lead: 'Patricia O\'Brien', date: 'Mar 20', time: '10:00 AM' },
-  { property: 'Parkside Townhomes', lead: 'Amanda Foster', date: 'Mar 20', time: '3:00 PM' },
-  { property: 'Mountain View Estates', lead: 'Robert Jackson', date: 'Mar 21', time: '11:00 AM' },
-];
+const STATUS_COLORS: Record<string, string> = {
+  Scheduled: 'bg-blue-100 text-blue-700',
+  Completed: 'bg-emerald-100 text-emerald-700',
+  Cancelled: 'bg-red-100 text-red-700',
+};
+
+type StatusFilter = 'All' | 'Scheduled' | 'Completed' | 'Cancelled';
 
 export default function Tours() {
   const { role } = useRole();
-  const [view, setView] = useState<'week' | 'day' | 'month'>('week');
+  const [filter, setFilter] = useState<StatusFilter>('All');
   const title = role === 'agent' ? 'Property Visits' : 'Property Tours';
-  const subtitle = 'Manage and schedule property tours with leads';
+
+  const filtered = filter === 'All' ? TOURS : TOURS.filter((t) => t.status === filter);
+
+  const counts = {
+    Scheduled: TOURS.filter((t) => t.status === 'Scheduled').length,
+    Completed: TOURS.filter((t) => t.status === 'Completed').length,
+    Cancelled: TOURS.filter((t) => t.status === 'Cancelled').length,
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-          <p className="text-slate-500 mt-1">{subtitle}</p>
+          <p className="text-slate-500 mt-1 text-sm">Manage and schedule property tours with leads</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg text-sm">
-            <Calendar size={18} className="text-slate-500" />
-            <span>March 18-24, 2024</span>
-          </div>
-          <div className="flex rounded-lg overflow-hidden border border-slate-300">
-            {(['week', 'day', 'month'] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setView(v)}
-                className={`px-4 py-2 text-sm font-medium capitalize ${view === v ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-          {role === 'agent' && (
-            <button
-              type="button"
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700"
-            >
-              Edit Availability
-            </button>
-          )}
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700"
-          >
-            <Plus size={18} />
-            Schedule Tour
-          </button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700"
+        >
+          <Plus size={18} />
+          Schedule Tour
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 text-center">
+          <p className="text-2xl font-bold text-blue-600">{counts.Scheduled}</p>
+          <p className="text-sm text-slate-500 mt-1">Scheduled</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 text-center">
+          <p className="text-2xl font-bold text-emerald-600">{counts.Completed}</p>
+          <p className="text-sm text-slate-500 mt-1">Completed</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 text-center">
+          <p className="text-2xl font-bold text-red-600">{counts.Cancelled}</p>
+          <p className="text-sm text-slate-500 mt-1">Cancelled</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-slate-500 w-24">Time</th>
-                  {weekDays.map((d) => (
-                    <th key={d} className="px-2 py-3 text-center text-sm font-medium text-slate-600 min-w-[100px]">
-                      {d}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {timeSlots.map((_, slotIndex) => (
-                  <tr key={slotIndex} className="border-b border-slate-100">
-                    <td className="px-4 py-2 text-sm text-slate-500 align-top">{timeSlots[slotIndex]}</td>
-                    {weekDays.map((_, dayIndex) => {
-                      const tour = mockTours.find(
-                        (t) => t.day === dayIndex && t.start === slotIndex
-                      );
-                      const isContinuation = mockTours.some(
-                        (t) => t.day === dayIndex && t.start < slotIndex && t.end > slotIndex
-                      );
-                      if (isContinuation) {
-                        return <td key={dayIndex} className="p-1 align-top w-[100px]" />;
-                      }
-                      if (tour) {
-                        return (
-                          <td key={dayIndex} className="p-1 align-top">
-                            <div className={`${tour.color} text-white text-xs p-2 rounded-lg min-h-[52px]`}>
-                              <p className="font-medium">{tour.lead}</p>
-                              {tour.property && <p className="opacity-90">{tour.property}</p>}
-                            </div>
-                          </td>
-                        );
-                      }
-                      return <td key={dayIndex} className="p-1 align-top" />;
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex gap-1 px-4 pt-4 border-b border-slate-100">
+          {(['All', 'Scheduled', 'Completed', 'Cancelled'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setFilter(tab)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
+                filter === tab
+                  ? 'bg-brand-50 text-brand-600 border-b-2 border-brand-600'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
-        <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-            <h2 className="font-semibold text-slate-900 mb-4">Upcoming Tours</h2>
-            <ul className="space-y-3">
-              {upcomingTours.map((t, i) => (
-                <li key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
-                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="font-medium text-slate-900 truncate">{t.property}</p>
-                    <p className="text-xs text-slate-500">{t.lead} · {t.date}, {t.time}</p>
-                  </div>
-                </li>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Client</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Property</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Date & Time</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Agent</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.map((tour) => (
+                <tr key={tour.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        {tour.client.split(' ').map((n) => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900 text-sm">{tour.client}</p>
+                        <p className="text-xs text-slate-400">{tour.phone}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <p className="font-medium text-slate-800 text-sm">{tour.property}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <MapPin size={11} className="text-slate-400 flex-shrink-0" />
+                      <p className="text-xs text-slate-400 truncate max-w-[220px]">{tour.address}</p>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <p className="font-medium text-slate-800 text-sm">{tour.date}</p>
+                    <p className="text-xs text-slate-400">{tour.time}</p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-1.5">
+                      <User size={13} className="text-slate-400" />
+                      <span className="text-sm text-slate-700">{tour.agent}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[tour.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                      {tour.status}
+                    </span>
+                  </td>
+                </tr>
               ))}
-            </ul>
-          </div>
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-            <h2 className="font-semibold text-slate-900 mb-4">Tour Statistics</h2>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-600">This Week</span>
-              <select className="text-sm border-0 bg-transparent text-slate-600">
-                <option>This Week</option>
-              </select>
-            </div>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center justify-between">
-                <span className="text-emerald-600 font-medium">Completed</span>
-                <span>24 <span className="text-emerald-600">+12%</span></span>
-              </li>
-              <li className="flex items-center justify-between">
-                <span className="text-amber-600 font-medium">Pending</span>
-                <span>8</span>
-              </li>
-              <li className="flex items-center justify-between">
-                <span className="text-red-600 font-medium">No-show</span>
-                <span>3 <span className="text-red-600">+1</span></span>
-              </li>
-              <li className="flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Canceled</span>
-                <span>5 <span className="text-slate-500">-2</span></span>
-              </li>
-            </ul>
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

@@ -20,23 +20,31 @@ type Listing = {
   rent_price: number | null;
   furnishing: string | null;
   property_id?: string;
+  status?: string;
+  image_url?: string;
 };
 
-type ListingStatus = 'Active' | 'Hot Listing' | 'Pending' | 'Inactive';
+type ListingStatus = 'Available' | 'Under Offer' | 'Sold' | 'Hot Listing' | 'Active' | 'Pending' | 'Inactive';
 
 // Helpers
 
 const STATUS_COLORS: Record<ListingStatus, string> = {
-  Active: 'bg-emerald-500 text-white',
+  Available: 'bg-emerald-500 text-white',
   'Hot Listing': 'bg-red-500 text-white',
+  'Under Offer': 'bg-amber-500 text-white',
+  Sold: 'bg-slate-400 text-white',
+  Active: 'bg-emerald-500 text-white',
   Pending: 'bg-amber-500 text-white',
   Inactive: 'bg-slate-400 text-white',
 };
 
-const STATUSES: ListingStatus[] = ['Active', 'Hot Listing', 'Pending', 'Inactive'];
+const FALLBACK_STATUSES: ListingStatus[] = ['Available', 'Hot Listing', 'Under Offer', 'Sold'];
 
-function mockStatus(id: number): ListingStatus {
-  return STATUSES[id % STATUSES.length];
+function mockStatus(id: number, overrideStatus?: string): ListingStatus {
+  if (overrideStatus && overrideStatus in STATUS_COLORS) {
+    return overrideStatus as ListingStatus;
+  }
+  return FALLBACK_STATUSES[id % FALLBACK_STATUSES.length];
 }
 
 const AMENITY_POOL = [
@@ -58,6 +66,201 @@ const TOUR_SLOTS = [
   'Mon Apr 7 at 10:00 AM',
   'Wed Apr 9 at 2:00 PM',
   'Sat Apr 12 at 11:00 AM',
+];
+
+const MOCK_LISTINGS = [
+  {
+    id: 201,
+    title: '3BR Apartment in Achrafieh',
+    listing_type: 'buy',
+    property_type: 'Apartment',
+    city: 'Beirut',
+    area: 'Achrafieh',
+    bedrooms: 3,
+    bathrooms: 2,
+    built_up_area: 175,
+    sale_price: 420000,
+    rent_price: null,
+    furnishing: 'Semi-Furnished',
+    status: 'Available',
+    image_url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop',
+  },
+  {
+    id: 202,
+    title: 'Sea View Penthouse in Dbayeh',
+    listing_type: 'buy',
+    property_type: 'Apartment',
+    city: 'Dbayeh',
+    area: 'Metn Coast',
+    bedrooms: 4,
+    bathrooms: 3,
+    built_up_area: 320,
+    sale_price: 1200000,
+    rent_price: null,
+    furnishing: 'Furnished',
+    status: 'Hot Listing',
+    image_url: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop',
+  },
+  {
+    id: 203,
+    title: '4BR Luxury Villa in Broummana',
+    listing_type: 'buy',
+    property_type: 'Villa',
+    city: 'Broummana',
+    area: 'Metn',
+    bedrooms: 4,
+    bathrooms: 3,
+    built_up_area: 380,
+    sale_price: 850000,
+    rent_price: null,
+    furnishing: 'Unfurnished',
+    status: 'Available',
+    image_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop',
+  },
+  {
+    id: 204,
+    title: '2BR Apartment in Jounieh',
+    listing_type: 'buy',
+    property_type: 'Apartment',
+    city: 'Jounieh',
+    area: 'Kesrwan',
+    bedrooms: 2,
+    bathrooms: 2,
+    built_up_area: 140,
+    sale_price: 280000,
+    rent_price: null,
+    furnishing: 'Unfurnished',
+    status: 'Available',
+    image_url: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=300&fit=crop',
+  },
+  {
+    id: 205,
+    title: 'Mountain Chalet in Beit Mery',
+    listing_type: 'buy',
+    property_type: 'House',
+    city: 'Beit Mery',
+    area: 'Metn',
+    bedrooms: 3,
+    bathrooms: 2,
+    built_up_area: 230,
+    sale_price: 650000,
+    rent_price: null,
+    furnishing: 'Semi-Furnished',
+    status: 'Under Offer',
+    image_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=300&fit=crop',
+  },
+  {
+    id: 206,
+    title: '5BR Mansion in Rabieh',
+    listing_type: 'buy',
+    property_type: 'Villa',
+    city: 'Rabieh',
+    area: 'Metn',
+    bedrooms: 5,
+    bathrooms: 5,
+    built_up_area: 620,
+    sale_price: 1800000,
+    rent_price: null,
+    furnishing: 'Unfurnished',
+    status: 'Available',
+    image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=300&fit=crop',
+  },
+  {
+    id: 207,
+    title: '3BR Apartment in Antelias',
+    listing_type: 'buy',
+    property_type: 'Apartment',
+    city: 'Antelias',
+    area: 'Metn Coast',
+    bedrooms: 3,
+    bathrooms: 2,
+    built_up_area: 195,
+    sale_price: 350000,
+    rent_price: null,
+    furnishing: 'Unfurnished',
+    status: 'Available',
+    image_url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop',
+  },
+  {
+    id: 208,
+    title: 'Penthouse in Kaslik',
+    listing_type: 'buy',
+    property_type: 'Apartment',
+    city: 'Jounieh',
+    area: 'Kaslik',
+    bedrooms: 4,
+    bathrooms: 3,
+    built_up_area: 290,
+    sale_price: 950000,
+    rent_price: null,
+    furnishing: 'Furnished',
+    status: 'Hot Listing',
+    image_url: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop',
+  },
+  {
+    id: 209,
+    title: '2BR Apartment in Mtayleb',
+    listing_type: 'buy',
+    property_type: 'Apartment',
+    city: 'Mtayleb',
+    area: 'Metn',
+    bedrooms: 2,
+    bathrooms: 2,
+    built_up_area: 155,
+    sale_price: 310000,
+    rent_price: null,
+    furnishing: 'Semi-Furnished',
+    status: 'Under Offer',
+    image_url: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=300&fit=crop',
+  },
+  {
+    id: 210,
+    title: '4BR Villa in Baabda',
+    listing_type: 'buy',
+    property_type: 'Villa',
+    city: 'Baabda',
+    area: 'Mount Lebanon',
+    bedrooms: 4,
+    bathrooms: 4,
+    built_up_area: 420,
+    sale_price: 720000,
+    rent_price: null,
+    furnishing: 'Unfurnished',
+    status: 'Available',
+    image_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop',
+  },
+  {
+    id: 211,
+    title: 'Commercial Space in Jounieh',
+    listing_type: 'buy',
+    property_type: 'Commercial',
+    city: 'Jounieh',
+    area: 'Kaslik',
+    bedrooms: 0,
+    bathrooms: 2,
+    built_up_area: 260,
+    sale_price: 550000,
+    rent_price: null,
+    furnishing: 'Unfurnished',
+    status: 'Available',
+    image_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=300&fit=crop',
+  },
+  {
+    id: 212,
+    title: '3BR Apartment in Gemmayzeh',
+    listing_type: 'buy',
+    property_type: 'Apartment',
+    city: 'Beirut',
+    area: 'Gemmayzeh',
+    bedrooms: 3,
+    bathrooms: 2,
+    built_up_area: 185,
+    sale_price: 480000,
+    rent_price: null,
+    furnishing: 'Furnished',
+    status: 'Sold',
+    image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=300&fit=crop',
+  },
 ];
 
 const formatPrice = (value: any): string => {
@@ -90,7 +293,7 @@ function ListingDrawer({
   onClose: () => void;
   onDelete: (id: number) => void;
 }) {
-  const status = mockStatus(listing.id);
+  const status = mockStatus(listing.id, listing.status);
   const amenities = mockAmenities(listing.id);
   const price = listing.listing_type === 'buy' ? listing.sale_price : listing.rent_price;
   const pricePerSqm =
@@ -477,9 +680,11 @@ export default function Listings() {
     setLoading(true);
     try {
       const res = await getListings();
-      setListings(Array.isArray(res.data) ? res.data : []);
+      const data = Array.isArray(res.data) ? res.data : [];
+      setListings(data.length > 0 ? data : MOCK_LISTINGS);
     } catch (err) {
       console.error(err);
+      setListings(MOCK_LISTINGS);
     } finally {
       setLoading(false);
     }
@@ -590,7 +795,7 @@ export default function Listings() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((l) => {
-                const status = mockStatus(l.id);
+                const status = mockStatus(l.id, l.status);
                 const price = getPrice(l);
 
                 return (
@@ -599,11 +804,19 @@ export default function Listings() {
                     className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => setSelectedListing(l)}
                   >
-                    {/* Image placeholder */}
-                    <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 relative">
-                      <div className="absolute inset-0 flex items-center justify-center text-slate-300">
-                        <Building2 size={52} />
-                      </div>
+                    {/* Cover photo */}
+                    <div className="h-48 relative overflow-hidden">
+                      {l.image_url ? (
+                        <img
+                          src={l.image_url}
+                          alt={l.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-300">
+                          <Building2 size={52} />
+                        </div>
+                      )}
 
                       {/* Status badge top-left */}
                       <div className="absolute top-3 left-3">
@@ -635,10 +848,12 @@ export default function Listings() {
 
                       {/* Stats row */}
                       <div className="flex items-center gap-3 text-sm text-slate-600 mb-3">
-                        <span className="flex items-center gap-1">
-                          <Bed size={14} />
-                          {l.bedrooms}
-                        </span>
+                        {l.bedrooms > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Bed size={14} />
+                            {l.bedrooms}
+                          </span>
+                        )}
                         <span className="flex items-center gap-1">
                           <Bath size={14} />
                           {l.bathrooms}

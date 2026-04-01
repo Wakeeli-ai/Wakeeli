@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #f1f5f9; padding: 30px; }
+  h1 { text-align: center; margin-bottom: 30px; color: #1e293b; font-size: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1200px; margin: 0 auto; }
+  .option { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+  .option-label { padding: 12px 16px; background: white; text-align: center; font-weight: 600; font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; }
+  .preview { display: flex; height: 500px; }
+  .sidebar { width: 220px; padding: 20px 16px; display: flex; flex-direction: column; }
+  .sidebar .logo-area { text-align: center; margin-bottom: 24px; padding-bottom: 16px; }
+  .sidebar .logo-area img { width: 120px; height: auto; }
+  .sidebar .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 13px; cursor: pointer; }
+  .sidebar .nav-item.active { font-weight: 600; }
+  .sidebar .logout { margin-top: auto; padding: 10px 12px; border-radius: 8px; font-size: 13px; display: flex; align-items: center; gap: 10px; opacity: 0.7; }
+  .content { flex: 1; background: #f8fafc; padding: 16px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px; }
+
+  /* Option 1: Dark Maroon */
+  .opt1 .sidebar { background: #2D1114; }
+  .opt1 .nav-item { color: rgba(255,255,255,0.6); }
+  .opt1 .nav-item:hover, .opt1 .nav-item.active { background: rgba(255,255,255,0.08); color: #fff; }
+  .opt1 .logout { color: rgba(255,255,255,0.5); }
+  .opt1 .logo-area { border-bottom: 1px solid rgba(255,255,255,0.08); }
+
+  /* Option 2: Clean White */
+  .opt2 .sidebar { background: #ffffff; border-right: 1px solid #e2e8f0; }
+  .opt2 .nav-item { color: #64748b; }
+  .opt2 .nav-item:hover, .opt2 .nav-item.active { background: #f1f5f9; color: #1e293b; }
+  .opt2 .logout { color: #94a3b8; }
+  .opt2 .logo-area { border-bottom: 1px solid #e2e8f0; }
+
+  /* Option 3: Brand Red */
+  .opt3 .sidebar { background: #B71C1C; }
+  .opt3 .nav-item { color: rgba(255,255,255,0.7); }
+  .opt3 .nav-item:hover, .opt3 .nav-item.active { background: rgba(255,255,255,0.12); color: #fff; }
+  .opt3 .logout { color: rgba(255,255,255,0.5); }
+  .opt3 .logo-area { border-bottom: 1px solid rgba(255,255,255,0.12); }
+
+  /* Option 4: Charcoal */
+  .opt4 .sidebar { background: #1e293b; }
+  .opt4 .nav-item { color: rgba(255,255,255,0.6); }
+  .opt4 .nav-item:hover, .opt4 .nav-item.active { background: rgba(255,255,255,0.08); color: #fff; }
+  .opt4 .logout { color: rgba(255,255,255,0.5); }
+  .opt4 .logo-area { border-bottom: 1px solid rgba(255,255,255,0.08); }
+
+  /* Option 5: Warm Cream */
+  .opt5 .sidebar { background: #fdf6f0; border-right: 1px solid #e8ddd4; }
+  .opt5 .nav-item { color: #6b5c50; }
+  .opt5 .nav-item:hover, .opt5 .nav-item.active { background: #f5ebe3; color: #2D1114; }
+  .opt5 .logout { color: #a8988c; }
+  .opt5 .logo-area { border-bottom: 1px solid #e8ddd4; }
+
+  /* Option 6: Deep Slate */
+  .opt6 .sidebar { background: #0f172a; }
+  .opt6 .nav-item { color: rgba(255,255,255,0.5); }
+  .opt6 .nav-item:hover, .opt6 .nav-item.active { background: rgba(185,28,28,0.3); color: #fff; }
+  .opt6 .logout { color: rgba(255,255,255,0.4); }
+  .opt6 .logo-area { border-bottom: 1px solid rgba(255,255,255,0.06); }
+</style>
+</head>
+<body>
+<h1>Sidebar Color Options</h1>
+<div class="grid">
+
+  <!-- Option 1: Dark Maroon -->
+  <div class="option opt1">
+    <div class="option-label">1. Dark Maroon</div>
+    <div class="preview">
+      <div class="sidebar">
+        <div class="logo-area"><img src="file:///home/claw/claudeclaw/workspace/uploads/1775071914158_Wakeeli_on_maroon_bg_.jpg" style="width:60px;height:60px;border-radius:12px;"></div>
+        <div class="nav-item active">Dashboard</div>
+        <div class="nav-item">Leads</div>
+        <div class="nav-item">Conversations</div>
+        <div class="nav-item">Listings</div>
+        <div class="nav-item">Tours</div>
+        <div class="nav-item">Agents</div>
+        <div class="nav-item">Analytics</div>
+        <div class="nav-item">Settings</div>
+        <div class="logout">Logout</div>
+      </div>
+      <div class="content">Dashboard content</div>
+    </div>
+  </div>
+
+  <!-- Option 2: Clean White -->
+  <div class="option opt2">
+    <div class="option-label">2. Clean White</div>
+    <div class="preview">
+      <div class="sidebar">
+        <div class="logo-area"><img src="file:///home/claw/claudeclaw/workspace/uploads/1775071742515_IMG_0282_bg_removed.png.png" style="width:60px;"></div>
+        <div class="nav-item active">Dashboard</div>
+        <div class="nav-item">Leads</div>
+        <div class="nav-item">Conversations</div>
+        <div class="nav-item">Listings</div>
+        <div class="nav-item">Tours</div>
+        <div class="nav-item">Agents</div>
+        <div class="nav-item">Analytics</div>
+        <div class="nav-item">Settings</div>
+        <div class="logout">Logout</div>
+      </div>
+      <div class="content">Dashboard content</div>
+    </div>
+  </div>
+
+  <!-- Option 3: Brand Red -->
+  <div class="option opt3">
+    <div class="option-label">3. Brand Red</div>
+    <div class="preview">
+      <div class="sidebar">
+        <div class="logo-area"><img src="file:///home/claw/claudeclaw/workspace/uploads/1775071905471_Wakeeli_on_red_bg.jpg" style="width:60px;height:60px;border-radius:12px;"></div>
+        <div class="nav-item active">Dashboard</div>
+        <div class="nav-item">Leads</div>
+        <div class="nav-item">Conversations</div>
+        <div class="nav-item">Listings</div>
+        <div class="nav-item">Tours</div>
+        <div class="nav-item">Agents</div>
+        <div class="nav-item">Analytics</div>
+        <div class="nav-item">Settings</div>
+        <div class="logout">Logout</div>
+      </div>
+      <div class="content">Dashboard content</div>
+    </div>
+  </div>
+
+  <!-- Option 4: Charcoal -->
+  <div class="option opt4">
+    <div class="option-label">4. Charcoal</div>
+    <div class="preview">
+      <div class="sidebar">
+        <div class="logo-area"><img src="file:///home/claw/claudeclaw/workspace/uploads/1775071914158_Wakeeli_on_maroon_bg_.jpg" style="width:60px;height:60px;border-radius:12px;"></div>
+        <div class="nav-item active">Dashboard</div>
+        <div class="nav-item">Leads</div>
+        <div class="nav-item">Conversations</div>
+        <div class="nav-item">Listings</div>
+        <div class="nav-item">Tours</div>
+        <div class="nav-item">Agents</div>
+        <div class="nav-item">Analytics</div>
+        <div class="nav-item">Settings</div>
+        <div class="logout">Logout</div>
+      </div>
+      <div class="content">Dashboard content</div>
+    </div>
+  </div>
+
+  <!-- Option 5: Warm Cream -->
+  <div class="option opt5">
+    <div class="option-label">5. Warm Cream</div>
+    <div class="preview">
+      <div class="sidebar">
+        <div class="logo-area"><img src="file:///home/claw/claudeclaw/workspace/uploads/1775071742515_IMG_0282_bg_removed.png.png" style="width:60px;"></div>
+        <div class="nav-item active">Dashboard</div>
+        <div class="nav-item">Leads</div>
+        <div class="nav-item">Conversations</div>
+        <div class="nav-item">Listings</div>
+        <div class="nav-item">Tours</div>
+        <div class="nav-item">Agents</div>
+        <div class="nav-item">Analytics</div>
+        <div class="nav-item">Settings</div>
+        <div class="logout">Logout</div>
+      </div>
+      <div class="content">Dashboard content</div>
+    </div>
+  </div>
+
+  <!-- Option 6: Deep Slate + Red Accent -->
+  <div class="option opt6">
+    <div class="option-label">6. Deep Slate + Red Accent</div>
+    <div class="preview">
+      <div class="sidebar">
+        <div class="logo-area"><img src="file:///home/claw/claudeclaw/workspace/uploads/1775071905471_Wakeeli_on_red_bg.jpg" style="width:60px;height:60px;border-radius:12px;"></div>
+        <div class="nav-item active">Dashboard</div>
+        <div class="nav-item">Leads</div>
+        <div class="nav-item">Conversations</div>
+        <div class="nav-item">Listings</div>
+        <div class="nav-item">Tours</div>
+        <div class="nav-item">Agents</div>
+        <div class="nav-item">Analytics</div>
+        <div class="nav-item">Settings</div>
+        <div class="logout">Logout</div>
+      </div>
+      <div class="content">Dashboard content</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

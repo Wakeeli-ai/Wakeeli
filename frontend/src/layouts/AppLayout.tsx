@@ -51,15 +51,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const [searchParams] = useSearchParams();
   const { role, user, logout } = useRole();
   const navItems = role === 'admin' ? adminNav : agentNav;
-  
-  // Search state
+
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
   };
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -68,8 +67,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       navigate('/leads');
     }
   };
-  
-  // Display name handling
+
   const displayName = user?.name || user?.username || 'User';
   const displayLabel = user?.label || (role === 'admin' ? 'Admin' : 'Agent');
   const initials = displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
@@ -77,18 +75,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-slate-100 text-slate-900">
       {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 flex flex-col" style={{ backgroundColor: '#2563EB' }}>
+      <aside className="w-60 flex-shrink-0 flex flex-col" style={{ backgroundColor: '#0f1729' }}>
         {/* Logo block */}
-        <div className="flex flex-col items-center pt-6 pb-4 px-4">
+        <div className="flex flex-col items-center pt-8 pb-5 px-4">
           <img
             src="/logo-icon.png"
             alt="Wakeeli"
-            className="w-24 h-24 object-contain"
+            className="w-14 h-14 object-contain"
           />
-          <span className="mt-2 text-white text-base font-semibold tracking-wide">Wakeeli</span>
+          <span className="mt-3 text-white text-base font-semibold tracking-[0.14em] uppercase">Wakeeli</span>
         </div>
         {/* Divider */}
-        <div className="mx-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+        <div className="mx-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.10)' }} />
         {/* Nav */}
         <nav className="flex-1 py-3 px-2">
           {navItems.map((item) => {
@@ -98,27 +96,27 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.to + item.label}
                 to={item.to}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border-l-4 pl-2 ${
                   isActive
-                    ? 'text-white border-l-[3px] border-white pl-[9px]'
-                    : 'text-white/60 hover:text-white hover:bg-white/10 border-l-[3px] border-transparent pl-[9px]'
+                    ? 'text-white border-white'
+                    : 'text-white/50 hover:text-white hover:bg-white/10 border-transparent'
                 }`}
-                style={isActive ? { backgroundColor: 'rgba(255,255,255,0.12)' } : undefined}
+                style={isActive ? { backgroundColor: 'rgba(255,255,255,0.10)' } : undefined}
               >
-                <Icon size={20} className={isActive ? 'text-white' : 'text-white/60'} />
+                <Icon size={20} className={isActive ? 'text-white' : 'text-white/50'} />
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
         {/* Logout */}
-        <div className="p-2" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+        <div className="p-2" style={{ borderTop: '1px solid rgba(255,255,255,0.10)' }}>
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 text-sm text-left transition-colors border-l-[3px] border-transparent pl-[9px]"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 text-sm text-left transition-all duration-200 border-l-4 border-transparent pl-2"
           >
-            <LogOut size={20} className="text-white/60" />
+            <LogOut size={20} className="text-white/50" />
             <span>Logout</span>
           </button>
         </div>

@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from app.database import engine, Base
 from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics
 from app.models import Listing
@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routes
+# API Routes (registered first - highest priority)
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(listings.router, prefix="/api/listings", tags=["Listings"])
@@ -31,15 +31,10 @@ app.include_router(conversations.router, prefix="/api/conversations", tags=["Con
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 
-# Static files
+# Backend static files (chat-test and costs-dashboard HTML)
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.isdir(_static_dir):
     app.mount("/static", StaticFiles(directory=_static_dir), name="static")
-
-
-@app.get("/")
-def read_root():
-    return {"message": "Wakeeli AI Backend is running."}
 
 
 @app.get("/chat-test")
@@ -76,3 +71,42 @@ def reset_listings():
     Listing.__table__.drop(bind=engine, checkfirst=True)
     Listing.__table__.create(bind=engine, checkfirst=True)
     return {"status": "ok", "message": "Listings table reset."}
+
+
+# Frontend static assets (Vite build - JS/CSS bundles live in /assets)
+_frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
+_frontend_assets = os.path.join(_frontend_dist, "assets")
+if os.path.isdir(_frontend_assets):
+    app.mount("/assets", StaticFiles(directory=_frontend_assets), name="frontend_assets")
+
+
+@app.get("/")
+def read_root():
+    """Serve React app at root, fallback to JSON if no build present."""
+    index_path = os.path.join(os.path.dirname(__file__), "..", "frontend_dist", "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    return {"message": "Wakeeli AI Backend is running."}
+
+
+# SPA catch-all: must be registered LAST
+# Serves index.html for any non-API, non-static path (React Router support)
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    # Let API paths return 404 normally - don't hijack them
+    if full_path.startswith("api/") or full_path == "api":
+        return JSONResponse({"error": "Not found"}, status_code=404)
+
+    frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
+
+    # Serve real files (favicon.ico, manifest.json, etc.) if they exist
+    file_path = os.path.join(frontend_dist, full_path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    # Fall back to index.html for React Router paths
+    index_path = os.path.join(frontend_dist, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+
+    return JSONResponse({"error": "Not found"}, status_code=404)

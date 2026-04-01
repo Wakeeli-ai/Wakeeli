@@ -5,6 +5,7 @@ frontend/node_modules/
 # Build output
 dist/
 frontend/dist/
+backend/frontend_dist/
 build/
 *.egg-info/
 .eggs/

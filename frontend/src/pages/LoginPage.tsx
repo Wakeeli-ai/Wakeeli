@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError('');
 
     if (!email || !password) {
-      setError('Please enter your email and password');
+      setError('Please enter your username and password');
       setLoading(false);
       return;
     }
@@ -144,14 +144,14 @@ export default function LoginPage() {
             {/* Email */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Email Address
+                Username
               </label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
+                placeholder="Enter your username"
+                autoComplete="username"
                 className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
               />
             </div>

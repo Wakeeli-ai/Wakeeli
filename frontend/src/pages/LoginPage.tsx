@@ -79,11 +79,11 @@ export default function LoginPage() {
             {/* Header: "Welcome to" + wordmark logo inline */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-brand-600 text-xl font-semibold">Welcome to</span>
+                <span className="text-brand-600 text-2xl font-semibold">Welcome to</span>
                 <img
                   src="/logo-wordmark.png"
                   alt="Wakeeli"
-                  className="h-8 object-contain"
+                  className="h-14 object-contain"
                 />
               </div>
               <p className="text-slate-500 text-sm">

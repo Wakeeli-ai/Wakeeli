@@ -107,3 +107,20 @@ class User(Base):
     role = Column(String, default="agent")  # "admin" or "agent"
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class TokenUsage(Base):
+    """Persistent token usage tracking for Claude API calls."""
+    __tablename__ = "token_usage"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime(timezone=False), default=None, index=True)
+    model = Column(String, index=True)
+    call_label = Column(String, nullable=True)
+    conversation_id = Column(Integer, nullable=True, index=True)
+    input_tokens = Column(Integer, default=0)
+    cache_creation_input_tokens = Column(Integer, default=0)
+    cache_read_input_tokens = Column(Integer, default=0)
+    output_tokens = Column(Integer, default=0)
+    total_input_tokens = Column(Integer, default=0)
+    estimated_cost_usd = Column(Float, default=0.0)

@@ -7,6 +7,9 @@ GET /api/analytics/costs
 
 Returns:
   summary, daily_breakdown, per_conversation, model_split
+
+Data source: PostgreSQL token_usage table (primary).
+Falls back to JSONL file if DB query fails or returns no data.
 """
 
 import json
@@ -22,8 +25,41 @@ from app.services.token_tracker import _USAGE_LOG
 router = APIRouter()
 
 
+def _query_db(days: int) -> list[dict]:
+    """Query token usage from PostgreSQL for the past N days."""
+    try:
+        from app.database import SessionLocal
+        from app.models import TokenUsage
+
+        cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=days - 1)
+        db = SessionLocal()
+        try:
+            records = db.query(TokenUsage).filter(TokenUsage.timestamp >= cutoff).all()
+            entries = []
+            for r in records:
+                ts = r.timestamp.isoformat() + "Z" if r.timestamp else ""
+                entries.append({
+                    "timestamp": ts,
+                    "model": r.model or "",
+                    "call_label": r.call_label or "",
+                    "conversation_id": r.conversation_id,
+                    "input_tokens": r.input_tokens or 0,
+                    "cache_creation_input_tokens": r.cache_creation_input_tokens or 0,
+                    "cache_read_input_tokens": r.cache_read_input_tokens or 0,
+                    "output_tokens": r.output_tokens or 0,
+                    "total_input_tokens": r.total_input_tokens or 0,
+                    "estimated_cost_usd": r.estimated_cost_usd or 0.0,
+                })
+            return entries
+        finally:
+            db.close()
+    except Exception as exc:
+        print(f"[ANALYTICS] WARNING: could not query DB: {exc}")
+        return []
+
+
 def _parse_log(days: int) -> list[dict]:
-    """Read the JSONL log and return entries within the requested date window."""
+    """Read the JSONL log and return entries within the requested date window (fallback)."""
     entries: list[dict] = []
     if not os.path.exists(_USAGE_LOG):
         return entries
@@ -50,12 +86,20 @@ def _parse_log(days: int) -> list[dict]:
     return entries
 
 
+def _get_entries(days: int) -> list[dict]:
+    """Return token usage entries, preferring DB over JSONL."""
+    entries = _query_db(days)
+    if not entries:
+        entries = _parse_log(days)
+    return entries
+
+
 @router.get("/costs")
 def get_costs(days: int = Query(default=30, ge=1, le=365)) -> dict[str, Any]:
     """
     Return aggregated cost analytics for the past N days.
     """
-    entries = _parse_log(days)
+    entries = _get_entries(days)
 
     total_spend = 0.0
     total_calls = len(entries)

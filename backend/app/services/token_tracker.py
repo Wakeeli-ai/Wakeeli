@@ -3,7 +3,8 @@ Token usage tracker and budget monitor for Wakeeli Anthropic API calls.
 
 Logs each API call's token usage (cache_creation_input_tokens,
 cache_read_input_tokens, input_tokens, output_tokens) to both stdout
-and a JSONL log file. Tracks daily spend against a configurable limit.
+and PostgreSQL (primary) with JSONL file as fallback. Tracks daily
+spend against a configurable limit.
 """
 
 import json
@@ -89,6 +90,42 @@ def _save_daily_spend(data: dict[str, Any]) -> None:
         json.dump(data, fh, indent=2)
 
 
+def _log_to_db(entry: dict) -> None:
+    """Write a token usage entry to PostgreSQL for persistent tracking."""
+    try:
+        from app.database import SessionLocal  # lazy import avoids circular at module load
+        from app.models import TokenUsage
+
+        ts_str = entry.get("timestamp", "")
+        if ts_str.endswith("Z"):
+            ts_str = ts_str[:-1]
+        try:
+            ts = datetime.datetime.fromisoformat(ts_str)
+        except (ValueError, AttributeError):
+            ts = datetime.datetime.utcnow()
+
+        db = SessionLocal()
+        try:
+            record = TokenUsage(
+                timestamp=ts,
+                model=entry.get("model", ""),
+                call_label=entry.get("call_label", ""),
+                conversation_id=entry.get("conversation_id"),
+                input_tokens=entry.get("input_tokens", 0),
+                cache_creation_input_tokens=entry.get("cache_creation_input_tokens", 0),
+                cache_read_input_tokens=entry.get("cache_read_input_tokens", 0),
+                output_tokens=entry.get("output_tokens", 0),
+                total_input_tokens=entry.get("total_input_tokens", 0),
+                estimated_cost_usd=entry.get("estimated_cost_usd", 0.0),
+            )
+            db.add(record)
+            db.commit()
+        finally:
+            db.close()
+    except Exception as exc:
+        print(f"[TOKEN_TRACKER] WARNING: could not write to DB: {exc}")
+
+
 def log_usage(model: str, usage: Any, call_label: str = "", conversation_id: int | None = None) -> None:
     """
     Log token usage for one API call.
@@ -150,7 +187,10 @@ def log_usage(model: str, usage: Any, call_label: str = "", conversation_id: int
         f"cost=${cost:.6f}"
     )
 
-    # Append to JSONL log
+    # Write to PostgreSQL (primary, persistent across deployments)
+    _log_to_db(entry)
+
+    # Append to JSONL log (secondary, ephemeral but useful for local dev)
     try:
         with open(_USAGE_LOG, "a") as fh:
             fh.write(json.dumps(entry) + "\n")

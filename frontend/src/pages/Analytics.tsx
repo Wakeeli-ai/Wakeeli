@@ -3,6 +3,13 @@ import { Users, CheckCircle, Calendar, Clock, TrendingUp, TrendingDown } from 'l
 
 const PERIODS = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days'];
 
+const responseTimeDist = [
+  { label: 'Under 15 mins', pct: 42, bar: 'bg-emerald-500' },
+  { label: '15 mins - 1 hour', pct: 31, bar: 'bg-brand-600' },
+  { label: '1 - 3 hours', pct: 18, bar: 'bg-amber-500' },
+  { label: 'Over 3 hours', pct: 9, bar: 'bg-red-400' },
+];
+
 const kpis = [
   {
     label: 'Total Leads',
@@ -67,6 +74,8 @@ const monthlyTrends = [
 
 export default function Analytics() {
   const [period, setPeriod] = useState('Last 30 Days');
+  const [agentFilter, setAgentFilter] = useState('All Agents');
+  const [sourceFilter, setSourceFilter] = useState('All Sources');
 
   return (
     <div className="space-y-6">
@@ -74,17 +83,40 @@ export default function Analytics() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Analytics Dashboard</h1>
-          <p className="text-slate-500 mt-1">Business performance overview</p>
+          <p className="text-slate-500 mt-1 text-sm">
+            Performance metrics and insights for your real estate operations
+          </p>
         </div>
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-        >
-          {PERIODS.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            {PERIODS.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+          <select
+            value={agentFilter}
+            onChange={(e) => setAgentFilter(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option>All Agents</option>
+            <option>AI Only</option>
+            <option>Human Only</option>
+          </select>
+          <select
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option>All Sources</option>
+            <option>WhatsApp</option>
+            <option>Website</option>
+            <option>Instagram</option>
+          </select>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -175,6 +207,58 @@ export default function Analytics() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Response Time + AI Volume */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Response Time Distribution */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <h2 className="font-semibold text-slate-900 mb-5">Response Time Distribution</h2>
+          <div className="space-y-4">
+            {responseTimeDist.map((item) => (
+              <div key={item.label}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-medium text-slate-700">{item.label}</span>
+                  <span className="text-sm font-semibold text-slate-900">{item.pct}%</span>
+                </div>
+                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${item.bar} rounded-full transition-all duration-300`}
+                    style={{ width: `${item.pct}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* AI Volume Stats */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <h2 className="font-semibold text-slate-900 mb-5">AI Volume Stats</h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 bg-brand-50 rounded-xl border border-brand-100">
+              <div>
+                <p className="text-sm font-medium text-slate-700">AI Handled Conversations</p>
+                <p className="text-xs text-slate-500 mt-0.5">69.5% of total conversations</p>
+              </div>
+              <p className="text-2xl font-bold text-brand-700">1,284</p>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-100">
+              <div>
+                <p className="text-sm font-medium text-slate-700">AI to Agent Handoffs</p>
+                <p className="text-xs text-slate-500 mt-0.5">11.4% of AI conversations</p>
+              </div>
+              <p className="text-2xl font-bold text-amber-700">147</p>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div>
+                <p className="text-sm font-medium text-slate-700">AI Qualification Rate</p>
+                <p className="text-xs text-slate-500 mt-0.5">vs human agent: +6.2%</p>
+              </div>
+              <p className="text-2xl font-bold text-slate-800">72.4%</p>
+            </div>
+          </div>
         </div>
       </div>
 

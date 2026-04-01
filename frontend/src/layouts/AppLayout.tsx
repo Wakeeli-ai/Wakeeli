@@ -11,7 +11,6 @@ import {
   Search,
   Bell,
   LogOut,
-  X,
   UserPlus,
 } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
@@ -78,14 +77,19 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-slate-100 text-slate-900">
       {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 bg-wakeeli-sidebar flex flex-col">
-        <div className="p-4 flex items-center justify-center border-b border-white/10">
+      <aside className="w-60 flex-shrink-0 flex flex-col" style={{ backgroundColor: '#2563EB' }}>
+        {/* Logo block */}
+        <div className="flex flex-col items-center pt-6 pb-4 px-4">
           <img
-            src="/logo.png"
+            src="/logo-icon.png"
             alt="Wakeeli"
-            className="w-32 object-contain"
+            className="w-24 h-24 object-contain"
           />
+          <span className="mt-2 text-white text-base font-semibold tracking-wide">Wakeeli</span>
         </div>
+        {/* Divider */}
+        <div className="mx-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+        {/* Nav */}
         <nav className="flex-1 py-3 px-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.to;
@@ -94,23 +98,27 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.to + item.label}
                 to={item.to}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/90 text-sm font-medium transition-colors ${
-                  isActive ? 'bg-white/20 text-white' : 'hover:bg-wakeeli-sidebarHover'
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'text-white border-l-[3px] border-white pl-[9px]'
+                    : 'text-white/60 hover:text-white hover:bg-white/10 border-l-[3px] border-transparent pl-[9px]'
                 }`}
+                style={isActive ? { backgroundColor: 'rgba(255,255,255,0.12)' } : undefined}
               >
-                <Icon size={20} />
+                <Icon size={20} className={isActive ? 'text-white' : 'text-white/60'} />
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="p-2 border-t border-white/10">
+        {/* Logout */}
+        <div className="p-2" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-white/80 hover:bg-wakeeli-sidebarHover text-sm text-left"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 text-sm text-left transition-colors border-l-[3px] border-transparent pl-[9px]"
           >
-            <LogOut size={20} />
+            <LogOut size={20} className="text-white/60" />
             <span>Logout</span>
           </button>
         </div>
@@ -119,8 +127,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-14 flex-shrink-0 bg-white border-b border-slate-200 flex items-center gap-4 px-6">
-          <form onSubmit={handleSearch} className="flex-1 max-w-xl">
+        <header className="h-14 flex-shrink-0 bg-white border-b border-slate-200 flex items-center px-6">
+          <form onSubmit={handleSearch} className="w-80 flex-shrink-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
@@ -132,30 +140,29 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               />
             </div>
           </form>
-          <Link
-            to="/leads"
-            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700"
-          >
-            <UserPlus size={18} />
-            New Lead
-            <span className="bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">3</span>
-          </Link>
-          <button type="button" className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
-            <Bell size={20} />
-            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">3</span>
-          </button>
-          <div className="flex items-center gap-3 pl-2">
-            <div className="text-right">
-              <p className="text-sm font-medium text-slate-900">{displayName}</p>
-              <p className="text-xs text-slate-500">{displayLabel}</p>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-medium">
-              {initials}
+          <div className="ml-auto flex items-center gap-3">
+            <Link
+              to="/leads"
+              className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700"
+            >
+              <UserPlus size={18} />
+              New Lead
+              <span className="bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">3</span>
+            </Link>
+            <button type="button" className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+              <Bell size={20} />
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">3</span>
+            </button>
+            <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
+              <div className="text-right">
+                <p className="text-sm font-medium text-slate-900">{displayName}</p>
+                <p className="text-xs text-slate-500">{displayLabel}</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-medium">
+                {initials}
+              </div>
             </div>
           </div>
-          <button type="button" className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg" aria-label="Close">
-            <X size={20} />
-          </button>
         </header>
 
         <main className="flex-1 overflow-auto p-6">

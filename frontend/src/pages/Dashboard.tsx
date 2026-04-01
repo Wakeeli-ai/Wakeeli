@@ -236,9 +236,9 @@ export default function Dashboard() {
               </div>
 
               {/* List + preview split */}
-              <div className="flex min-h-[260px]">
+              <div className="flex min-h-[320px]">
                 {/* Conversation list */}
-                <div className="w-72 flex-shrink-0 border-r border-slate-100 max-h-[320px] overflow-y-auto">
+                <div className="w-80 flex-shrink-0 border-r border-slate-100 max-h-[420px] overflow-y-auto">
                   {filtered.length === 0 ? (
                     <p className="p-6 text-center text-slate-500 text-sm">
                       No conversations here.
@@ -289,7 +289,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Chat preview */}
-                <div className="flex-1 bg-slate-50/50 p-5 overflow-y-auto max-h-[320px]">
+                <div className="flex-1 bg-slate-50/50 p-5 overflow-y-auto max-h-[420px]">
                   {selectedConvo && (selectedConvo.messages ?? []).length > 0 ? (
                     <div className="space-y-3">
                       <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">

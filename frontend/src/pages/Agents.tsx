@@ -499,7 +499,7 @@ export default function Agents() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Agents</h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 mt-1 text-sm">
             Manage your team, track performance, and optimize lead assignments
           </p>
         </div>

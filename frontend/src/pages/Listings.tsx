@@ -525,6 +525,9 @@ export default function Listings() {
     );
   });
 
+  const forSaleCount = listings.filter((l) => l.listing_type === 'buy').length;
+  const forRentCount = listings.filter((l) => l.listing_type === 'rent').length;
+
   const getPrice = (l: any) =>
     l.listing_type === 'buy' ? l.sale_price : l.rent_price;
 
@@ -532,7 +535,17 @@ export default function Listings() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold text-slate-900">Listings</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Listings</h1>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="px-2.5 py-0.5 bg-brand-50 text-brand-700 rounded-full text-xs font-medium">
+              For Sale: {forSaleCount}
+            </span>
+            <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
+              For Rent: {forRentCount}
+            </span>
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search

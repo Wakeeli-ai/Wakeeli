@@ -73,10 +73,19 @@ export default function Conversations() {
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
   const [assigningAgent, setAssigningAgent] = useState(false);
   const [endingChat, setEndingChat] = useState(false);
+  const [listFilter, setListFilter] = useState<'All' | 'AI Active' | 'Agent' | 'Waiting'>('All');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const aiActiveCount = conversations.filter(isAiActive).length;
+
+  const filteredConversations = conversations.filter((c) => {
+    if (listFilter === 'All') return true;
+    if (listFilter === 'AI Active') return isAiActive(c);
+    if (listFilter === 'Agent') return c.agent_id != null;
+    if (listFilter === 'Waiting') return c.status === 'handed_off' || c.status === 'waiting';
+    return true;
+  });
 
   const loadList = async () => {
     try {
@@ -178,15 +187,33 @@ export default function Conversations() {
             )}
           </div>
 
+          {/* Filter tabs */}
+          <div className="flex border-b border-slate-100 flex-shrink-0">
+            {(['All', 'AI Active', 'Agent', 'Waiting'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setListFilter(tab)}
+                className={`flex-1 px-1 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                  listFilter === tab
+                    ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50/40'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
           {/* List */}
           <div className="flex-1 overflow-y-auto">
-            {conversations.length === 0 ? (
+            {filteredConversations.length === 0 ? (
               <div className="p-6 text-center text-slate-400 text-sm">
                 <MessageSquare className="mx-auto h-10 w-10 text-slate-200 mb-2" />
                 No conversations yet
               </div>
             ) : (
-              conversations.map((c) => {
+              filteredConversations.map((c) => {
                 const lastMsg = c.messages?.[c.messages.length - 1];
                 const b = getBadge(c.status);
                 const isSelected = selected?.id === c.id;

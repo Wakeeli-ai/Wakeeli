@@ -56,6 +56,20 @@ def chat_test_page():
     )
 
 
+@app.get("/dashboard/costs")
+def costs_dashboard():
+    """Serve the cost analytics dashboard. No authentication required."""
+    html_path = os.path.join(os.path.dirname(__file__), "..", "static", "costs-dashboard.html")
+    return FileResponse(
+        html_path,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
 # TEMP: one-time reset for listings table (remove after use)
 @app.post("/admin/reset-listings")
 def reset_listings():

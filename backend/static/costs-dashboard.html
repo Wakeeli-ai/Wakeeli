@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wakeeli AI Cost Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F1F5F9;
+      --card: #FFFFFF;
+      --header-bg: #0F172A;
+      --header-border: #1E293B;
+      --accent: #4F46E5;
+      --accent-light: #EEF2FF;
+      --accent-hover: #4338CA;
+      --emerald: #10B981;
+      --emerald-light: #ECFDF5;
+      --amber: #F59E0B;
+      --amber-light: #FFFBEB;
+      --rose: #F43F5E;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-tertiary: #94A3B8;
+      --border: #E2E8F0;
+      --border-strong: #CBD5E1;
+      --row-alt: #F8FAFC;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--header-border);
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #F1F5F9;
+      letter-spacing: -0.2px;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: #64748B;
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .days-selector {
+      display: flex;
+      background: #1E293B;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .days-btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #94A3B8;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .days-btn:hover { color: #E2E8F0; background: #334155; }
+
+    .days-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .refresh-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #64748B;
+      padding: 6px 12px;
+      background: #1E293B;
+      border: 1px solid #334155;
+      border-radius: 8px;
+    }
+
+    .refresh-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--emerald);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* MAIN LAYOUT */
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 24px 48px;
+    }
+
+    /* STATUS BAR */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .status-label {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .status-updated {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .status-updated span {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* KPI CARDS */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .kpi-card.accent::before { background: var(--accent); }
+    .kpi-card.emerald::before { background: var(--emerald); }
+    .kpi-card.amber::before { background: var(--amber); }
+    .kpi-card.slate::before { background: #64748B; }
+
+    .kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      font-size: 18px;
+    }
+
+    .kpi-card.accent .kpi-icon { background: var(--accent-light); }
+    .kpi-card.emerald .kpi-icon { background: var(--emerald-light); }
+    .kpi-card.amber .kpi-icon { background: var(--amber-light); }
+    .kpi-card.slate .kpi-icon { background: #F1F5F9; }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 6px;
+    }
+
+    /* SECTION LAYOUT */
+    .section-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      background: var(--row-alt);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 8px;
+    }
+
+    .card-body { padding: 20px; }
+
+    /* MODEL SPLIT */
+    .model-item {
+      margin-bottom: 16px;
+    }
+
+    .model-item:last-child { margin-bottom: 0; }
+
+    .model-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .model-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .model-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .model-tag.sonnet {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+
+    .model-tag.haiku {
+      background: var(--emerald-light);
+      color: var(--emerald);
+    }
+
+    .model-tag.other {
+      background: #F1F5F9;
+      color: #64748B;
+    }
+
+    .model-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: right;
+    }
+
+    .model-meta strong {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .progress-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-fill.accent { background: linear-gradient(90deg, #4F46E5, #6366F1); }
+    .progress-fill.emerald { background: linear-gradient(90deg, #10B981, #34D399); }
+    .progress-fill.amber { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+    .progress-fill.slate { background: linear-gradient(90deg, #64748B, #94A3B8); }
+
+    /* STATS MINI */
+    .model-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .model-stat {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .model-stat strong {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* TABLES */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead tr {
+      border-bottom: 2px solid var(--border);
+    }
+
+    th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+      background: var(--row-alt);
+    }
+
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s;
+    }
+
+    th.sortable:hover { color: var(--text-primary); }
+
+    th.sortable::after {
+      content: ' \2195';
+      font-size: 10px;
+      opacity: 0.5;
+    }
+
+    th.sort-asc::after { content: ' \2191'; opacity: 1; color: var(--accent); }
+    th.sort-desc::after { content: ' \2193'; opacity: 1; color: var(--accent); }
+    th.sort-asc, th.sort-desc { color: var(--accent); }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+    tbody tr:hover { background: #EEF2FF; }
+
+    td {
+      padding: 11px 16px;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    td.dim { color: var(--text-secondary); }
+
+    .cost-chip {
+      display: inline-flex;
+      align-items: center;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .cost-chip.high { color: var(--rose); }
+    .cost-chip.mid { color: var(--amber); }
+    .cost-chip.low { color: var(--emerald); }
+
+    .rate-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rate-bar-track {
+      width: 60px;
+      height: 5px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .rate-bar-fill {
+      height: 100%;
+      background: var(--emerald);
+      border-radius: 99px;
+    }
+
+    .conv-id {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: var(--row-alt);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+
+    /* FULL WIDTH CARD */
+    .card-full {
+      margin-bottom: 24px;
+    }
+
+    /* LOADING */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-size: 14px;
+      color: var(--text-tertiary);
+    }
+
+    /* ERROR */
+    .error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .error-icon {
+      font-size: 36px;
+    }
+
+    .error-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .error-msg {
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 400px;
+    }
+
+    .retry-btn {
+      margin-top: 4px;
+      padding: 8px 20px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .retry-btn:hover { background: var(--accent-hover); }
+
+    /* HIDDEN */
+    .hidden { display: none !important; }
+
+    /* EMPTY */
+    .empty-row td {
+      text-align: center;
+      color: var(--text-tertiary);
+      padding: 32px;
+    }
+
+    /* COUNTDOWN */
+    #countdown {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .section-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 0 16px; }
+      .header-inner { height: auto; padding: 12px 0; flex-wrap: wrap; }
+      main { padding: 20px 16px 40px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .kpi-value { font-size: 22px; }
+      .header-subtitle { display: none; }
+      .refresh-badge { display: none; }
+    }
+
+    @media (max-width: 400px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .days-btn { padding: 6px 10px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo">W</div>
+      <div>
+        <div class="header-title">Wakeeli AI Cost Dashboard</div>
+        <div class="header-subtitle">Claude API spend analytics</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="refresh-badge">
+        <div class="refresh-dot"></div>
+        <span>Next refresh in <span id="countdown">60</span>s</span>
+      </div>
+      <div class="days-selector">
+        <button class="days-btn" data-days="7">7d</button>
+        <button class="days-btn active" data-days="30">30d</button>
+        <button class="days-btn" data-days="14">14d</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <div class="status-bar">
+    <div class="status-label" id="range-label">Last 30 days</div>
+    <div class="status-updated">Last updated: <span id="last-updated">Never</span></div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div id="loading-state" class="loading-state">
+    <div class="spinner"></div>
+    <div class="loading-text">Fetching cost data...</div>
+  </div>
+
+  <!-- ERROR STATE -->
+  <div id="error-state" class="error-state hidden">
+    <div class="error-icon">⚠️</div>
+    <div class="error-title">Failed to load data</div>
+    <div class="error-msg" id="error-msg">Could not reach the analytics API. Check that the backend is running.</div>
+    <button class="retry-btn" onclick="fetchData()">Try Again</button>
+  </div>
+
+  <!-- DASHBOARD CONTENT -->
+  <div id="dashboard-content" class="hidden">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+      <div class="kpi-card accent">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-label">Total Spend</div>
+        <div class="kpi-value" id="kpi-spend">$0.00</div>
+        <div class="kpi-sub" id="kpi-spend-sub">loading...</div>
+      </div>
+      <div class="kpi-card emerald">
+        <div class="kpi-icon">💬</div>
+        <div class="kpi-label">Avg Cost / Conversation</div>
+        <div class="kpi-value" id="kpi-avg-cost">$0.00</div>
+        <div class="kpi-sub" id="kpi-avg-sub">loading...</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-icon">⚡</div>
+        <div class="kpi-label">Cache Hit Rate</div>
+        <div class="kpi-value" id="kpi-cache">0%</div>
+        <div class="kpi-sub" id="kpi-cache-sub">loading...</div>
+      </div>
+      <div class="kpi-card slate">
+        <div class="kpi-icon">📡</div>
+        <div class="kpi-label">Total API Calls</div>
+        <div class="kpi-value" id="kpi-calls">0</div>
+        <div class="kpi-sub" id="kpi-calls-sub">loading...</div>
+      </div>
+    </div>
+
+    <!-- MODEL SPLIT + DAILY BREAKDOWN SIDE BY SIDE -->
+    <div class="section-row">
+
+      <!-- MODEL SPLIT -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Model Split</div>
+          <div class="card-badge" id="model-count-badge">0 models</div>
+        </div>
+        <div class="card-body" id="model-split-body">
+          <div style="color: var(--text-tertiary); font-size:13px;">No data</div>
+        </div>
+      </div>
+
+      <!-- DAILY BREAKDOWN -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Daily Breakdown</div>
+          <div class="card-badge" id="daily-count-badge">0 days</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Cost</th>
+                <th>API Calls</th>
+                <th>Cache Rate</th>
+              </tr>
+            </thead>
+            <tbody id="daily-table-body">
+              <tr class="empty-row"><td colspan="4">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PER-CONVERSATION TABLE -->
+    <div class="card card-full">
+      <div class="card-header">
+        <div class="card-title">Per Conversation</div>
+        <div class="card-badge" id="conv-count-badge">0 conversations</div>
+      </div>
+      <div class="table-wrap">
+        <table id="conv-table">
+          <thead>
+            <tr>
+              <th>Conversation ID</th>
+              <th class="sortable" data-col="cost_usd" data-dir="desc">Cost</th>
+              <th class="sortable" data-col="calls" data-dir="desc">API Calls</th>
+              <th class="sortable" data-col="input_tokens" data-dir="desc">Input Tokens</th>
+              <th class="sortable" data-col="output_tokens" data-dir="desc">Output Tokens</th>
+            </tr>
+          </thead>
+          <tbody id="conv-table-body">
+            <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function() {
+  'use strict';
+
+  let currentDays = 30;
+  let currentData = null;
+  let countdownTimer = null;
+  let countdownValue = 60;
+  let sortState = { col: 'cost_usd', dir: 'desc' };
+
+  // INIT
+  document.querySelectorAll('.days-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.days-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentDays = parseInt(this.dataset.days);
+      document.getElementById('range-label').textContent = 'Last ' + currentDays + ' days';
+      fetchData();
+    });
+  });
+
+  // Sort headers
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', function() {
+      const col = this.dataset.col;
+      if (sortState.col === col) {
+        sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
+      } else {
+        sortState.col = col;
+        sortState.dir = 'desc';
+      }
+      updateSortHeaders();
+      if (currentData) renderConvTable(currentData.per_conversation || []);
+    });
+  });
+
+  function updateSortHeaders() {
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('sort-asc', 'sort-desc');
+      if (th.dataset.col === sortState.col) {
+        th.classList.add(sortState.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+      }
+    });
+  }
+
+  updateSortHeaders();
+
+  // FETCH
+  async function fetchData() {
+    showLoading();
+    resetCountdown();
+    try {
+      const resp = await fetch('/api/analytics/costs?days=' + currentDays, {
+        cache: 'no-store'
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status + ': ' + resp.statusText);
+      const data = await resp.json();
+      currentData = data;
+      renderDashboard(data);
+      showDashboard();
+      document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    } catch(err) {
+      console.error('Fetch error:', err);
+      showError(err.message || 'Unknown error');
+    }
+  }
+
+  // RENDER
+  function renderDashboard(data) {
+    const s = data.summary || {};
+    renderKPIs(s);
+    renderModelSplit(data.model_split || {});
+    renderDailyTable(data.daily_breakdown || []);
+    renderConvTable(data.per_conversation || []);
+  }
+
+  function renderKPIs(s) {
+    const spend = s.total_spend_usd || 0;
+    const avg = s.avg_cost_per_conversation || 0;
+    const cache = (s.cache_hit_rate || 0) * 100;
+    const calls = s.total_calls || 0;
+    const convs = s.total_conversations || 0;
+
+    document.getElementById('kpi-spend').textContent = '$' + spend.toFixed(4);
+    document.getElementById('kpi-spend-sub').textContent =
+      convs + ' conversation' + (convs !== 1 ? 's' : '') + ' total';
+
+    document.getElementById('kpi-avg-cost').textContent = avg >= 0.01
+      ? '$' + avg.toFixed(4)
+      : (avg * 100).toFixed(3) + 'c';
+    document.getElementById('kpi-avg-sub').textContent =
+      'across ' + convs + ' conversation' + (convs !== 1 ? 's' : '');
+
+    document.getElementById('kpi-cache').textContent = cache.toFixed(1) + '%';
+    document.getElementById('kpi-cache-sub').textContent =
+      cache >= 50 ? 'Excellent cache efficiency' :
+      cache >= 25 ? 'Good cache efficiency' :
+      cache >= 10 ? 'Room to improve' : 'Low cache usage';
+
+    document.getElementById('kpi-calls').textContent = calls.toLocaleString();
+    document.getElementById('kpi-calls-sub').textContent =
+      currentDays + 'd window, ' + (calls / Math.max(currentDays, 1)).toFixed(1) + ' avg/day';
+  }
+
+  function renderModelSplit(modelSplit) {
+    const body = document.getElementById('model-split-body');
+    const entries = Object.entries(modelSplit);
+    const badge = document.getElementById('model-count-badge');
+    badge.textContent = entries.length + ' model' + (entries.length !== 1 ? 's' : '');
+
+    if (!entries.length) {
+      body.innerHTML = '<div style="color:var(--text-tertiary);font-size:13px;">No model data available</div>';
+      return;
+    }
+
+    const totalCost = entries.reduce((sum, [, v]) => sum + (v.cost_usd || 0), 0);
+    const totalCalls = entries.reduce((sum, [, v]) => sum + (v.calls || 0), 0);
+
+    // Sort by cost desc
+    entries.sort((a, b) => (b[1].cost_usd || 0) - (a[1].cost_usd || 0));
+
+    const colorClasses = ['accent', 'emerald', 'amber', 'slate'];
+    const modelTags = {
+      'claude-sonnet': 'sonnet',
+      'claude-haiku': 'haiku',
+    };
+
+    body.innerHTML = entries.map(([model, info], i) => {
+      const cost = info.cost_usd || 0;
+      const calls = info.calls || 0;
+      const pct = totalCost > 0 ? (cost / totalCost * 100) : 0;
+      const colorClass = colorClasses[i % colorClasses.length];
+
+      // Determine tag
+      let tagClass = 'other';
+      let tagLabel = 'model';
+      if (model.toLowerCase().includes('sonnet')) { tagClass = 'sonnet'; tagLabel = 'Sonnet'; }
+      else if (model.toLowerCase().includes('haiku')) { tagClass = 'haiku'; tagLabel = 'Haiku'; }
+      else if (model.toLowerCase().includes('opus')) { tagClass = 'other'; tagLabel = 'Opus'; }
+
+      const shortModel = model.replace('claude-', '').replace(/-\d+(-\d+)?$/, '');
+
+      return `
+        <div class="model-item">
+          <div class="model-row">
+            <div class="model-name">
+              <span>${shortModel}</span>
+              <span class="model-tag ${tagClass}">${tagLabel}</span>
+            </div>
+            <div class="model-meta">
+              <strong>$${cost.toFixed(4)}</strong>
+              ${pct.toFixed(1)}%
+            </div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill ${colorClass}" style="width:${pct.toFixed(1)}%"></div>
+          </div>
+          <div class="model-stats">
+            <div class="model-stat"><strong>${calls.toLocaleString()}</strong> calls</div>
+            <div class="model-stat"><strong>${totalCalls > 0 ? (calls/totalCalls*100).toFixed(1) : 0}%</strong> of volume</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderDailyTable(rows) {
+    const tbody = document.getElementById('daily-table-body');
+    const badge = document.getElementById('daily-count-badge');
+    badge.textContent = rows.length + ' day' + (rows.length !== 1 ? 's' : '');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No daily data available</td></tr>';
+      return;
+    }
+
+    // Sort by date desc
+    const sorted = [...rows].sort((a, b) => b.date > a.date ? 1 : -1);
+
+    const maxCost = Math.max(...sorted.map(r => r.cost_usd || 0));
+
+    tbody.innerHTML = sorted.map(row => {
+      const cost = row.cost_usd || 0;
+      const calls = row.calls || 0;
+      const cache = (row.cache_hit_rate || 0) * 100;
+      const costPct = maxCost > 0 ? (cost / maxCost * 100) : 0;
+
+      let costClass = 'low';
+      if (costPct > 66) costClass = 'high';
+      else if (costPct > 33) costClass = 'mid';
+
+      const dateObj = new Date(row.date + 'T00:00:00');
+      const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+
+      return `
+        <tr>
+          <td class="dim">${dateStr}</td>
+          <td><span class="cost-chip ${costClass}">$${cost.toFixed(4)}</span></td>
+          <td>${calls.toLocaleString()}</td>
+          <td>
+            <div class="rate-bar">
+              <div class="rate-bar-track">
+                <div class="rate-bar-fill" style="width:${cache.toFixed(1)}%"></div>
+              </div>
+              <span>${cache.toFixed(1)}%</span>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderConvTable(rows) {
+    const tbody = document.getElementById('conv-table-body');
+    const badge = document.getElementById('conv-count-badge');
+    badge.textContent = rows.length + ' conversation' + (rows.length !== 1 ? 's' : '');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No conversation data available</td></tr>';
+      return;
+    }
+
+    const col = sortState.col;
+    const dir = sortState.dir;
+
+    const sorted = [...rows].sort((a, b) => {
+      const av = a[col] || 0;
+      const bv = b[col] || 0;
+      return dir === 'desc' ? bv - av : av - bv;
+    });
+
+    const maxCost = Math.max(...sorted.map(r => r.cost_usd || 0));
+
+    tbody.innerHTML = sorted.map(row => {
+      const cost = row.cost_usd || 0;
+      const calls = row.calls || 0;
+      const inTok = row.input_tokens || 0;
+      const outTok = row.output_tokens || 0;
+      const convId = row.conversation_id || row.id || 'unknown';
+
+      const costPct = maxCost > 0 ? (cost / maxCost * 100) : 0;
+      let costClass = 'low';
+      if (costPct > 66) costClass = 'high';
+      else if (costPct > 33) costClass = 'mid';
+
+      const shortId = String(convId).length > 16
+        ? String(convId).substring(0, 8) + '...' + String(convId).slice(-4)
+        : String(convId);
+
+      return `
+        <tr>
+          <td><span class="conv-id" title="${convId}">${shortId}</span></td>
+          <td><span class="cost-chip ${costClass}">$${cost.toFixed(5)}</span></td>
+          <td>${calls.toLocaleString()}</td>
+          <td class="dim">${inTok.toLocaleString()}</td>
+          <td class="dim">${outTok.toLocaleString()}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // STATE MANAGEMENT
+  function showLoading() {
+    document.getElementById('loading-state').classList.remove('hidden');
+    document.getElementById('error-state').classList.add('hidden');
+    document.getElementById('dashboard-content').classList.add('hidden');
+  }
+
+  function showDashboard() {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.add('hidden');
+    document.getElementById('dashboard-content').classList.remove('hidden');
+  }
+
+  function showError(msg) {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+    document.getElementById('dashboard-content').classList.add('hidden');
+    document.getElementById('error-msg').textContent = msg;
+  }
+
+  // COUNTDOWN
+  function resetCountdown() {
+    countdownValue = 60;
+    document.getElementById('countdown').textContent = countdownValue;
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(function() {
+      countdownValue--;
+      if (countdownValue <= 0) {
+        countdownValue = 60;
+        fetchData();
+      }
+      document.getElementById('countdown').textContent = countdownValue;
+    }, 1000);
+  }
+
+  // START
+  fetchData();
+
+})();
+</script>
+</body>
+</html>

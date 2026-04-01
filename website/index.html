@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wakeeli - Convert Every WhatsApp Lead</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#1a2744',
+            'navy-dark': '#0f1828',
+            'navy-light': '#243357',
+            'navy-mid': '#1e2f52',
+            accent: '#e63946',
+            'accent-dark': '#c1121f',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .gradient-hero {
+      background: linear-gradient(135deg, #0f1828 0%, #1a2744 50%, #1e2f52 100%);
+    }
+    .gradient-section {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .tab-btn.active {
+      background-color: #1a2744;
+      color: white;
+    }
+    .faq-answer { display: none; }
+    .faq-answer.open { display: block; }
+    .faq-icon { transition: transform 0.2s ease; }
+    .faq-icon.open { transform: rotate(45deg); }
+    .screenshot-placeholder {
+      background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+      position: relative;
+      overflow: hidden;
+    }
+    .screenshot-placeholder::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 32px;
+      background: #cbd5e1;
+      border-radius: 12px 12px 0 0;
+    }
+    .screenshot-placeholder::after {
+      content: '';
+      position: absolute;
+      top: 10px; left: 14px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #94a3b8;
+      box-shadow: 18px 0 0 #94a3b8, 36px 0 0 #94a3b8;
+    }
+    .nav-scrolled {
+      background: rgba(15, 24, 40, 0.95) !important;
+      backdrop-filter: blur(12px);
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeInUp 0.6s ease forwards; }
+    .pulse-dot {
+      width: 10px; height: 10px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: inline-block;
+      position: relative;
+    }
+    .pulse-dot::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    @keyframes ping {
+      75%, 100% { transform: scale(2); opacity: 0; }
+    }
+    .card-hover {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(26, 39, 68, 0.12);
+    }
+    .pricing-popular {
+      border: 2px solid #1a2744;
+      position: relative;
+    }
+    .tag-popular {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a2744;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 999px;
+    }
+    .whatsapp-bubble {
+      background: #075e54;
+      color: white;
+      border-radius: 18px 18px 18px 4px;
+      padding: 10px 16px;
+      font-size: 14px;
+      max-width: 240px;
+    }
+    .ai-bubble {
+      background: #e9f5fb;
+      color: #1a2744;
+      border-radius: 18px 18px 4px 18px;
+      padding: 10px 16px;
+      font-size: 14px;
+      max-width: 240px;
+      align-self: flex-end;
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+  <!-- NAV -->
+  <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4 px-6 lg:px-12">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2">
+        <div class="flex items-center">
+          <span class="text-2xl font-black text-white tracking-tight">Wake</span><span class="text-2xl font-black text-accent tracking-tight">eli</span>
+        </div>
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#problem" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">The Problem</a>
+        <a href="#solution" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">How It Works</a>
+        <a href="#features" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">Features</a>
+        <a href="#pricing" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">Pricing</a>
+        <a href="#faq" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">FAQ</a>
+      </div>
+      <div class="hidden md:flex items-center gap-4">
+        <a href="#" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">Sign In</a>
+        <a href="#pricing" class="bg-accent hover:bg-accent-dark text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">Book a Demo</a>
+      </div>
+      <button id="mobile-menu-btn" class="md:hidden text-white p-2">
+        <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <svg id="close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
+      <div class="flex flex-col gap-4 px-2">
+        <a href="#problem" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">The Problem</a>
+        <a href="#solution" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">How It Works</a>
+        <a href="#features" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">Features</a>
+        <a href="#pricing" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">Pricing</a>
+        <a href="#faq" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">FAQ</a>
+        <a href="#pricing" class="bg-accent text-white text-sm font-semibold px-5 py-2.5 rounded-lg text-center mt-2">Book a Demo</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="gradient-hero min-h-screen flex items-center pt-20 pb-16 px-6 lg:px-12 overflow-hidden">
+    <div class="max-w-7xl mx-auto w-full">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="animate-fade-up">
+          <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 mb-6">
+            <span class="pulse-dot"></span>
+            <span class="text-white/90 text-xs font-medium ml-1">AI responses in under 3 seconds</span>
+          </div>
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+            Every missed<br>message is<br><span class="text-accent">a lost deal.</span>
+          </h1>
+          <p class="text-lg text-gray-300 mb-8 max-w-lg leading-relaxed">
+            Wakeeli is the AI conversion system built for Lebanese real estate agencies. It qualifies leads, matches listings, and books property tours automatically on WhatsApp, 24 hours a day.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a href="#pricing" class="bg-accent hover:bg-accent-dark text-white font-bold px-8 py-4 rounded-xl text-base transition-colors text-center shadow-lg shadow-accent/30">
+              Book a Demo
+            </a>
+            <a href="#solution" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-8 py-4 rounded-xl text-base transition-colors text-center">
+              See How It Works
+            </a>
+          </div>
+          <div class="mt-10 flex items-center gap-6">
+            <div class="text-center">
+              <div class="text-3xl font-black text-white">24/7</div>
+              <div class="text-xs text-gray-400 mt-0.5">Always On</div>
+            </div>
+            <div class="h-10 w-px bg-white/20"></div>
+            <div class="text-center">
+              <div class="text-3xl font-black text-white">3s</div>
+              <div class="text-xs text-gray-400 mt-0.5">Response Time</div>
+            </div>
+            <div class="h-10 w-px bg-white/20"></div>
+            <div class="text-center">
+              <div class="text-3xl font-black text-white">21x</div>
+              <div class="text-xs text-gray-400 mt-0.5">More Conversions</div>
+            </div>
+          </div>
+        </div>
+        <div class="relative flex justify-center lg:justify-end">
+          <div class="relative w-full max-w-sm">
+            <div class="absolute inset-0 bg-accent/20 rounded-3xl blur-3xl transform scale-95"></div>
+            <div class="relative bg-navy-light/60 border border-white/10 rounded-2xl p-5 backdrop-blur-sm shadow-2xl">
+              <div class="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
+                <div class="w-9 h-9 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">WA</div>
+                <div>
+                  <div class="text-white text-sm font-semibold">Wakeeli AI</div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="pulse-dot" style="width:6px;height:6px;"></span>
+                    <span class="text-green-400 text-xs">online</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-col gap-3">
+                <div class="whatsapp-bubble">
+                  Marhaba, I saw your listing for the Achrafieh apartment. Is it still available?
+                </div>
+                <div class="ai-bubble">
+                  Hi! Yes, it is available. Are you looking to buy or rent? I can match you with similar listings too.
+                </div>
+                <div class="whatsapp-bubble">
+                  Buy. Budget around $350k. Need 3 bedrooms.
+                </div>
+                <div class="ai-bubble">
+                  Perfect. I found 4 matching listings in Achrafieh and Gemmayzeh. Want me to book a viewing this week?
+                </div>
+                <div class="flex justify-end">
+                  <div class="bg-navy text-white text-xs rounded-full px-4 py-1.5 border border-white/20 font-medium">
+                    Viewing booked: Thursday 3pm
+                  </div>
+                </div>
+                <div class="text-center">
+                  <span class="text-gray-400 text-xs">AI handled this in 90 seconds</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF BAR -->
+  <section class="bg-gray-50 border-y border-gray-200 py-10 px-6 lg:px-12">
+    <div class="max-w-7xl mx-auto">
+      <p class="text-center text-gray-400 text-xs font-semibold uppercase tracking-widest mb-8">Trusted by leading Lebanese real estate agencies</p>
+      <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+        <div class="text-gray-300 font-bold text-lg tracking-tight">Pro-Founders</div>
+        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+        <div class="text-gray-300 font-bold text-lg tracking-tight">Beirut Commune</div>
+        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+        <div class="text-gray-300 font-bold text-lg tracking-tight">Ray White</div>
+        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+        <div class="text-gray-300 font-bold text-lg tracking-tight">Spectrum</div>
+        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+        <div class="text-gray-300 font-bold text-lg tracking-tight">One Properties</div>
+        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+        <div class="text-gray-300 font-bold text-lg tracking-tight">JSK</div>
+        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+        <div class="text-gray-300 font-bold text-lg tracking-tight">C Properties</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem" class="py-20 px-6 lg:px-12 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-14">
+        <span class="text-accent text-sm font-bold uppercase tracking-widest">The Problem</span>
+        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Your pipeline is leaking deals every day.</h2>
+        <p class="text-gray-500 max-w-xl mx-auto text-base">Lebanese real estate runs on WhatsApp. But agencies are still handling it like it's 2010.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card-hover bg-white border border-gray-100 rounded-2xl p-7 shadow-sm">
+          <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-navy mb-3">Agents respond too late</h3>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            Forbes research shows 35 to 50% of sales go to the first business that responds. Most agency teams reply in hours. Your competitor responds in seconds.
+          </p>
+          <div class="bg-red-50 rounded-lg px-4 py-2.5 text-xs text-accent font-semibold">
+            35-50% of deals go to the first responder (Forbes)
+          </div>
+        </div>
+        <div class="card-hover bg-white border border-gray-100 rounded-2xl p-7 shadow-sm">
+          <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-navy mb-3">Follow-up is a mess</h3>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            Agents juggle 50+ WhatsApp threads across personal phones, with no system, no visibility, and no way to know which leads have gone cold. Nothing falls through the cracks except everything.
+          </p>
+          <div class="bg-red-50 rounded-lg px-4 py-2.5 text-xs text-accent font-semibold">
+            Avg. agency response time: 4 to 8 hours
+          </div>
+        </div>
+        <div class="card-hover bg-white border border-gray-100 rounded-2xl p-7 shadow-sm">
+          <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-navy mb-3">Good leads disappear</h3>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            High-intent buyers reach out at 10pm on a Sunday. No one answers. By Monday morning they have already scheduled a visit with your competitor. Those leads are gone forever.
+          </p>
+          <div class="bg-red-50 rounded-lg px-4 py-2.5 text-xs text-accent font-semibold">
+            70% of buyers contact 2 or more agencies before deciding
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION -->
+  <section id="solution" class="py-20 px-6 lg:px-12 bg-navy">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-14">
+        <span class="text-accent text-sm font-bold uppercase tracking-widest">The Solution</span>
+        <h2 class="text-3xl md:text-4xl font-black text-white mt-3 mb-4">Wakeeli handles the entire lead journey.</h2>
+        <p class="text-gray-300 max-w-xl mx-auto text-base">From first message to booked visit, your AI never sleeps, never misses a lead, and never lets a deal slip.</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors">
+          <div class="flex items-start gap-5">
+            <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white mb-2">Responds in seconds, 24/7</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">No more waiting. The moment a lead messages your WhatsApp, Wakeeli is already responding. Arabic, English, or both. Day or night. Weekend or holiday.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors">
+          <div class="flex items-start gap-5">
+            <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white mb-2">Qualifies and matches automatically</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">The AI asks the right questions: budget, location, size, timeline. It then matches the lead to your exact listings and presents the best options instantly.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors">
+          <div class="flex items-start gap-5">
+            <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white mb-2">Books tours without human intervention</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">Once a lead is qualified and interested, Wakeeli checks agent availability and books the property visit directly in the conversation. No back-and-forth, no missed slots.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors">
+          <div class="flex items-start gap-5">
+            <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white mb-2">Hands off only when it matters</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">Your agents step in only for high-intent, visit-ready leads. No more time wasted on cold enquiries or basic questions. Only close-ready conversations land on their desk.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-10 text-center">
+        <a href="#pricing" class="inline-block bg-accent hover:bg-accent-dark text-white font-bold px-8 py-4 rounded-xl text-base transition-colors shadow-lg shadow-accent/30">
+          Book a Demo
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="py-16 px-6 lg:px-12 bg-white border-b border-gray-100">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-8 text-center">
+        <div>
+          <div class="text-4xl md:text-5xl font-black text-navy mb-2">21x</div>
+          <div class="text-gray-500 text-sm max-w-xs mx-auto">Higher conversion rate when you respond within 5 minutes versus 30 minutes</div>
+        </div>
+        <div class="border-t md:border-t-0 md:border-x border-gray-100 pt-8 md:pt-0 md:px-8">
+          <div class="text-4xl md:text-5xl font-black text-navy mb-2">35-50%</div>
+          <div class="text-gray-500 text-sm max-w-xs mx-auto">Of all real estate deals go to the first company that responds, according to Forbes research</div>
+        </div>
+        <div class="border-t md:border-t-0 border-gray-100 pt-8 md:pt-0">
+          <div class="text-4xl md:text-5xl font-black text-navy mb-2">3 sec</div>
+          <div class="text-gray-500 text-sm max-w-xs mx-auto">Average Wakeeli AI response time. Not 3 hours. Not 3 minutes. Three seconds, every time.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="py-20 px-6 lg:px-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-14">
+        <span class="text-accent text-sm font-bold uppercase tracking-widest">Platform</span>
+        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Everything your agency needs in one place.</h2>
+        <p class="text-gray-500 max-w-xl mx-auto text-base">Nine fully integrated modules. One dashboard. Complete control over your lead pipeline.</p>
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-2 mb-8" id="tabs-nav">
+        <button class="tab-btn active text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="smart-inbox">Smart Inbox</button>
+        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="lead-management">Lead Management</button>
+        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="ai-conversations">AI Conversations</button>
+        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="listings">Listings</button>
+        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="tours">Tours</button>
+        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="analytics">Analytics</button>
+        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="agent-management">Agent Management</button>
+        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="ai-routing">AI Routing</button>
+        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="settings">Settings</button>
+      </div>
+
+      <div id="tabs-content">
+
+        <div id="tab-smart-inbox" class="tab-content active">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">Smart Inbox</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">All your WhatsApp conversations in a single unified inbox. AI-sorted by priority, status, and intent. Your team sees only what needs attention, not a wall of noise.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>AI-prioritized conversations</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Status filters: new, active, booked, closed</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Full conversation history with AI notes</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">Smart Inbox Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-lead-management" class="tab-content">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">Lead Management</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">A complete CRM built for real estate. Every lead profile includes budget, requirements, preferred locations, and full conversation history, all populated automatically by the AI.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Auto-populated lead profiles</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Pipeline view with deal stages</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Re-engagement alerts for cold leads</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">Lead Management Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-ai-conversations" class="tab-content">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">AI Conversations</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">Your AI assistant handles the full conversation flow. It qualifies leads with natural dialogue, matches them to listings, and guides them toward booking a visit, all without sounding like a bot.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Arabic and English, natural tone</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Customizable qualification questions</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Smooth handoff to human agents</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">AI Conversations Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-listings" class="tab-content">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">Listings</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">Upload and manage your full property portfolio. The AI automatically matches incoming leads to the right listings based on their requirements, budget, and location preferences.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Bulk listing import via CSV</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Smart AI matching engine</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Availability status management</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">Listings Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-tours" class="tab-content">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">Tours</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">Wakeeli books property visits automatically. It checks your agents' availability, proposes time slots, confirms with the lead, and sends reminders. All inside WhatsApp.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Automated availability checking</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Confirmation and reminders on WhatsApp</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Calendar integration for agents</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">Tours Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-analytics" class="tab-content">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">Analytics</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">Full visibility into your pipeline. Conversion rates, response times, tour booking rates, and agent performance, all in one clean dashboard. Know exactly where deals are won or lost.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Lead-to-visit conversion tracking</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Agent performance benchmarks</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Weekly email digest reports</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">Analytics Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-agent-management" class="tab-content">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">Agent Management</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">Add and manage your team. Set specializations, coverage areas, availability windows, and performance targets. Each agent sees only their leads, their tours, and their numbers.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Role-based access and views</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Availability and coverage settings</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Individual performance dashboards</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">Agent Management Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-ai-routing" class="tab-content">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">AI Routing</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">The AI decides which leads get handled automatically and which ones need a human. When it's time to hand off, it routes to the right agent based on their area, workload, and specialization.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Smart agent-lead matching</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Configurable handoff triggers</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Fallback and overflow rules</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">AI Routing Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
+            <div class="p-8 flex flex-col justify-center">
+              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
+                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-navy mb-3">Settings</h3>
+              <p class="text-gray-500 text-sm leading-relaxed mb-5">Full control over your AI behavior. Customize the conversation tone, language preference, working hours, and qualification criteria. Configure your WhatsApp number and team structure in minutes.</p>
+              <ul class="space-y-2">
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>AI tone and language customization</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>WhatsApp number setup and verification</li>
+                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Business hours and OOO configuration</li>
+              </ul>
+            </div>
+            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
+              <div class="screenshot-placeholder w-full">
+                <span class="text-gray-400 text-sm mt-8 z-10 relative">Settings Screenshot</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="py-20 px-6 lg:px-12 bg-white">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-14">
+        <span class="text-accent text-sm font-bold uppercase tracking-widest">Simple by Design</span>
+        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Three steps. Zero friction.</h2>
+        <p class="text-gray-500 max-w-lg mx-auto text-base">You connect your WhatsApp. Wakeeli does the rest. Your team wakes up to a calendar full of visits.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8 relative">
+        <div class="hidden md:block absolute top-12 left-1/3 right-1/3 h-0.5 bg-gray-200 z-0"></div>
+        <div class="text-center relative z-10">
+          <div class="w-20 h-20 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-navy/20">
+            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+          </div>
+          <div class="text-xs font-bold text-accent uppercase tracking-widest mb-2">Step 1</div>
+          <h3 class="text-base font-bold text-navy mb-2">Lead messages WhatsApp</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">A buyer or tenant reaches out on your agency's WhatsApp number. Any time of day, any language.</p>
+        </div>
+        <div class="text-center relative z-10">
+          <div class="w-20 h-20 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-navy/20">
+            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
+            </svg>
+          </div>
+          <div class="text-xs font-bold text-accent uppercase tracking-widest mb-2">Step 2</div>
+          <h3 class="text-base font-bold text-navy mb-2">AI qualifies and books</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Wakeeli qualifies the lead, matches them to listings, and books the property visit, automatically, in seconds.</p>
+        </div>
+        <div class="text-center relative z-10">
+          <div class="w-20 h-20 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-navy/20">
+            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <div class="text-xs font-bold text-accent uppercase tracking-widest mb-2">Step 3</div>
+          <h3 class="text-base font-bold text-navy mb-2">Agent closes the deal</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Your agent shows up to a confirmed visit with a qualified, listing-matched lead ready to buy. Just close.</p>
+        </div>
+      </div>
+      <div class="mt-12 bg-navy/5 border border-navy/10 rounded-2xl p-6 text-center">
+        <p class="text-navy font-semibold text-base">Your agents spend zero time on cold leads. They only meet visit-ready buyers.</p>
+        <p class="text-gray-500 text-sm mt-1">That's not an incremental improvement. That's a different business.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing" class="py-20 px-6 lg:px-12 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-14">
+        <span class="text-accent text-sm font-bold uppercase tracking-widest">Pricing</span>
+        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Simple pricing. Serious results.</h2>
+        <p class="text-gray-500 max-w-lg mx-auto text-base">No setup fees. No long-term contracts. Cancel anytime. Your first 14 days are free.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6 items-stretch">
+
+        <div class="card-hover bg-white border border-gray-200 rounded-2xl p-7 flex flex-col">
+          <div class="mb-6">
+            <div class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Starter</div>
+            <div class="flex items-end gap-1 mb-1">
+              <span class="text-4xl font-black text-navy">$149</span>
+              <span class="text-gray-400 text-sm mb-1.5">/month</span>
+            </div>
+            <p class="text-gray-500 text-sm">Perfect for boutique agencies getting started with AI lead conversion.</p>
+          </div>
+          <ul class="space-y-3 flex-grow mb-8">
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              1 agent seat
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              100 AI conversations/month
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Smart Inbox and Lead CRM
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Automated tour booking
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Email support
+            </li>
+          </ul>
+          <a href="#" class="block text-center bg-navy/10 hover:bg-navy/20 text-navy font-bold px-6 py-3.5 rounded-xl text-sm transition-colors">
+            Start Free Trial
+          </a>
+        </div>
+
+        <div class="card-hover bg-white border-2 border-navy rounded-2xl p-7 flex flex-col pricing-popular relative">
+          <div class="tag-popular">Most Popular</div>
+          <div class="mb-6">
+            <div class="text-sm font-bold text-navy uppercase tracking-widest mb-3">Professional</div>
+            <div class="flex items-end gap-1 mb-1">
+              <span class="text-4xl font-black text-navy">$599</span>
+              <span class="text-gray-400 text-sm mb-1.5">/month</span>
+            </div>
+            <p class="text-gray-500 text-sm">For growing agencies serious about dominating their market.</p>
+          </div>
+          <ul class="space-y-3 flex-grow mb-8">
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              5 agent seats
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              500 AI conversations/month
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              All Starter features
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Advanced analytics dashboard
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Priority support
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              AI conversation customization
+            </li>
+          </ul>
+          <a href="#" class="block text-center bg-navy hover:bg-navy-dark text-white font-bold px-6 py-3.5 rounded-xl text-sm transition-colors shadow-lg shadow-navy/30">
+            Start Free Trial
+          </a>
+        </div>
+
+        <div class="card-hover bg-white border border-gray-200 rounded-2xl p-7 flex flex-col">
+          <div class="mb-6">
+            <div class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Enterprise</div>
+            <div class="flex items-end gap-1 mb-1">
+              <span class="text-4xl font-black text-navy">$1,200</span>
+              <span class="text-gray-400 text-sm mb-1.5">/month</span>
+            </div>
+            <p class="text-gray-500 text-sm">For large agencies and groups that need full power and white-glove service.</p>
+          </div>
+          <ul class="space-y-3 flex-grow mb-8">
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Unlimited agent seats
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Unlimited AI conversations
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              All Professional features
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Dedicated account manager
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              Custom integrations and API
+            </li>
+            <li class="flex items-center gap-2.5 text-sm text-gray-600">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              SLA and 24/7 phone support
+            </li>
+          </ul>
+          <a href="#" class="block text-center bg-navy/10 hover:bg-navy/20 text-navy font-bold px-6 py-3.5 rounded-xl text-sm transition-colors">
+            Contact Sales
+          </a>
+        </div>
+
+      </div>
+      <p class="text-center text-gray-400 text-xs mt-6">All plans include a 14-day free trial. No credit card required.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="py-20 px-6 lg:px-12 bg-white">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-14">
+        <span class="text-accent text-sm font-bold uppercase tracking-widest">FAQ</span>
+        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Questions? We have answers.</h2>
+      </div>
+      <div class="divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden" id="faq-list">
+
+        <div class="faq-item">
+          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
+            <span class="text-sm font-semibold text-navy pr-4">How does the AI handle Arabic conversations?</span>
+            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-5 pb-5">
+            <p class="text-gray-500 text-sm leading-relaxed">Wakeeli is fully bilingual in Arabic and English. The AI detects the language of the incoming message and responds naturally in the same language. It handles Lebanese dialect, Modern Standard Arabic, and Arabizi. You can also set a default language preference per channel.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
+            <span class="text-sm font-semibold text-navy pr-4">Can I customize the conversation flow and questions?</span>
+            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-5 pb-5">
+            <p class="text-gray-500 text-sm leading-relaxed">Yes. You control the qualification questions, tone, and conversation style. You can define what information the AI collects, in what order, and what triggers a handoff to a human agent. Professional and Enterprise plans include full conversation flow customization.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
+            <span class="text-sm font-semibold text-navy pr-4">How long does setup take?</span>
+            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-5 pb-5">
+            <p class="text-gray-500 text-sm leading-relaxed">Most agencies are live within 48 hours. You connect your WhatsApp number, upload your listings, add your agents, and you are done. Our onboarding team walks you through every step. Enterprise clients get a dedicated setup session.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
+            <span class="text-sm font-semibold text-navy pr-4">What WhatsApp number do I use with Wakeeli?</span>
+            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-5 pb-5">
+            <p class="text-gray-500 text-sm leading-relaxed">You can use your existing agency WhatsApp Business number. We connect via the official WhatsApp Business API. All messages still appear to come from your number, your brand. Leads never know there is an AI involved unless you want them to.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
+            <span class="text-sm font-semibold text-navy pr-4">What happens when a lead needs a human agent?</span>
+            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-5 pb-5">
+            <p class="text-gray-500 text-sm leading-relaxed">When a lead meets your handoff criteria (e.g. ready to make an offer, complex request, or requests a human), Wakeeli notifies the assigned agent with a full conversation summary. The agent jumps in seamlessly. The lead never has to repeat themselves.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
+            <span class="text-sm font-semibold text-navy pr-4">Does it integrate with my existing CRM or property portal?</span>
+            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-5 pb-5">
+            <p class="text-gray-500 text-sm leading-relaxed">Wakeeli includes its own built-in CRM and listing management. Enterprise plans support custom API integrations with third-party tools including Property Finder, OpenRE, and custom platforms. Contact our sales team for your specific integration requirements.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
+            <span class="text-sm font-semibold text-navy pr-4">Is my data and my clients' data secure?</span>
+            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-5 pb-5">
+            <p class="text-gray-500 text-sm leading-relaxed">Yes. All data is encrypted in transit and at rest. We use secure cloud infrastructure and follow industry-standard security practices. Your lead data is never shared or sold. Enterprise clients can request data processing agreements and security documentation.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
+            <span class="text-sm font-semibold text-navy pr-4">What if I want to cancel?</span>
+            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-5 pb-5">
+            <p class="text-gray-500 text-sm leading-relaxed">Cancel anytime, no questions asked. There are no annual contracts or cancellation fees on Starter and Professional plans. You keep access until the end of your billing period. Your lead data can be exported in full before you go.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER -->
+  <section class="py-20 px-6 lg:px-12 gradient-hero">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4">More first conversations.<br>More visits booked.<br><span class="text-accent">More deals closed.</span></h2>
+      <p class="text-gray-300 text-base mb-8 max-w-xl mx-auto">Every hour without Wakeeli is an hour your leads are waiting. And while they wait, your competitor is already booking their visit.</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="#pricing" class="bg-accent hover:bg-accent-dark text-white font-bold px-8 py-4 rounded-xl text-base transition-colors shadow-lg shadow-accent/30">
+          Book a Demo
+        </a>
+        <a href="#pricing" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-8 py-4 rounded-xl text-base transition-colors">
+          Start Free Trial
+        </a>
+      </div>
+      <p class="text-gray-400 text-xs mt-5">14-day free trial. No credit card required. Setup in 48 hours.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-navy-dark py-12 px-6 lg:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid md:grid-cols-4 gap-8 mb-10">
+        <div class="md:col-span-2">
+          <div class="flex items-center mb-4">
+            <span class="text-2xl font-black text-white tracking-tight">Wake</span><span class="text-2xl font-black text-accent tracking-tight">eli</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed max-w-xs mb-5">The AI conversion system built for Lebanese real estate agencies. Qualify, match, and book visits on WhatsApp, 24/7.</p>
+          <a href="#pricing" class="inline-block bg-accent hover:bg-accent-dark text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+            Book a Demo
+          </a>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Product</div>
+          <ul class="space-y-2.5">
+            <li><a href="#features" class="text-gray-400 hover:text-white text-sm transition-colors">Features</a></li>
+            <li><a href="#pricing" class="text-gray-400 hover:text-white text-sm transition-colors">Pricing</a></li>
+            <li><a href="#how-it-works" class="text-gray-400 hover:text-white text-sm transition-colors">How It Works</a></li>
+            <li><a href="#faq" class="text-gray-400 hover:text-white text-sm transition-colors">FAQ</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Company</div>
+          <ul class="space-y-2.5">
+            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">About</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Blog</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Contact</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
+        <p class="text-gray-500 text-xs">2024 Wakeeli. All rights reserved. Built in Beirut.</p>
+        <p class="text-gray-500 text-xs">WhatsApp is a trademark of Meta Platforms, Inc. Wakeeli is not affiliated with Meta.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Nav scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('nav-scrolled');
+      } else {
+        navbar.classList.remove('nav-scrolled');
+      }
+    });
+
+    // Mobile menu
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuIcon = document.getElementById('menu-icon');
+    const closeIcon = document.getElementById('close-icon');
+
+    mobileMenuBtn.addEventListener('click', () => {
+      const isOpen = !mobileMenu.classList.contains('hidden');
+      if (isOpen) {
+        mobileMenu.classList.add('hidden');
+        menuIcon.classList.remove('hidden');
+        closeIcon.classList.add('hidden');
+      } else {
+        mobileMenu.classList.remove('hidden');
+        menuIcon.classList.add('hidden');
+        closeIcon.classList.remove('hidden');
+      }
+    });
+
+    function closeMobileMenu() {
+      mobileMenu.classList.add('hidden');
+      menuIcon.classList.remove('hidden');
+      closeIcon.classList.add('hidden');
+    }
+
+    // Tabs
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+        });
+
+        const target = document.getElementById('tab-' + targetTab);
+        if (target) target.classList.add('active');
+      });
+    });
+
+    // FAQ accordion
+    function toggleFaq(btn) {
+      const item = btn.parentElement;
+      const answer = item.querySelector('.faq-answer');
+      const icon = btn.querySelector('.faq-icon');
+      const isOpen = answer.classList.contains('open');
+
+      // Close all
+      document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
+      document.querySelectorAll('.faq-icon').forEach(i => i.classList.remove('open'));
+
+      if (!isOpen) {
+        answer.classList.add('open');
+        icon.classList.add('open');
+      }
+    }
+  </script>
+
+</body>
+</html>

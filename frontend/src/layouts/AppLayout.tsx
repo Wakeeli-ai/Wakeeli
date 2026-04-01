@@ -11,7 +11,6 @@ import {
   Search,
   Bell,
   LogOut,
-  Zap,
   X,
   UserPlus,
 } from 'lucide-react';
@@ -80,9 +79,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen bg-slate-100 text-slate-900">
       {/* Sidebar */}
       <aside className="w-60 flex-shrink-0 bg-wakeeli-sidebar flex flex-col">
-        <div className="p-4 flex items-center gap-2 border-b border-white/10">
-          <Zap className="text-white" size={24} />
-          <span className="text-white font-semibold text-lg">Wakeeli</span>
+        <div className="p-4 flex items-center justify-center border-b border-white/10">
+          <img
+            src="/logo.png"
+            alt="Wakeeli"
+            className="w-32 object-contain"
+          />
         </div>
         <nav className="flex-1 py-3 px-2">
           {navItems.map((item) => {

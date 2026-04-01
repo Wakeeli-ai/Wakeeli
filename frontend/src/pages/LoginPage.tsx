@@ -74,28 +74,12 @@ export default function LoginPage() {
         {/* Content */}
         <div className="relative z-10 text-center px-12">
           {/* Logo mark */}
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg
-                className="w-7 h-7 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 22V12h6v10"
-                />
-              </svg>
-            </div>
-            <span className="text-white text-4xl font-bold tracking-tight">Wakeeli</span>
+          <div className="flex items-center justify-center mb-6">
+            <img
+              src="/logo.png"
+              alt="Wakeeli"
+              className="w-48 object-contain"
+            />
           </div>
 
           <p className="text-slate-300 text-lg font-light leading-relaxed max-w-xs mx-auto">

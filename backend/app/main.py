@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
+from sqlalchemy import text, inspect
 from app.database import engine, Base
 from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics
 from app.models import Listing
@@ -10,6 +11,19 @@ from app.config import settings
 
 # Create Tables
 Base.metadata.create_all(bind=engine)
+
+# Ensure users table has all required columns (handles legacy DBs)
+try:
+    inspector = inspect(engine)
+    if inspector.has_table("users"):
+        columns = [c["name"] for c in inspector.get_columns("users")]
+        with engine.begin() as conn:
+            if "role" not in columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'agent'"))
+            if "is_active" not in columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE"))
+except Exception:
+    pass
 
 app = FastAPI(title=settings.PROJECT_NAME)
 

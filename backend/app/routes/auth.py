@@ -70,19 +70,23 @@ def authenticate_user(db: Session, username: str, password: str) -> User | Admin
     if username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD:
         # Return a mock admin user object
         return AdminUser()
-    
+
     # Then check database users
-    user = db.query(User).filter(User.username == username).first()
-    if not user:
+    try:
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            return False
+
+        if not user.is_active:
+            return False
+
+        if not verify_password(password, user.hashed_password):
+            return False
+
+        return user
+    except Exception:
+        # DB schema may be out of date, fall back to rejecting
         return False
-    
-    if not user.is_active:
-        return False
-    
-    if not verify_password(password, user.hashed_password):
-        return False
-    
-    return user
 
 
 

@@ -1,54 +1,222 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { getConversations, getAgents } from '../api';
-import { Download, LayoutGrid, Loader2, X } from 'lucide-react';
+import { Download, LayoutGrid, X } from 'lucide-react';
 import LeadDetailPanel from '../components/LeadDetailPanel';
 
-type Conversation = {
+type Lead = {
   id: number;
-  user_phone: string;
-  status: string;
-  user_requirements: { listing_type?: string } | null;
-  agent_id: number | null;
-  agent?: { name: string } | null;
-  created_at: string;
-  updated_at: string | null;
-  messages?: { content: string }[];
+  name: string;
+  phone: string;
+  source: 'WhatsApp' | 'Instagram' | 'Website';
+  type: 'buy' | 'rent';
+  status: 'new' | 'qualifying' | 'qualified' | 'tour_booked' | 'handed_to_agent';
+  agent: string | null;
+  lastActivity: string;
+  activityText: string;
+  notes: string;
+  budget: string;
 };
 
-function formatTimeAgo(dateStr: string) {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${diffDays}d ago`;
-}
+const MOCK_LEADS: Lead[] = [
+  {
+    id: 1,
+    name: 'Rami Khoury',
+    phone: '+961 70 123 456',
+    source: 'WhatsApp',
+    type: 'buy',
+    status: 'qualified',
+    agent: 'Rafic Khoury',
+    lastActivity: '3 days ago',
+    activityText: 'Requirements confirmed',
+    notes: 'Looking for a 3BR apartment in Achrafieh. Prefers high floor with city view.',
+    budget: '$350,000',
+  },
+  {
+    id: 2,
+    name: 'Nadia Haddad',
+    phone: '+961 71 234 567',
+    source: 'Instagram',
+    type: 'rent',
+    status: 'new',
+    agent: null,
+    lastActivity: '2 hours ago',
+    activityText: 'AI follow-up sent',
+    notes: 'Interested in a furnished apartment in Hamra. Needs parking.',
+    budget: '$1,200/mo',
+  },
+  {
+    id: 3,
+    name: 'Tony Gemayel',
+    phone: '+961 76 345 678',
+    source: 'WhatsApp',
+    type: 'buy',
+    status: 'tour_booked',
+    agent: 'Rami Haddad',
+    lastActivity: 'Yesterday',
+    activityText: 'Tour scheduled',
+    notes: 'Wants a spacious 4BR in Achrafieh. Flexible on floor, prefers garden access.',
+    budget: '$500,000',
+  },
+  {
+    id: 4,
+    name: 'Maya Nasrallah',
+    phone: '+961 78 456 789',
+    source: 'Website',
+    type: 'rent',
+    status: 'qualifying',
+    agent: 'Mary Rizk',
+    lastActivity: '5 days ago',
+    activityText: 'Viewed listing',
+    notes: 'Looking for a 2BR in Verdun, close to schools. Prefers modern building.',
+    budget: '$1,500/mo',
+  },
+  {
+    id: 5,
+    name: 'Sami Aoun',
+    phone: '+961 03 567 890',
+    source: 'WhatsApp',
+    type: 'buy',
+    status: 'handed_to_agent',
+    agent: 'Clara Nassar',
+    lastActivity: '1 week ago',
+    activityText: 'Handed to agent',
+    notes: 'Interested in a 2BR apartment in Jounieh. Sea view preferred.',
+    budget: '$250,000',
+  },
+  {
+    id: 6,
+    name: 'Lara Saliba',
+    phone: '+961 70 678 901',
+    source: 'WhatsApp',
+    type: 'rent',
+    status: 'qualified',
+    agent: 'Rafic Khoury',
+    lastActivity: '2 days ago',
+    activityText: 'Requirements confirmed',
+    notes: 'Furnished studio or 1BR in Dbayeh. Near highway access. Moving in 3 weeks.',
+    budget: '$900/mo',
+  },
+  {
+    id: 7,
+    name: 'Karim Mouawad',
+    phone: '+961 71 789 012',
+    source: 'Instagram',
+    type: 'buy',
+    status: 'new',
+    agent: null,
+    lastActivity: '4 hours ago',
+    activityText: 'AI follow-up sent',
+    notes: 'Looking for a chalet or villa in Broummana area. Mountain views essential.',
+    budget: '$600,000',
+  },
+  {
+    id: 8,
+    name: 'Rita Fares',
+    phone: '+961 76 890 123',
+    source: 'WhatsApp',
+    type: 'rent',
+    status: 'qualifying',
+    agent: 'Mary Rizk',
+    lastActivity: '3 days ago',
+    activityText: 'Viewed listing',
+    notes: 'Wants 2BR in Beit Mery. Quiet neighborhood, away from main road.',
+    budget: '$1,100/mo',
+  },
+  {
+    id: 9,
+    name: 'Hassan Khalil',
+    phone: '+961 78 901 234',
+    source: 'WhatsApp',
+    type: 'buy',
+    status: 'qualified',
+    agent: 'Rami Haddad',
+    lastActivity: '6 days ago',
+    activityText: 'Requirements confirmed',
+    notes: 'Investment apartment in Hamra, 1BR or studio. Wants rental yield potential.',
+    budget: '$200,000',
+  },
+  {
+    id: 10,
+    name: 'Joelle Abi Saab',
+    phone: '+961 03 012 345',
+    source: 'Instagram',
+    type: 'rent',
+    status: 'tour_booked',
+    agent: 'Clara Nassar',
+    lastActivity: 'Yesterday',
+    activityText: 'Tour scheduled',
+    notes: 'High-end 3BR in Achrafieh or Saifi. Must have concierge and gym.',
+    budget: '$2,000/mo',
+  },
+  {
+    id: 11,
+    name: 'Omar Darwish',
+    phone: '+961 70 123 567',
+    source: 'Website',
+    type: 'buy',
+    status: 'handed_to_agent',
+    agent: 'Rafic Khoury',
+    lastActivity: '10 days ago',
+    activityText: 'Handed to agent',
+    notes: 'Commercial retail space in Verdun or Hamra. Ground floor preferred.',
+    budget: '$450,000',
+  },
+  {
+    id: 12,
+    name: 'Celine Rizk',
+    phone: '+961 71 234 678',
+    source: 'WhatsApp',
+    type: 'rent',
+    status: 'new',
+    agent: null,
+    lastActivity: '1 hour ago',
+    activityText: 'AI follow-up sent',
+    notes: 'Studio or 1BR in Jounieh. Furnished. Close to the waterfront.',
+    budget: '$800/mo',
+  },
+  {
+    id: 13,
+    name: 'Elie Bitar',
+    phone: '+961 76 345 789',
+    source: 'WhatsApp',
+    type: 'buy',
+    status: 'qualifying',
+    agent: 'Rami Haddad',
+    lastActivity: '4 days ago',
+    activityText: 'Viewed listing',
+    notes: 'Looking for a beachfront or sea-view apartment in Batroun. 2-3BR.',
+    budget: '$300,000',
+  },
+  {
+    id: 14,
+    name: 'Dina Hamdan',
+    phone: '+961 78 456 890',
+    source: 'Instagram',
+    type: 'rent',
+    status: 'qualified',
+    agent: 'Mary Rizk',
+    lastActivity: '2 days ago',
+    activityText: 'Requirements confirmed',
+    notes: 'Luxury 3BR in Dbayeh or Antelias. Building must have generator and water tank.',
+    budget: '$1,800/mo',
+  },
+  {
+    id: 15,
+    name: 'Georges Skaff',
+    phone: '+961 03 567 901',
+    source: 'Website',
+    type: 'buy',
+    status: 'handed_to_agent',
+    agent: 'Clara Nassar',
+    lastActivity: '8 days ago',
+    activityText: 'Handed to agent',
+    notes: 'Mountain villa or large chalet in Broummana or Beit Mery. Pool preferred.',
+    budget: '$750,000',
+  },
+];
 
-function getMockSource(id: number): 'WhatsApp' | 'Instagram' | 'Website' {
-  const sources = ['WhatsApp', 'Instagram', 'Website'] as const;
-  return sources[id % 3];
-}
-
-function getMockType(c: Conversation): string {
-  if (c.user_requirements?.listing_type) return c.user_requirements.listing_type;
-  return c.id % 2 === 0 ? 'buy' : 'rent';
-}
-
-function getActivityText(status: string): string {
-  switch (status) {
-    case 'qualifying': return 'Viewed listing';
-    case 'qualified': return 'Requirements confirmed';
-    case 'tour_booked': return 'Tour scheduled';
-    case 'handed_to_agent':
-    case 'handed_off': return 'Handed to agent';
-    default: return 'AI follow-up sent';
-  }
-}
+const MOCK_AGENTS = ['Rafic Khoury', 'Rami Haddad', 'Mary Rizk', 'Clara Nassar'];
 
 const SOURCE_BADGE: Record<string, string> = {
   WhatsApp: 'bg-emerald-100 text-emerald-800',
@@ -67,7 +235,6 @@ const STATUS_BADGE: Record<string, string> = {
   qualified: 'bg-emerald-100 text-emerald-800',
   tour_booked: 'bg-purple-100 text-purple-800',
   handed_to_agent: 'bg-slate-100 text-slate-600',
-  handed_off: 'bg-slate-100 text-slate-600',
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -76,7 +243,6 @@ const STATUS_LABEL: Record<string, string> = {
   qualified: 'Qualified',
   tour_booked: 'Tour Booked',
   handed_to_agent: 'Handed to Agent',
-  handed_off: 'Handed to Agent',
 };
 
 const PAGE_SIZE = 10;
@@ -86,10 +252,6 @@ export default function Leads() {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [agents, setAgents] = useState<{ id: number; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({ source: '', type: '', status: '', agent: '' });
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -100,35 +262,17 @@ export default function Leads() {
     ? `Search results for "${searchQuery}"`
     : 'Manage and track all your property leads';
 
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [convos, agentsList] = await Promise.all([
-        getConversations(searchQuery || undefined).then((r) => r.data),
-        getAgents().then((r) => r.data),
-      ]);
-      setConversations(Array.isArray(convos) ? convos : []);
-      setAgents(Array.isArray(agentsList) ? agentsList : []);
-    } catch {
-      setError('Failed to load leads.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [searchQuery]);
-
-  const filtered = conversations.filter((c) => {
-    if (filters.source && getMockSource(c.id) !== filters.source) return false;
-    if (filters.type && getMockType(c) !== filters.type) return false;
-    if (filters.status && c.status !== filters.status) return false;
-    if (filters.agent) {
-      const aid = parseInt(filters.agent, 10);
-      if (c.agent_id !== aid) return false;
-    }
+  const filtered = MOCK_LEADS.filter((lead) => {
+    if (
+      searchQuery &&
+      !lead.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !lead.phone.includes(searchQuery)
+    )
+      return false;
+    if (filters.source && lead.source !== filters.source) return false;
+    if (filters.type && lead.type !== filters.type) return false;
+    if (filters.status && lead.status !== filters.status) return false;
+    if (filters.agent && lead.agent !== filters.agent) return false;
     return true;
   });
 
@@ -218,8 +362,8 @@ export default function Leads() {
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">All Agents</option>
-            {agents.map((a) => (
-              <option key={a.id} value={String(a.id)}>{a.name}</option>
+            {MOCK_AGENTS.map((name) => (
+              <option key={name} value={name}>{name}</option>
             ))}
           </select>
         )}
@@ -233,159 +377,151 @@ export default function Leads() {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 font-medium uppercase tracking-wide">
-                    <th className="px-6 py-4 w-10">
-                      <input type="checkbox" className="rounded border-slate-300" />
-                    </th>
-                    <th className="px-6 py-4">Lead Name</th>
-                    <th className="px-6 py-4">Contact</th>
-                    <th className="px-6 py-4">Source</th>
-                    <th className="px-6 py-4">Type</th>
-                    <th className="px-6 py-4">Status</th>
-                    {!isAgent && <th className="px-6 py-4">Assigned Agent</th>}
-                    <th className="px-6 py-4">Last Activity</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {paginated.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={isAgent ? 7 : 8}
-                        className="px-6 py-12 text-center text-slate-400"
-                      >
-                        No leads found.
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 font-medium uppercase tracking-wide">
+                <th className="px-6 py-4 w-10">
+                  <input type="checkbox" className="rounded border-slate-300" />
+                </th>
+                <th className="px-6 py-4">Lead Name</th>
+                <th className="px-6 py-4">Contact</th>
+                <th className="px-6 py-4">Source</th>
+                <th className="px-6 py-4">Type</th>
+                <th className="px-6 py-4">Status</th>
+                {!isAgent && <th className="px-6 py-4">Assigned Agent</th>}
+                <th className="px-6 py-4">Last Activity</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginated.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={isAgent ? 7 : 8}
+                    className="px-6 py-12 text-center text-slate-400"
+                  >
+                    No leads found.
+                  </td>
+                </tr>
+              ) : (
+                paginated.map((lead) => {
+                  const initials = lead.name
+                    .split(' ')
+                    .slice(0, 2)
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase();
+                  const statusLabel = STATUS_LABEL[lead.status] || lead.status;
+
+                  return (
+                    <tr
+                      key={lead.id}
+                      className="hover:bg-slate-50 cursor-pointer transition-colors"
+                      onClick={() => setSelectedLeadId(lead.id)}
+                    >
+                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" className="rounded border-slate-300" />
+                      </td>
+
+                      {/* Lead Name */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                            {initials}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900">{lead.name}</p>
+                            <p className="text-xs text-slate-400">{lead.budget}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Contact */}
+                      <td className="px-6 py-4 text-slate-700">{lead.phone}</td>
+
+                      {/* Source */}
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${SOURCE_BADGE[lead.source]}`}>
+                          {lead.source}
+                        </span>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${TYPE_BADGE[lead.type] || 'bg-slate-100 text-slate-600'}`}>
+                          {lead.type}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[lead.status] || 'bg-slate-100 text-slate-600'}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+
+                      {/* Assigned Agent */}
+                      {!isAgent && (
+                        <td className="px-6 py-4">
+                          {lead.agent ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600">
+                                {lead.agent
+                                  .split(' ')
+                                  .slice(0, 2)
+                                  .map((n) => n[0])
+                                  .join('')
+                                  .toUpperCase()}
+                              </div>
+                              <span className="text-slate-700">{lead.agent}</span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic text-xs">AI Routing</span>
+                          )}
+                        </td>
+                      )}
+
+                      {/* Last Activity */}
+                      <td className="px-6 py-4">
+                        <p className="text-slate-600 text-sm">{lead.lastActivity}</p>
+                        <p className="text-xs text-slate-400">{lead.activityText}</p>
                       </td>
                     </tr>
-                  ) : (
-                    paginated.map((c) => {
-                      const initials = c.user_phone.slice(-2).toUpperCase();
-                      const source = getMockSource(c.id);
-                      const type = getMockType(c);
-                      const statusLabel = STATUS_LABEL[c.status] || c.status;
-                      const activityText = getActivityText(c.status);
-                      const timeAgo = formatTimeAgo(c.updated_at || c.created_at);
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                      return (
-                        <tr
-                          key={c.id}
-                          className="hover:bg-slate-50 cursor-pointer transition-colors"
-                          onClick={() => setSelectedLeadId(c.id)}
-                        >
-                          <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                            <input type="checkbox" className="rounded border-slate-300" />
-                          </td>
-
-                          {/* Lead Name */}
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                                {initials}
-                              </div>
-                              <div>
-                                <p className="font-semibold text-slate-900">{c.user_phone}</p>
-                                <p className="text-xs text-slate-400">No email on file</p>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Contact */}
-                          <td className="px-6 py-4 text-slate-700">{c.user_phone}</td>
-
-                          {/* Source */}
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${SOURCE_BADGE[source]}`}>
-                              {source}
-                            </span>
-                          </td>
-
-                          {/* Type */}
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${TYPE_BADGE[type] || 'bg-slate-100 text-slate-600'}`}>
-                              {type}
-                            </span>
-                          </td>
-
-                          {/* Status */}
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[c.status] || 'bg-slate-100 text-slate-600'}`}>
-                              {statusLabel}
-                            </span>
-                          </td>
-
-                          {/* Assigned Agent */}
-                          {!isAgent && (
-                            <td className="px-6 py-4">
-                              {c.agent ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600">
-                                    {c.agent.name.slice(0, 2).toUpperCase()}
-                                  </div>
-                                  <span className="text-slate-700">{c.agent.name}</span>
-                                </div>
-                              ) : (
-                                <span className="text-slate-400 italic text-xs">AI Routing</span>
-                              )}
-                            </td>
-                          )}
-
-                          {/* Last Activity */}
-                          <td className="px-6 py-4">
-                            <p className="text-slate-600 text-sm">{timeAgo}</p>
-                            <p className="text-xs text-slate-400">{activityText}</p>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination footer */}
-            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
-              <span>
-                {filtered.length === 0
-                  ? 'No leads'
-                  : `Showing ${pageStart + 1}–${pageEnd} of ${filtered.length} leads`}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={currentPage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Pagination footer */}
+        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+          <span>
+            {filtered.length === 0
+              ? 'No leads'
+              : `Showing ${pageStart + 1}–${pageEnd} of ${filtered.length} leads`}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Lead Detail Panel (right-side drawer) */}
@@ -393,7 +529,7 @@ export default function Leads() {
         <LeadDetailPanel
           conversationId={selectedLeadId}
           onClose={() => setSelectedLeadId(null)}
-          onUpdate={loadData}
+          onUpdate={() => {}}
         />
       )}
     </div>

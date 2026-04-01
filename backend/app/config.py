@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     WHATSAPP_TOKEN: str = ""
     WHATSAPP_VERIFY_TOKEN: str = "wakeeli_verify"
     WHATSAPP_PHONE_NUMBER_ID: str = ""
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "admin"
+    ADMIN_USERNAME: str = "Admin"
+    ADMIN_PASSWORD: str = "Admin123"
     VERSION: str = "v15.0"
     PHONE_NUMBER_ID: str = ""
 

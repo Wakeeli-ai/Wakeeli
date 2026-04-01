@@ -919,7 +919,7 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             messages=[{"role": "user", "content": user_message}],
             extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
         )
-        log_usage("claude-sonnet-4-6", response.usage, call_label="generate_reply")
+        log_usage("claude-sonnet-4-6", response.usage, call_label="generate_reply", conversation_id=conversation_id)
         raw_reply = response.content[0].text
         raw_reply = _strip_internal_reasoning(raw_reply)
     except Exception as e:
@@ -944,7 +944,7 @@ Greet the user naturally and ask how you can help them find a property in Lebano
     return parts if parts else [raw_reply]
 
 
-def extract_entities(message, history):
+def extract_entities(message, history, conversation_id=None):
     # Build message list with cache_control on the last history message so
     # incremental conversation turns benefit from caching.
     messages: list[dict] = []
@@ -985,7 +985,7 @@ def extract_entities(message, history):
             messages=messages,
             extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
         )
-        log_usage(extraction_model, response.usage, call_label="extract_entities")
+        log_usage(extraction_model, response.usage, call_label="extract_entities", conversation_id=conversation_id)
 
         raw_text = response.content[0].text.strip()
         # Strip markdown code fences if Claude wraps the JSON
@@ -1061,7 +1061,7 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             db.commit()
             return [response_msg]
 
-        extracted = extract_entities(user_message, history)
+        extracted = extract_entities(user_message, history, conversation_id=conversation_id)
 
         # If the bot previously asked for the user's name and the extractor still
         # returned null for name, treat the current message as a name if it is

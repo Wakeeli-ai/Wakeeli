@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import engine, Base
-from app.routes import whatsapp, listings, agents, conversations, auth, chat
+from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics
 from app.models import Listing
 from app.config import settings
 
@@ -29,6 +29,7 @@ app.include_router(listings.router, prefix="/api/listings", tags=["Listings"])
 app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])
 app.include_router(conversations.router, prefix="/api/conversations", tags=["Conversations"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 
 # Static files
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")

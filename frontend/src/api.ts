@@ -103,3 +103,44 @@ export const signup = (username: string, email: string, password: string, role: 
   });
 
 export const getCurrentUser = () => api.get<UserInfo>('/auth/me');
+
+export interface AnalyticsCostsSummary {
+  total_spend_usd: number;
+  total_calls: number;
+  total_conversations: number;
+  avg_cost_per_conversation: number;
+  cache_hit_rate: number;
+}
+
+export interface AnalyticsCostsDailyBreakdown {
+  date: string;
+  cost_usd: number;
+  calls: number;
+  cache_hit_rate: number;
+}
+
+export interface AnalyticsCostsPerConversation {
+  conversation_id: string;
+  total_cost_usd: number;
+  call_count: number;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  first_call: string;
+  last_call: string;
+}
+
+export interface AnalyticsCostsModelSplit {
+  cost_usd: number;
+  calls: number;
+}
+
+export interface AnalyticsCostsResponse {
+  summary: AnalyticsCostsSummary;
+  daily_breakdown: AnalyticsCostsDailyBreakdown[];
+  per_conversation: AnalyticsCostsPerConversation[];
+  model_split: Record<string, AnalyticsCostsModelSplit>;
+}
+
+export const getAnalyticsCosts = (days?: number) =>
+  api.get<AnalyticsCostsResponse>('/analytics/costs', { params: { days } });

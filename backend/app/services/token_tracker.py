@@ -89,15 +89,16 @@ def _save_daily_spend(data: dict[str, Any]) -> None:
         json.dump(data, fh, indent=2)
 
 
-def log_usage(model: str, usage: Any, call_label: str = "") -> None:
+def log_usage(model: str, usage: Any, call_label: str = "", conversation_id: int | None = None) -> None:
     """
     Log token usage for one API call.
 
     Parameters
     ----------
-    model       Anthropic model string (e.g. 'claude-sonnet-4-6').
-    usage       The usage object from response.usage (or a dict).
-    call_label  Optional human-readable label for the call context.
+    model           Anthropic model string (e.g. 'claude-sonnet-4-6').
+    usage           The usage object from response.usage (or a dict).
+    call_label      Optional human-readable label for the call context.
+    conversation_id Optional conversation ID for per-conversation analytics.
     """
     _ensure_log_dir()
 
@@ -128,6 +129,7 @@ def log_usage(model: str, usage: Any, call_label: str = "") -> None:
         "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
         "model": model,
         "call_label": call_label,
+        "conversation_id": conversation_id,
         "input_tokens": usage_dict["input_tokens"],
         "cache_creation_input_tokens": usage_dict["cache_creation_input_tokens"],
         "cache_read_input_tokens": usage_dict["cache_read_input_tokens"],

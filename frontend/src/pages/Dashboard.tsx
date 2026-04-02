@@ -281,28 +281,18 @@ export default function Dashboard() {
   const [selectedConvo, setSelectedConvo] = useState<any | null>(MOCK_CONVERSATIONS[0]);
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
     getConversations()
       .then((r) => {
-        if (cancelled) return;
         const data = Array.isArray(r.data) ? r.data : [];
         const list = data.length > 0 ? data : MOCK_CONVERSATIONS;
         setConversations(list);
         setSelectedConvo((prev: any) => prev ?? list[0]);
       })
       .catch(() => {
-        if (!cancelled) {
-          setConversations(MOCK_CONVERSATIONS);
-          setSelectedConvo(MOCK_CONVERSATIONS[0]);
-        }
+        setConversations(MOCK_CONVERSATIONS);
+        setSelectedConvo(MOCK_CONVERSATIONS[0]);
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = filterConversations(conversations, activeTab);

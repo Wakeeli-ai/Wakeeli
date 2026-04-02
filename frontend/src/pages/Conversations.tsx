@@ -275,7 +275,7 @@ function isAiActive(c: Conversation): boolean {
 export default function Conversations() {
   useRole();
   const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
-  const [selected, setSelected] = useState<Conversation | null>(MOCK_CONVERSATIONS[0]);
+  const [selected, setSelected] = useState<Conversation | null>(null);
   const [detail, setDetail] = useState<Conversation | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -327,7 +327,13 @@ export default function Conversations() {
     setDetail(null);
     getConversation(selected.id)
       .then((res) => { if (!cancelled) { setDetail(res.data); setLoadingDetail(false); } })
-      .catch(() => { if (!cancelled) { setDetail(selected); setLoadingDetail(false); } });
+      .catch(() => {
+        if (!cancelled) {
+          const mockConvo = MOCK_CONVERSATIONS.find((c) => c.id === selected.id) ?? selected;
+          setDetail(mockConvo);
+          setLoadingDetail(false);
+        }
+      });
     return () => { cancelled = true; };
   }, [selected?.id]);
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from typing import List, Optional, Any
 from datetime import datetime
 
@@ -95,6 +95,13 @@ class Conversation(ConversationBase):
 class ConversationDetail(Conversation):
     messages: List[Message] = []
     agent: Optional[Agent] = None
+
+    @computed_field
+    @property
+    def user_name(self) -> Optional[str]:
+        if self.user_requirements and isinstance(self.user_requirements, dict):
+            return self.user_requirements.get('name')
+        return None
 
 
 

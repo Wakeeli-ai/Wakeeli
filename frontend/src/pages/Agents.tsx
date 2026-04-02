@@ -4,7 +4,7 @@ import {
   X, Mail, Phone, Briefcase, ChevronLeft, ChevronRight,
   Loader2,
 } from 'lucide-react';
-import { getAgents, createAgent, deleteAgent } from '../api';
+// import { getAgents, createAgent, deleteAgent } from '../api';
 
 // ---- Types ----
 
@@ -17,9 +17,76 @@ type Agent = {
   specialties?: string[];
   territories?: string[];
   priority?: number;
+  status?: AgentStatus;
+  role?: string;
 };
 
 type AgentStatus = 'available' | 'on_break' | 'offline';
+
+// ---- Mock Data ----
+
+const MOCK_AGENTS: Agent[] = [
+  {
+    id: 1,
+    name: 'Michel Boutros',
+    role: 'Senior Agent',
+    specialization: 'Luxury Properties',
+    email: 'michel.b@wakeeli.app',
+    phone: '+961 3 456 789',
+    status: 'available',
+    specialties: ['Luxury Properties'],
+    territories: [],
+    priority: 1,
+  },
+  {
+    id: 2,
+    name: 'Joelle Rizk',
+    role: 'Agent',
+    specialization: 'Residential Rentals',
+    email: 'joelle.r@wakeeli.app',
+    phone: '+961 70 123 456',
+    status: 'available',
+    specialties: ['Residential Rentals'],
+    territories: [],
+    priority: 1,
+  },
+  {
+    id: 3,
+    name: 'Elie Khoury',
+    role: 'Senior Agent',
+    specialization: 'Commercial',
+    email: 'elie.k@wakeeli.app',
+    phone: '+961 71 789 012',
+    status: 'available',
+    specialties: ['Commercial'],
+    territories: [],
+    priority: 1,
+  },
+  {
+    id: 4,
+    name: 'Roula Bou Jawde',
+    role: 'Agent',
+    specialization: 'Mountain Properties',
+    email: 'roula.bj@wakeeli.app',
+    phone: '+961 76 345 678',
+    status: 'on_break',
+    specialties: ['Mountain Properties'],
+    territories: [],
+    priority: 1,
+  },
+  {
+    id: 5,
+    name: 'Karim Haddad',
+    role: 'Agent',
+    specialization: 'Sea View Apartments',
+    email: 'karim.h@wakeeli.app',
+    phone: '+961 3 567 890',
+    status: 'available',
+    specialties: ['Sea View Apartments'],
+    territories: [],
+    priority: 1,
+  },
+];
 
 // ---- Helpers ----
 
@@ -84,6 +151,8 @@ function AgentDrawer({
   onDelete: (id: number) => void;
 }) {
   const perf = mockPerf(agent.id);
+  const agentStatus: AgentStatus = agent.status ?? perf.status;
+  const agentRole = agent.role ?? perf.role;
   const initials = getInitials(agent.name);
   const assignments = MOCK_ASSIGNMENT_POOL[agent.id % MOCK_ASSIGNMENT_POOL.length];
 
@@ -110,11 +179,11 @@ function AgentDrawer({
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">{agent.name}</h2>
-              <p className="text-sm text-slate-500">{perf.role}</p>
+              <p className="text-sm text-slate-500">{agentRole}</p>
               <span
-                className={`inline-flex mt-1 px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[perf.status]}`}
+                className={`inline-flex mt-1 px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[agentStatus]}`}
               >
-                {STATUS_LABELS[perf.status]}
+                {STATUS_LABELS[agentStatus]}
               </span>
             </div>
           </div>
@@ -402,56 +471,53 @@ export default function Agents() {
     loadAgents();
   }, []);
 
-  const loadAgents = async () => {
+  const loadAgents = () => {
     setLoading(true);
-    try {
-      const res = await getAgents();
-      setAgents(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    // const res = await getAgents();
+    // setAgents(Array.isArray(res.data) ? res.data : []);
+    setAgents(MOCK_AGENTS);
+    setLoading(false);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
     if (!confirm('Remove this agent?')) return;
-    try {
-      await deleteAgent(id);
-      setSelectedAgent(null);
-      loadAgents();
-    } catch (err) {
-      console.error(err);
-    }
+    setAgents((prev) => prev.filter((a) => a.id !== id));
+    setSelectedAgent(null);
   };
 
   const handleAddAgent = async (data: typeof EMPTY_FORM) => {
-    await createAgent({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      specialization: data.specialization,
-      specialties: [data.specialization || 'general'],
-      territories: [],
-      priority: 1,
-    });
+    // await createAgent({ ... });
+    const newId = Date.now();
+    setAgents((prev) => [
+      ...prev,
+      {
+        id: newId,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        specialization: data.specialization,
+        role: data.role,
+        status: 'available' as AgentStatus,
+        specialties: [data.specialization || 'general'],
+        territories: [],
+        priority: 1,
+      },
+    ]);
     setShowAddModal(false);
-    loadAgents();
   };
 
-  // Backend has no status field; all agents are treated as available
   const tabCounts: Record<AgentStatus, number> = {
-    available: agents.length,
-    on_break: 0,
-    offline: 0,
+    available: agents.filter((a) => (a.status ?? 'available') === 'available').length,
+    on_break: agents.filter((a) => a.status === 'on_break').length,
+    offline: agents.filter((a) => a.status === 'offline').length,
   };
 
-  const filteredAgents = statusTab === 'available' ? agents : [];
+  const filteredAgents = agents.filter((a) => (a.status ?? 'available') === statusTab);
   const totalPages = Math.max(1, Math.ceil(filteredAgents.length / PAGE_SIZE));
   const paged = filteredAgents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const availabilityPct =
-    agents.length > 0 ? Math.round((agents.length / agents.length) * 100) : 0;
+    agents.length > 0 ? Math.round((tabCounts.available / agents.length) * 100) : 0;
 
   const kpiCards = [
     {
@@ -589,6 +655,8 @@ export default function Agents() {
                   {paged.map((agent) => {
                     const perf = mockPerf(agent.id);
                     const initials = getInitials(agent.name);
+                    const agentStatus: AgentStatus = agent.status ?? 'available';
+                    const agentRole = agent.role ?? perf.role;
                     return (
                       <tr
                         key={agent.id}
@@ -608,12 +676,12 @@ export default function Agents() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">{perf.role}</td>
+                        <td className="px-6 py-4 text-slate-700">{agentRole}</td>
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[perf.status]}`}
+                            className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[agentStatus]}`}
                           >
-                            {STATUS_LABELS[perf.status]}
+                            {STATUS_LABELS[agentStatus]}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-slate-700">{perf.totalLeads}</td>

@@ -363,16 +363,30 @@
     if (el) el.remove();
   }
 
+  function stripMarkdown(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/gs, '$1')
+      .replace(/\*(.*?)\*/gs, '$1')
+      .replace(/__(.*?)__/gs, '$1')
+      .replace(/_(.*?)_/gs, '$1')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^[-*]\s+/gm, '')
+      .trim();
+  }
+
   function appendBubble(role, text) {
     hideEmptyState();
     const messages = document.getElementById('messages');
 
     const wrap = document.createElement('div');
-    wrap.className = `bubble-wrap ${role}`;
+    wrap.className = 'bubble-wrap ' + role;
 
     const bubble = document.createElement('div');
-    bubble.className = `bubble ${role}`;
-    bubble.textContent = text;
+    bubble.className = 'bubble ' + role;
+
+    // Strip markdown from assistant messages
+    const displayText = role === 'assistant' ? stripMarkdown(text) : text;
+    bubble.textContent = displayText;
 
     const time = document.createElement('div');
     time.className = 'time';

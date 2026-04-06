@@ -370,7 +370,7 @@
     <div class="avatar">W</div>
     <div class="header-info">
       <div class="header-name">Wakeeli AI</div>
-      <div class="header-status" id="status-text">connecting...</div>
+      <div class="header-status" id="status-text">online</div>
     </div>
     <div class="header-actions">
       <span class="mode-badge" id="mode-badge">auto</span>
@@ -389,7 +389,7 @@
   <div class="messages" id="messages">
     <div class="empty-state" id="empty-state">
       <div class="icon">🏠</div>
-      <strong>Starting conversation...</strong>
+      <strong>Send a message to start</strong>
     </div>
   </div>
 
@@ -402,10 +402,9 @@
         rows="1"
         onkeydown="handleKey(event)"
         oninput="autoResize(this)"
-        disabled
       ></textarea>
     </div>
-    <button class="btn-send" id="send-btn" onclick="sendMessage()" disabled>
+    <button class="btn-send" id="send-btn" onclick="sendMessage()">
       <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
     </button>
   </div>
@@ -452,17 +451,6 @@
 
   function setStatus(text) {
     document.getElementById('status-text').textContent = text;
-  }
-
-  function enableInput() {
-    document.getElementById('msg-input').disabled = false;
-    document.getElementById('send-btn').disabled = false;
-    document.getElementById('msg-input').focus();
-  }
-
-  function disableInput() {
-    document.getElementById('msg-input').disabled = true;
-    document.getElementById('send-btn').disabled = true;
   }
 
   function autoResize(el) {
@@ -576,36 +564,24 @@
     return await res.json();
   }
 
-  async function startConversation() {
-    setStatus('connecting...');
-    showTyping();
-
-    try {
-      const data = await callApi('[START]');
-      sessionId = data.session_id;
-      hideTyping();
-      addDateLabel();
-      appendBubble('bot', data.response);
-      setStatus('online');
-      enableInput();
-    } catch (err) {
-      hideTyping();
-      hideEmptyState();
-      appendBubble('bot', 'Unable to connect. Please refresh and try again.');
-      setStatus('connection error');
-    }
-  }
-
   async function sendMessage() {
     if (isLoading) return;
     const input = document.getElementById('msg-input');
     const text = input.value.trim();
     if (!text) return;
 
+    // Add date label on first message
+    const messages = document.getElementById('messages');
+    const hasDateLabel = messages.querySelector('.date-label');
+    if (!hasDateLabel) {
+      hideEmptyState();
+      addDateLabel();
+    }
+
     input.value = '';
     input.style.height = 'auto';
     isLoading = true;
-    disableInput();
+    document.getElementById('send-btn').disabled = true;
 
     appendBubble('user', text);
     showTyping();
@@ -626,7 +602,8 @@
       setStatus('error');
     } finally {
       isLoading = false;
-      enableInput();
+      document.getElementById('send-btn').disabled = false;
+      document.getElementById('msg-input').focus();
     }
   }
 
@@ -637,17 +614,19 @@
   function resetChat() {
     sessionId = null;
     isLoading = false;
-    disableInput();
 
     const messages = document.getElementById('messages');
-    messages.innerHTML = '<div class="empty-state" id="empty-state"><div class="icon">🏠</div><strong>Starting conversation...</strong></div>';
+    messages.innerHTML = '<div class="empty-state" id="empty-state"><div class="icon">🏠</div><strong>Send a message to start</strong></div>';
 
-    startConversation();
+    document.getElementById('send-btn').disabled = false;
+    document.getElementById('msg-input').disabled = false;
+    document.getElementById('msg-input').focus();
+    setStatus('online');
   }
 
   // Init
   initMode();
-  startConversation();
+  document.getElementById('msg-input').focus();
 </script>
 
 </body>

@@ -466,7 +466,7 @@ export default function Conversations() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] min-h-[560px]">
+    <div className="flex flex-col h-[calc(100vh-7.5rem)] md:h-[calc(100vh-7rem)] min-h-[480px]">
       {error && (
         <div className="mb-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm flex-shrink-0">
           {error}
@@ -476,7 +476,7 @@ export default function Conversations() {
       <div className="flex flex-1 min-h-0 rounded-xl border border-slate-200 shadow-sm overflow-hidden">
 
         {/* ===== LEFT: Conversation List ===== */}
-        <div className={`w-[280px] flex-shrink-0 bg-white border-r border-slate-200 flex flex-col ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`flex-shrink-0 bg-white border-r border-slate-200 flex flex-col w-full md:w-[280px] ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
 
           {/* Panel header */}
           <div className="px-4 pt-3.5 pb-2.5 border-b border-slate-100 flex-shrink-0">
@@ -552,7 +552,7 @@ export default function Conversations() {
                     key={c.id}
                     type="button"
                     onClick={() => handleSelectConversation(c)}
-                    className={`w-full flex items-start gap-2.5 px-3.5 py-2.5 border-b border-slate-100 text-left transition-colors relative ${
+                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 border-b border-slate-100 text-left transition-colors relative min-h-[64px] ${
                       isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'
                     }`}
                   >
@@ -604,7 +604,7 @@ export default function Conversations() {
         </div>
 
         {/* ===== MIDDLE: Chat Panel ===== */}
-        <div className={`flex-1 flex flex-col bg-slate-50/60 min-w-0 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`flex-1 flex flex-col bg-slate-50/60 min-w-0 w-full ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
           {!selected ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400">
               <MessageSquare className="w-12 h-12 text-slate-200" />
@@ -702,7 +702,7 @@ export default function Conversations() {
               </div>
 
               {/* Messages area */}
-              <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
+              <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-5 flex flex-col gap-3">
                 {/* Day divider */}
                 <div className="flex items-center gap-3 my-1">
                   <div className="flex-1 h-px bg-slate-200" />
@@ -754,7 +754,7 @@ export default function Conversations() {
               </div>
 
               {/* Input bar */}
-              <div className="bg-white border-t border-slate-200 px-5 py-3 flex-shrink-0">
+              <div className="bg-white border-t border-slate-200 px-3 md:px-5 py-2.5 md:py-3 flex-shrink-0">
                 {isAiActive(detail) && !overrideAI ? (
                   <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5">
                     <Bot className="w-4 h-4 text-brand-500 flex-shrink-0" />

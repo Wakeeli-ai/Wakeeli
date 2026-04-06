@@ -6,9 +6,9 @@ from datetime import datetime
 class ListingBase(BaseModel):
     listing_type: str
     property_type: str
-    property_id: str
+    property_id: Optional[str] = None
     title: str
-    category: str
+    category: Optional[str] = "Residential"
     city: str
     area: Optional[str] = None
     building_name: Optional[str] = None

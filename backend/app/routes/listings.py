@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Optional
+import uuid
 from app.database import get_db
 from app.models import Listing
 from app.schemas import ListingCreate, Listing as ListingSchema
@@ -148,7 +149,10 @@ def match_listings_for_lead(
 
 @router.post("/", response_model=ListingSchema)
 def create_listing(listing: ListingCreate, db: Session = Depends(get_db)):
-    db_listing = Listing(**listing.dict())
+    data = listing.dict()
+    if not data.get('property_id'):
+        data['property_id'] = f"WK-{uuid.uuid4().hex[:8].upper()}"
+    db_listing = Listing(**data)
     db.add(db_listing)
     db.commit()
     db.refresh(db_listing)

@@ -414,7 +414,7 @@ function AddAgentModal({
                 <input
                   required={required}
                   type={type}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
+                  className="w-full px-3 h-11 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
                   placeholder={placeholder}
                   value={form[key as keyof typeof EMPTY_FORM]}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
@@ -424,7 +424,7 @@ function AddAgentModal({
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">Role</label>
               <select
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                className="w-full px-3 h-11 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
               >
@@ -624,7 +624,7 @@ export default function Agents() {
   const showEnd = Math.min(page * PAGE_SIZE, filteredAgents.length);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-24 md:pb-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -633,7 +633,8 @@ export default function Agents() {
             Manage your team, track performance, and optimize lead assignments
           </p>
         </div>
-        <div className="flex gap-2">
+        {/* Add Agent button: visible on desktop in header, hidden on mobile (shown at bottom) */}
+        <div className="hidden md:flex gap-2">
           <button
             onClick={() => setShowAddModal(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm"
@@ -718,26 +719,106 @@ export default function Agents() {
             )}
           </div>
         </div>
+
+        {/* Mobile: filter button only in header */}
+        <div className="flex md:hidden gap-2 w-full">
+          <div className="relative flex-1" ref={filterRef}>
+            <button
+              type="button"
+              onClick={() => setFilterOpen((v) => !v)}
+              className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 border rounded-lg text-sm font-medium transition-colors shadow-sm ${
+                hasActiveFilters
+                  ? 'border-brand-400 bg-brand-50 text-brand-700'
+                  : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
+              }`}
+            >
+              <Filter size={15} />
+              Filter
+              {hasActiveFilters && (
+                <span className="w-4 h-4 bg-brand-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                  {(nameSearch ? 1 : 0) + (roleFilter ? 1 : 0)}
+                </span>
+              )}
+            </button>
+
+            {filterOpen && (
+              <div className="absolute left-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-30 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-900">Filter Agents</span>
+                  {hasActiveFilters && (
+                    <button type="button" onClick={clearFilters} className="text-xs text-brand-600 hover:text-brand-700 font-semibold">
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Search by name</label>
+                  <div className="relative">
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={nameSearch}
+                      onChange={(e) => { setNameSearch(e.target.value); setPage(1); }}
+                      placeholder="e.g. Joelle"
+                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                    {nameSearch && (
+                      <button type="button" onClick={() => setNameSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Role</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['', 'Agent', 'Senior Agent'].map((r) => (
+                      <button
+                        key={r || 'all'}
+                        type="button"
+                        onClick={() => { setRoleFilter(r); setPage(1); }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                          roleFilter === r
+                            ? 'bg-brand-600 text-white border-brand-600'
+                            : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {r || 'All Roles'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen(false)}
+                  className="w-full py-2 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {kpiCards.map((card) => {
           const Icon = card.icon;
           return (
             <div
               key={card.label}
-              className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm border-l-4"
+              className="bg-white rounded-xl border border-slate-200 p-3 md:p-4 shadow-sm border-l-4"
               style={{ borderLeftColor: card.borderColor }}
             >
               <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{card.label}</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-1">{card.value}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] md:text-xs font-semibold text-slate-500 uppercase tracking-wide truncate">{card.label}</p>
+                  <p className="text-2xl font-extrabold text-slate-900 mt-1">{card.value}</p>
                   <p className="text-xs text-slate-400 mt-1">{card.sub}</p>
                 </div>
-                <div className="rounded-lg p-2" style={{ background: card.iconBg }}>
-                  <Icon size={18} style={{ color: card.iconColor }} />
+                <div className="rounded-lg p-1.5 md:p-2 flex-shrink-0 ml-2" style={{ background: card.iconBg }}>
+                  <Icon size={16} style={{ color: card.iconColor }} />
                 </div>
               </div>
             </div>
@@ -746,7 +827,7 @@ export default function Agents() {
       </div>
 
       {/* Status Tabs */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex overflow-x-auto gap-2 pb-1 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
         {(['available', 'on_break', 'offline'] as AgentStatus[]).map((tab) => {
           const cfg = STATUS_CONFIG[tab];
           const isActive = statusTab === tab;
@@ -754,7 +835,7 @@ export default function Agents() {
             <button
               key={tab}
               onClick={() => { setStatusTab(tab); setPage(1); }}
-              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all border shadow-sm"
+              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all border shadow-sm whitespace-nowrap flex-shrink-0 min-h-[44px]"
               style={isActive
                 ? { background: cfg.bg, color: cfg.text, borderColor: cfg.dot }
                 : { background: '#fff', color: '#475569', borderColor: '#e2e8f0' }
@@ -776,7 +857,7 @@ export default function Agents() {
         })}
       </div>
 
-      {/* Table */}
+      {/* Agent list / table container */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -788,67 +869,72 @@ export default function Agents() {
           </div>
         ) : (
           <>
-            {/* Mobile cards */}
-            <div className="sm:hidden divide-y divide-slate-100">
+            {/* Mobile compact list */}
+            <div className="md:hidden">
               {paged.map((agent) => {
-                const perf = mockPerf(agent.id);
                 const agentStatus: AgentStatus = agent.status ?? 'available';
                 const cfg = STATUS_CONFIG[agentStatus];
                 const ac = getAvatarColor(agent.id);
+                const perf = mockPerf(agent.id);
                 return (
                   <div
                     key={agent.id}
-                    className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-100 min-h-[64px] cursor-pointer active:bg-slate-50 transition-colors"
                     onClick={() => setSelectedAgent(agent)}
                   >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                        style={{ background: ac.bg, color: ac.text }}
-                      >
-                        {getInitials(agent.name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold text-slate-900 truncate">{agent.name}</p>
-                          <span
-                            className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold"
-                            style={{ background: cfg.bg, color: cfg.text }}
-                          >
-                            {cfg.label}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-0.5">{agent.role} · {agent.email || 'No email'}</p>
-                      </div>
+                    {/* Avatar */}
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                      style={{ background: ac.bg, color: ac.text }}
+                    >
+                      {getInitials(agent.name)}
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                        <p className="font-bold text-slate-900 text-sm">{perf.totalLeads}</p>
-                        <p className="text-slate-400 mt-0.5">Leads</p>
-                      </div>
-                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                        <p className="font-bold text-slate-900 text-sm">{perf.conversionRate}%</p>
-                        <p className="text-slate-400 mt-0.5">Conv.</p>
-                      </div>
-                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                        <p className="font-bold text-slate-900 text-sm">{perf.avgResponse}</p>
-                        <p className="text-slate-400 mt-0.5">Resp.</p>
-                      </div>
+
+                    {/* Center: name + role */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-slate-900 truncate">{agent.name}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">
+                        {agent.role ?? 'Agent'}{agent.specialization ? ` · ${agent.specialization}` : ''}
+                      </p>
+                    </div>
+
+                    {/* Right: status dot + active leads */}
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span
+                        className="inline-block w-2.5 h-2.5 rounded-full"
+                        style={{ background: cfg.dot }}
+                        title={cfg.label}
+                      />
+                      <span className="text-xs text-slate-400 font-medium">{perf.activeLeads} leads</span>
                     </div>
                   </div>
                 );
               })}
+
+              {/* Mobile pagination */}
               <div className="px-4 py-3 flex items-center justify-between text-sm text-slate-500 border-t border-slate-100">
-                <span className="text-xs">Showing {showStart} to {showEnd} of {filteredAgents.length}</span>
+                <span className="text-xs">Showing {showStart}–{showEnd} of {filteredAgents.length}</span>
                 <div className="flex gap-1">
-                  <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[36px] min-w-[36px] flex items-center justify-center"><ChevronLeft size={14} /></button>
-                  <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[36px] min-w-[36px] flex items-center justify-center"><ChevronRight size={14} /></button>
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Desktop table */}
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="bg-[#f8fafc] border-b border-slate-200">
@@ -933,7 +1019,7 @@ export default function Agents() {
             </div>
 
             {/* Desktop pagination */}
-            <div className="hidden sm:flex px-5 py-3.5 border-t border-slate-100 items-center justify-between text-sm text-slate-500 bg-[#f8fafc]/50">
+            <div className="hidden md:flex px-5 py-3.5 border-t border-slate-100 items-center justify-between text-sm text-slate-500 bg-[#f8fafc]/50">
               <span className="text-xs text-slate-500">
                 Showing {showStart} to {showEnd} of {filteredAgents.length} agents
               </span>
@@ -969,6 +1055,17 @@ export default function Agents() {
             </div>
           </>
         )}
+      </div>
+
+      {/* Mobile: full-width Add Agent button fixed at bottom */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 z-20">
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="w-full flex items-center justify-center gap-2 h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
+        >
+          <UserPlus size={16} />
+          Add Agent
+        </button>
       </div>
 
       {selectedAgent && (

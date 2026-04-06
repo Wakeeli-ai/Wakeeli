@@ -8,9 +8,12 @@ export const api = axios.create({
 });
 
 // Decode JWT and check if expired (client-side, no library needed)
+// JWT uses base64url encoding; convert to standard base64 before calling atob()
 export function isTokenExpired(token: string): boolean {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
     if (!payload.exp) return false;
     return Date.now() >= payload.exp * 1000;
   } catch {
@@ -20,6 +23,9 @@ export function isTokenExpired(token: string): boolean {
 
 // Add Authorization header and pre-flight expiry check on every request
 api.interceptors.request.use((config) => {
+  // Never block or modify the login endpoint - it handles its own auth
+  if (config.url === '/auth/login') return config;
+
   const token = localStorage.getItem('token');
   if (token) {
     // Reject the request immediately if the token is already expired
@@ -47,7 +53,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    if (status === 401) {
+    // A 401 on the login endpoint means wrong credentials, not an expired session
+    const isLoginEndpoint = error.config?.url === '/auth/login';
+    if (status === 401 && !isLoginEndpoint) {
       toast.info('Session expired. Please log in again.');
       localStorage.removeItem('token');
       localStorage.removeItem('wakeeli_authenticated');

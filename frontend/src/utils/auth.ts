@@ -12,7 +12,10 @@ export function getTokenExpiry(): number {
   if (!token) return 0;
 
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    // JWT uses base64url; convert to standard base64 before atob()
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
     if (typeof payload.exp !== 'number') return 0;
     const ms = payload.exp * 1000 - Date.now();
     return ms > 0 ? ms : 0;

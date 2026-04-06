@@ -569,7 +569,20 @@ export default function Agents() {
     offline: agents.filter((a) => a.status === 'offline').length,
   };
 
-  const filteredAgents = agents.filter((a) => (a.status ?? 'available') === statusTab);
+  const filteredAgents = agents.filter((a) => {
+    if ((a.status ?? 'available') !== statusTab) return false;
+    if (nameSearch && !a.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
+    if (roleFilter && (a.role ?? '') !== roleFilter) return false;
+    return true;
+  });
+
+  const hasActiveFilters = nameSearch !== '' || roleFilter !== '';
+
+  const clearFilters = () => {
+    setNameSearch('');
+    setRoleFilter('');
+  };
+
   const totalPages = Math.max(1, Math.ceil(filteredAgents.length / PAGE_SIZE));
   const paged = filteredAgents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -634,10 +647,95 @@ export default function Agents() {
             <UserPlus size={16} />
             Add Agent
           </button>
-          <button className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
-            <Filter size={16} />
-            Filter
-          </button>
+          <div className="relative" ref={filterRef}>
+            <button
+              type="button"
+              onClick={() => setFilterOpen((v) => !v)}
+              className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                hasActiveFilters
+                  ? 'border-brand-400 bg-brand-50 text-brand-700'
+                  : 'border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+              }`}
+            >
+              <Filter size={16} />
+              Filter
+              {hasActiveFilters && (
+                <span className="w-4 h-4 bg-brand-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                  {(nameSearch ? 1 : 0) + (roleFilter ? 1 : 0)}
+                </span>
+              )}
+            </button>
+
+            {filterOpen && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-30 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-900">Filter Agents</span>
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="text-xs text-brand-600 hover:text-brand-700 font-medium"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Search by name
+                  </label>
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={nameSearch}
+                      onChange={(e) => { setNameSearch(e.target.value); setPage(1); }}
+                      placeholder="e.g. Joelle"
+                      className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                    {nameSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setNameSearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Role</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['', 'Agent', 'Senior Agent'].map((r) => (
+                      <button
+                        key={r || 'all'}
+                        type="button"
+                        onClick={() => { setRoleFilter(r); setPage(1); }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                          roleFilter === r
+                            ? 'bg-brand-600 text-white border-brand-600'
+                            : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {r || 'All Roles'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen(false)}
+                  className="w-full py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -695,7 +793,62 @@ export default function Agents() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile card view */}
+            <div className="sm:hidden divide-y divide-slate-100">
+              {paged.map((agent) => {
+                const perf = mockPerf(agent.id);
+                const agentInitials = getInitials(agent.name);
+                const agentStatus: AgentStatus = agent.status ?? 'available';
+                const agentRole = agent.role ?? perf.role;
+                return (
+                  <div
+                    key={agent.id}
+                    className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
+                    onClick={() => setSelectedAgent(agent)}
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        {agentInitials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium text-slate-900 truncate">{agent.name}</p>
+                          <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded font-medium ${STATUS_COLORS[agentStatus]}`}>
+                            {STATUS_LABELS[agentStatus]}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">{agentRole} · {agent.email || 'No email'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                        <p className="font-bold text-slate-900 text-base">{perf.totalLeads}</p>
+                        <p className="text-slate-400">Leads</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                        <p className="font-bold text-slate-900 text-base">{perf.conversionRate}%</p>
+                        <p className="text-slate-400">Conversion</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                        <p className="font-bold text-slate-900 text-base">{perf.avgResponse}</p>
+                        <p className="text-slate-400">Avg Response</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Mobile pagination */}
+              <div className="px-4 py-3 flex items-center justify-between text-sm text-slate-500 border-t border-slate-100">
+                <span>Showing {showStart} to {showEnd} of {filteredAgents.length}</span>
+                <div className="flex gap-1">
+                  <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft size={14} /></button>
+                  <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronRight size={14} /></button>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -752,8 +905,8 @@ export default function Agents() {
               </table>
             </div>
 
-            {/* Pagination */}
-            <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+            {/* Desktop Pagination */}
+            <div className="hidden sm:flex px-6 py-3 border-t border-slate-100 items-center justify-between text-sm text-slate-500">
               <span>
                 Showing {showStart} to {showEnd} of {filteredAgents.length} agents
               </span>

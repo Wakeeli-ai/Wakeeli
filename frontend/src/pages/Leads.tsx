@@ -301,6 +301,31 @@ export default function Leads() {
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 
+  const handleExport = (filteredLeads: Lead[]) => {
+    const headers = ['Name', 'Phone', 'Source', 'Type', 'Status', 'Agent', 'Budget', 'Last Activity'];
+    const rows = filteredLeads.map((l) => [
+      l.name,
+      l.phone,
+      l.source,
+      l.type,
+      STATUS_LABEL[l.status] || l.status,
+      l.agent || 'AI Routing',
+      l.budget,
+      l.lastActivity,
+    ]);
+    const csv = [headers, ...rows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wakeeli-leads-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredLeads.length} leads to CSV`);
+  };
+
   useEffect(() => {
     getConversations()
       .then((res) => {
@@ -361,6 +386,7 @@ export default function Leads() {
         <div className="flex gap-2">
           <button
             type="button"
+            onClick={() => handleExport(filtered)}
             className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50"
           >
             <Download size={16} />
@@ -438,7 +464,57 @@ export default function Leads() {
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+
+        {/* Mobile card view */}
+        <div className="sm:hidden divide-y divide-slate-100">
+          {paginated.length === 0 ? (
+            <p className="px-5 py-10 text-center text-slate-400 text-sm">No leads found.</p>
+          ) : (
+            paginated.map((lead) => {
+              const avatarInitials = lead.name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
+              const statusLabel = STATUS_LABEL[lead.status] || lead.status;
+              return (
+                <div
+                  key={lead.id}
+                  className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
+                  onClick={() => setSelectedLeadId(lead.id)}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                      {avatarInitials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-slate-900 truncate">{lead.name}</p>
+                        <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[lead.status] || 'bg-slate-100 text-slate-600'}`}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">{lead.budget} · {lead.phone}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SOURCE_BADGE[lead.source]}`}>{lead.source}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${TYPE_BADGE[lead.type] || 'bg-slate-100 text-slate-600'}`}>{lead.type}</span>
+                    {lead.agent && <span className="text-xs text-slate-500">{lead.agent}</span>}
+                    <span className="text-xs text-slate-400 ml-auto">{lead.lastActivity}</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          {/* Mobile pagination */}
+          <div className="px-4 py-3 flex items-center justify-between text-sm text-slate-500 border-t border-slate-100">
+            <span>{filtered.length === 0 ? 'No leads' : `${pageStart + 1}${pageEnd > pageStart + 1 ? `-${pageEnd}` : ''} of ${filtered.length}`}</span>
+            <div className="flex gap-2">
+              <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white hover:bg-slate-50 disabled:opacity-40 min-h-[44px]">Prev</button>
+              <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white hover:bg-slate-50 disabled:opacity-40 min-h-[44px]">Next</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop table view */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 font-medium uppercase tracking-wide">
@@ -561,8 +637,8 @@ export default function Leads() {
           </table>
         </div>
 
-        {/* Pagination footer */}
-        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+        {/* Desktop pagination footer */}
+        <div className="hidden sm:flex px-6 py-4 border-t border-slate-100 items-center justify-between text-sm text-slate-500">
           <span>
             {filtered.length === 0
               ? 'No leads'

@@ -286,6 +286,8 @@ export default function Conversations() {
   const [assigningAgent, setAssigningAgent] = useState(false);
   const [endingChat, setEndingChat] = useState(false);
   const [listFilter, setListFilter] = useState<'All' | 'AI Active' | 'Agent' | 'Waiting'>('All');
+  const [showDetails, setShowDetails] = useState(false);
+  const [messageInput, setMessageInput] = useState('');
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -576,10 +578,15 @@ export default function Conversations() {
 
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                      onClick={() => setShowDetails((v) => !v)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                        showDetails
+                          ? 'bg-brand-100 text-brand-700'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
                     >
                       <Info className="w-3.5 h-3.5" />
-                      View Details
+                      {showDetails ? 'Hide Details' : 'View Details'}
                     </button>
 
                     <button
@@ -650,19 +657,39 @@ export default function Conversations() {
                     <span className="text-sm text-slate-500">AI is handling this conversation</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!messageInput.trim()) return;
+                      const newMsg: Message = {
+                        id: Date.now(),
+                        role: 'assistant',
+                        content: messageInput.trim(),
+                        timestamp: new Date().toISOString(),
+                      };
+                      setDetail((prev) =>
+                        prev ? { ...prev, messages: [...(prev.messages ?? []), newMsg] } : prev,
+                      );
+                      setMessageInput('');
+                      toast.success('Message sent.');
+                    }}
+                    className="flex items-center gap-2"
+                  >
                     <input
                       type="text"
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
                       placeholder="Type a message..."
                       className="flex-1 px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
                     />
                     <button
-                      type="button"
-                      className="px-4 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 transition-colors"
+                      type="submit"
+                      disabled={!messageInput.trim()}
+                      className="px-4 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Send
                     </button>
-                  </div>
+                  </form>
                 )}
               </div>
             </>
@@ -672,6 +699,91 @@ export default function Conversations() {
             </div>
           )}
         </div>
+
+        {/* DETAILS PANEL */}
+        {showDetails && detail && (
+          <div className="w-72 flex-shrink-0 border-l border-slate-200 flex flex-col bg-white overflow-y-auto">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+              <span className="font-semibold text-slate-900 text-sm">Lead Details</span>
+              <button
+                type="button"
+                onClick={() => setShowDetails(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-4 space-y-5">
+              {/* Contact */}
+              <section>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Contact</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${avatarColor(detail.id)}`}>
+                      {detail.user_name ? initials(detail.user_name) : detail.user_phone.slice(-2)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">{detail.user_name ?? 'Unknown'}</p>
+                      <p className="text-xs text-slate-500">{detail.user_phone}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Status */}
+              <section>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Status</p>
+                <span className={`inline-flex text-xs px-2.5 py-1 rounded-full font-medium ${getBadge(detail.status).cls}`}>
+                  {getBadge(detail.status).label}
+                </span>
+              </section>
+
+              {/* Agent */}
+              <section>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assigned Agent</p>
+                <p className="text-sm text-slate-700">
+                  {detail.agent?.name ?? <span className="text-slate-400 italic">AI Handling</span>}
+                </p>
+              </section>
+
+              {/* Requirements */}
+              {detail.user_requirements && Object.keys(detail.user_requirements).length > 0 && (
+                <section>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Requirements</p>
+                  <div className="space-y-1.5">
+                    {Object.entries(detail.user_requirements).map(([k, v]) => (
+                      <div key={k} className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500 capitalize">{k.replace(/_/g, ' ')}</span>
+                        <span className="font-medium text-slate-800 capitalize">{String(v)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Timeline */}
+              <section>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Timeline</p>
+                <div className="space-y-1.5 text-xs text-slate-600">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Created</span>
+                    <span>{new Date(detail.created_at).toLocaleDateString()}</span>
+                  </div>
+                  {detail.updated_at && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Last activity</span>
+                      <span>{new Date(detail.updated_at).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Messages</span>
+                    <span className="font-medium">{detail.messages?.length ?? 0}</span>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

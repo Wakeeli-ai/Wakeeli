@@ -139,6 +139,15 @@ export default function Settings() {
     tourReminders: true,
     weeklyReports: false,
   });
+  const [companyForm, setCompanyForm] = useState({
+    companyName: 'Wakeeli Demo Agency',
+    email: 'contact@wakeeli.app',
+    phone: '+961 1 234 567',
+    address: 'Achrafieh, Beirut, Lebanon',
+    website: 'wakeeli.app',
+  });
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [addUserForm, setAddUserForm] = useState({ name: '', email: '', role: 'Agent' });
 
   function togglePermission(userId: string, perm: Permission) {
     setUsers((prev) =>
@@ -148,6 +157,55 @@ export default function Settings() {
           : u,
       ),
     );
+  }
+
+  function handleSaveCompany(e: React.FormEvent) {
+    e.preventDefault();
+    toast.success('Company profile saved.');
+  }
+
+  function handleAddIntegration() {
+    toast.success('Integration settings opened. (Coming soon)');
+  }
+
+  function handleAddUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (!addUserForm.name || !addUserForm.email) {
+      toast.error('Name and email are required.');
+      return;
+    }
+    const initials = addUserForm.name
+      .split(' ')
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
+    const colors = ['bg-brand-100 text-brand-700', 'bg-emerald-100 text-emerald-700', 'bg-purple-100 text-purple-700'];
+    setUsers((prev) => [
+      ...prev,
+      {
+        id: String(Date.now()),
+        name: addUserForm.name,
+        email: addUserForm.email,
+        role: addUserForm.role,
+        initials,
+        avatarColor: colors[prev.length % colors.length],
+        permissions: {
+          fullAccess: false,
+          billing: false,
+          userManagement: false,
+          leads: true,
+          listings: false,
+          tours: true,
+          conversations: true,
+          analytics: false,
+          settings: false,
+        },
+      },
+    ]);
+    toast.success(`${addUserForm.name} added.`);
+    setAddUserForm({ name: '', email: '', role: 'Agent' });
+    setShowAddUserModal(false);
   }
 
   return (
@@ -234,37 +292,46 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-slate-900">Company Profile</h2>
-            <button
-              type="button"
-              onClick={() => toast.success('Settings saved.')}
-              className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700"
-            >
-              Save Changes
-            </button>
-          </div>
-          <div className="space-y-4">
-            {['Company Name', 'Email Address', 'Phone Number', 'Address', 'Website'].map(
-              (label) => (
-                <div key={label}>
+          <form onSubmit={handleSaveCompany}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-slate-900">Company Profile</h2>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+            <div className="space-y-4">
+              {(
+                [
+                  { key: 'companyName', label: 'Company Name' },
+                  { key: 'email', label: 'Email Address' },
+                  { key: 'phone', label: 'Phone Number' },
+                  { key: 'address', label: 'Address' },
+                  { key: 'website', label: 'Website' },
+                ] as { key: keyof typeof companyForm; label: string }[]
+              ).map(({ key, label }) => (
+                <div key={key}>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
                   <input
                     type="text"
+                    value={companyForm[key]}
+                    onChange={(e) => setCompanyForm({ ...companyForm, [key]: e.target.value })}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                    placeholder={label}
                   />
                 </div>
-              ),
-            )}
-          </div>
+              ))}
+            </div>
+          </form>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-900">Integrations</h2>
             <button
               type="button"
-              className="px-4 py-2 border border-brand-600 text-brand-600 rounded-lg text-sm font-medium hover:bg-brand-50"
+              onClick={handleAddIntegration}
+              className="px-4 py-2 border border-brand-600 text-brand-600 rounded-lg text-sm font-medium hover:bg-brand-50 transition-colors"
             >
               Add Integration
             </button>
@@ -319,7 +386,8 @@ export default function Settings() {
           </div>
           <button
             type="button"
-            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700"
+            onClick={() => setShowAddUserModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
           >
             <UserPlus size={15} />
             Add User
@@ -421,6 +489,78 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowAddUserModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <h3 className="text-base font-semibold text-slate-900">Add User</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <User size={18} />
+                </button>
+              </div>
+              <form onSubmit={handleAddUser} className="px-6 py-5 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
+                  <input
+                    required
+                    value={addUserForm.name}
+                    onChange={(e) => setAddUserForm({ ...addUserForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    placeholder="e.g. Sarah Mitchell"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                  <input
+                    required
+                    type="email"
+                    value={addUserForm.email}
+                    onChange={(e) => setAddUserForm({ ...addUserForm, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    placeholder="email@wakeeli.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                  <select
+                    value={addUserForm.role}
+                    onChange={(e) => setAddUserForm({ ...addUserForm, role: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  >
+                    <option>Agent</option>
+                    <option>Senior Agent</option>
+                    <option>Admin</option>
+                    <option>Viewer</option>
+                  </select>
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddUserModal(false)}
+                    className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Add User
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

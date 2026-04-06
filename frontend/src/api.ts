@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from './utils/toast';
 
 export const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
@@ -6,19 +7,65 @@ export const api = axios.create({
   baseURL: API_URL,
 });
 
-// Add token to requests if available
+// Decode JWT and check if expired (client-side, no library needed)
+export function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (!payload.exp) return false;
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
+// Add Authorization header and pre-flight expiry check on every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
+    // Reject the request immediately if the token is already expired
+    // rather than sending a doomed request to the server.
+    if (isTokenExpired(token)) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('wakeeli_authenticated');
+      localStorage.removeItem('wakeeli_remember');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login?expired=1';
+      }
+      // Abort the request
+      const controller = new AbortController();
+      controller.abort();
+      config.signal = controller.signal;
+      return config;
+    }
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Handle errors (avoid redirect since auth is disabled)
+// Auto-logout on 401 and global network error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error)
+  (error) => {
+    const status = error.response?.status;
+    if (status === 401) {
+      toast.info('Session expired. Please log in again.');
+      localStorage.removeItem('token');
+      localStorage.removeItem('wakeeli_authenticated');
+      localStorage.removeItem('wakeeli_remember');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        setTimeout(() => { window.location.href = '/login?expired=1'; }, 1200);
+      }
+    } else if (status === 403) {
+      toast.error('Access denied. You do not have permission for this action.');
+    } else if (status === 404) {
+      toast.error('Resource not found.');
+    } else if (status && status >= 500) {
+      toast.error('Server error. Please try again later.');
+    } else if (!error.response) {
+      toast.error('Network error. Check your connection.');
+    }
+    return Promise.reject(error);
+  }
 );
 
 export const getListings = () => api.get('/listings/');
@@ -163,3 +210,6 @@ export interface AnalyticsCostsResponse {
 
 export const getAnalyticsCosts = (days?: number) =>
   api.get<AnalyticsCostsResponse>('/analytics/costs', { params: { days } });
+
+// Tours (no backend route yet, will 404 gracefully and fall back to mock data)
+export const getTours = () => api.get('/tours/');

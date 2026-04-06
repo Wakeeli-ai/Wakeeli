@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { RoleProvider, useRole } from './context/RoleContext';
+import { toast } from './utils/toast';
 import AppLayout from './layouts/AppLayout';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
@@ -44,6 +47,20 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/** Fires a sonner toast when a session expires mid-use (timer or 401 detected in-app). */
+function SessionExpiredHandler() {
+  const { sessionExpired, clearSessionExpired } = useRole();
+
+  useEffect(() => {
+    if (sessionExpired) {
+      toast.info('Session expired. Please log in again.');
+      clearSessionExpired();
+    }
+  }, [sessionExpired, clearSessionExpired]);
+
+  return null;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -75,7 +92,25 @@ export default function App() {
   return (
     <Router>
       <RoleProvider>
+        <SessionExpiredHandler />
         <AppRoutes />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: '#1a2744',
+              color: '#ffffff',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '10px',
+              fontSize: '14px',
+            },
+            classNames: {
+              error: 'toast-error',
+              success: 'toast-success',
+              info: 'toast-info',
+            },
+          }}
+        />
       </RoleProvider>
     </Router>
   );

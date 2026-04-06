@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login } from '../api';
 import { useRole, AuthUser } from '../context/RoleContext';
+import { toast } from '../utils/toast';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useRole();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(
+    searchParams.get('expired') === '1' ? 'Session expired. Please log in again.' : ''
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +44,13 @@ export default function LoginPage() {
         label: user.role === 'admin' ? 'Admin' : 'Agent',
       };
       setUser(authUser);
-
+      toast.success('Signed in successfully.');
       navigate('/', { replace: true });
     } catch (err: any) {
       const message =
         err.response?.data?.detail || 'Sign in failed. Please check your credentials.';
       setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

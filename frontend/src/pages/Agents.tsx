@@ -4,7 +4,8 @@ import {
   X, Mail, Phone, Briefcase, ChevronLeft, ChevronRight,
   Loader2,
 } from 'lucide-react';
-// import { getAgents, createAgent, deleteAgent } from '../api';
+import { getAgents, createAgent, deleteAgent } from '../api';
+import { toast } from '../utils/toast';
 
 // ---- Types ----
 
@@ -473,36 +474,78 @@ export default function Agents() {
 
   const loadAgents = () => {
     setLoading(true);
-    // const res = await getAgents();
-    // setAgents(Array.isArray(res.data) ? res.data : []);
-    setAgents(MOCK_AGENTS);
-    setLoading(false);
+    getAgents()
+      .then((res) => {
+        const data: any[] = Array.isArray(res.data) ? res.data : [];
+        if (data.length > 0) {
+          const mapped: Agent[] = data.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            email: a.email || undefined,
+            phone: a.phone || undefined,
+            specialization: a.specialties?.[0] || undefined,
+            specialties: a.specialties || [],
+            territories: a.territories || [],
+            priority: a.priority ?? 1,
+            status: a.is_active ? 'available' : 'offline',
+            role: 'Agent',
+          }));
+          setAgents(mapped);
+        } else {
+          setAgents(MOCK_AGENTS);
+        }
+      })
+      .catch(() => {
+        console.warn('[Agents] Failed to load from API, using mock data');
+        setAgents(MOCK_AGENTS);
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleDelete = (id: number) => {
     if (!confirm('Remove this agent?')) return;
+    // Optimistically remove from UI
     setAgents((prev) => prev.filter((a) => a.id !== id));
     setSelectedAgent(null);
+    deleteAgent(id)
+      .then(() => toast.success('Agent removed.'))
+      .catch(() => {
+        toast.error('Failed to remove agent. Reloading.');
+        loadAgents();
+      });
   };
 
   const handleAddAgent = async (data: typeof EMPTY_FORM) => {
-    // await createAgent({ ... });
-    const newId = Date.now();
-    setAgents((prev) => [
-      ...prev,
-      {
-        id: newId,
+    try {
+      const res = await createAgent({
         name: data.name,
-        email: data.email,
-        phone: data.phone,
-        specialization: data.specialization,
-        role: data.role,
-        status: 'available' as AgentStatus,
-        specialties: [data.specialization || 'general'],
+        email: data.email || null,
+        phone: data.phone || '',
+        specialties: data.specialization ? [data.specialization] : [],
         territories: [],
         priority: 1,
-      },
-    ]);
+        is_active: true,
+      });
+      const a = res.data;
+      setAgents((prev) => [
+        ...prev,
+        {
+          id: a.id,
+          name: a.name,
+          email: a.email || undefined,
+          phone: a.phone || undefined,
+          specialization: a.specialties?.[0] || data.specialization || undefined,
+          specialties: a.specialties || [],
+          territories: a.territories || [],
+          priority: a.priority ?? 1,
+          status: 'available' as AgentStatus,
+          role: data.role,
+        },
+      ]);
+      toast.success('Agent added.');
+    } catch {
+      toast.error('Failed to add agent.');
+    }
     setShowAddModal(false);
   };
 

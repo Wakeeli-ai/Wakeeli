@@ -335,6 +335,8 @@ export default function Leads() {
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [localSearch, setLocalSearch] = useState('');
+  // Mobile status tab filter
+  const [mobileStatusTab, setMobileStatusTab] = useState<string>('All');
 
   const handleExport = (filteredLeads: Lead[]) => {
     const headers = ['Name', 'Phone', 'Source', 'Type', 'Status', 'Agent', 'Budget', 'Last Activity', 'Score'];
@@ -381,6 +383,15 @@ export default function Leads() {
 
   const effectiveSearch = searchQuery || localSearch;
 
+  const MOBILE_STATUS_TABS = ['All', 'New', 'Qualifying', 'Qualified', 'Tour Booked', 'Handed Off'] as const;
+  const MOBILE_STATUS_MAP: Record<string, string> = {
+    'New': 'new',
+    'Qualifying': 'qualifying',
+    'Qualified': 'qualified',
+    'Tour Booked': 'tour_booked',
+    'Handed Off': 'handed_to_agent',
+  };
+
   const filtered = leads.filter((lead) => {
     if (
       effectiveSearch &&
@@ -395,6 +406,10 @@ export default function Leads() {
     return true;
   });
 
+  const mobileFiltered = mobileStatusTab === 'All'
+    ? filtered
+    : filtered.filter((l) => l.status === MOBILE_STATUS_MAP[mobileStatusTab]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * PAGE_SIZE;
@@ -404,9 +419,29 @@ export default function Leads() {
   const hasFilters = filters.source !== '' || filters.type !== '' || filters.status !== '' || filters.agent !== '';
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+      {/* Mobile filter tabs */}
+      <div className="sm:hidden overflow-x-auto px-4 pt-2">
+        <div className="flex gap-1 pb-2 w-max border-b border-slate-100">
+          {MOBILE_STATUS_TABS.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setMobileStatusTab(tab)}
+              className={`px-3 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition-all min-h-[36px] ${
+                mobileStatusTab === tab
+                  ? 'bg-brand-600 text-white'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 sm:px-0">
         <div>
           <h1 className="text-xl font-bold text-slate-900">{title}</h1>
           <p className="text-slate-500 mt-0.5 text-sm">
@@ -428,7 +463,7 @@ export default function Leads() {
           <button
             type="button"
             onClick={() => handleExport(filtered)}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-sm min-h-[44px]"
           >
             <Download size={15} />
             Export CSV
@@ -436,8 +471,8 @@ export default function Leads() {
         </div>
       </div>
 
-      {/* Filter and search bar */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
+      {/* Filter and search bar - desktop only */}
+      <div className="hidden sm:flex bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 flex-wrap items-center gap-3">
         {/* Local search */}
         <div className="relative flex-shrink-0 w-56">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -516,47 +551,41 @@ export default function Leads() {
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
 
-        {/* Mobile card view */}
+        {/* Mobile compact list */}
         <div className="sm:hidden divide-y divide-slate-100">
-          {paginated.length === 0 ? (
+          {mobileFiltered.length === 0 ? (
             <p className="px-5 py-10 text-center text-slate-400 text-sm">No leads found.</p>
           ) : (
-            paginated.map((lead) => {
+            mobileFiltered.map((lead) => {
               const avatarInitials = lead.name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
               const src = SOURCE_STYLES[lead.source] || { bg: '#f1f5f9', text: '#64748b', dot: '#94a3b8' };
               return (
                 <div
                   key={lead.id}
-                  className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 bg-white min-h-[64px] cursor-pointer active:bg-slate-50 transition-colors"
                   onClick={() => setSelectedLeadId(lead.id)}
                 >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                      {avatarInitials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-semibold text-slate-900 truncate">{lead.name}</p>
-                        <StatusBadge status={lead.status} />
-                      </div>
-                      <p className="text-xs text-slate-400 mt-0.5">{lead.budget} · {lead.phone}</p>
+                  {/* Avatar */}
+                  <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    {avatarInitials}
+                  </div>
+                  {/* Center info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-slate-900 truncate">{lead.name}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <StatusBadge status={lead.status} />
+                      <span className="text-xs text-slate-500">{lead.budget}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  {/* Right: source + time */}
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span
-                      className="text-xs px-2 py-0.5 rounded-full font-medium"
+                      className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                       style={{ background: src.bg, color: src.text }}
                     >
                       {lead.source}
                     </span>
-                    <span
-                      className="text-xs px-2 py-0.5 rounded-full font-medium capitalize"
-                      style={TYPE_STYLES[lead.type]}
-                    >
-                      {lead.type}
-                    </span>
-                    {lead.agent && <span className="text-xs text-slate-500">{lead.agent}</span>}
-                    <span className="text-xs text-slate-400 ml-auto">{lead.lastActivity}</span>
+                    <span className="text-[10px] text-slate-400">{lead.lastActivity}</span>
                   </div>
                 </div>
               );
@@ -564,7 +593,7 @@ export default function Leads() {
           )}
           {/* Mobile pagination */}
           <div className="px-4 py-3 flex items-center justify-between text-sm text-slate-500 border-t border-slate-100">
-            <span className="text-xs">{filtered.length === 0 ? 'No leads' : `${pageStart + 1}${pageEnd > pageStart + 1 ? `-${pageEnd}` : ''} of ${filtered.length}`}</span>
+            <span className="text-xs">{mobileFiltered.length === 0 ? 'No leads' : `${mobileFiltered.length} leads`}</span>
             <div className="flex gap-2">
               <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white hover:bg-slate-50 disabled:opacity-40 min-h-[36px]">Prev</button>
               <button type="button" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white hover:bg-slate-50 disabled:opacity-40 min-h-[36px]">Next</button>

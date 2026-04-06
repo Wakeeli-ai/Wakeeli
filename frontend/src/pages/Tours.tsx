@@ -388,10 +388,12 @@ export default function Tours() {
     'No-show': tours.filter((t) => t.status === 'No-show').length,
   };
 
+  const todayTours = tours.filter((t) => t.date.includes('Apr 6'));
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 sm:px-0">
         <div>
           <h1 className="text-xl font-bold text-slate-900">{title}</h1>
           <p className="text-slate-500 mt-0.5 text-sm">Schedule and manage property visits with leads</p>
@@ -399,15 +401,45 @@ export default function Tours() {
         <button
           type="button"
           onClick={() => setShowScheduleModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm min-h-[44px]"
         >
           <Plus size={16} />
           Schedule Tour
         </button>
       </div>
 
+      {/* Mobile: Today's Tours strip */}
+      {todayTours.length > 0 && (
+        <div className="md:hidden px-4">
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Today</p>
+          <div className="flex flex-col gap-2">
+            {todayTours.map((tour) => {
+              const cfg = STATUS_CONFIG[tour.status] || STATUS_CONFIG.Scheduled;
+              return (
+                <div
+                  key={tour.id}
+                  className="flex items-center gap-3 p-3 rounded-xl border"
+                  style={{ background: cfg.bg, borderColor: cfg.borderColor }}
+                >
+                  <div
+                    className="flex-shrink-0 px-2 py-1 rounded-lg text-[11px] font-bold"
+                    style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.borderColor}` }}
+                  >
+                    {tour.time}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 truncate">{tour.property}</p>
+                    <p className="text-xs text-slate-500 truncate">{tour.client} · {tour.agent}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 sm:px-0">
         {[
           { key: 'Scheduled', label: 'Scheduled', color: '#2563eb', bg: '#eff6ff' },
           { key: 'Completed', label: 'Completed', color: '#16a34a', bg: '#f0fdf4' },
@@ -440,13 +472,13 @@ export default function Tours() {
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {/* Tab filter */}
-        <div className="flex items-center gap-1 px-4 pt-4 border-b border-slate-100">
+        <div className="flex items-center gap-1 px-4 pt-4 border-b border-slate-100 overflow-x-auto">
           {(['All', 'Scheduled', 'Completed', 'Cancelled', 'No-show'] as const).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setFilter(tab)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all mb-3 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all mb-3 whitespace-nowrap ${
                 filter === tab
                   ? 'bg-brand-600 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
@@ -464,8 +496,47 @@ export default function Tours() {
           ))}
         </div>
 
+        {/* Mobile compact list */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filtered.length === 0 ? (
+            <p className="px-5 py-10 text-center text-slate-400 text-sm">No tours in this category.</p>
+          ) : (
+            filtered.map((tour) => {
+              const cfg = STATUS_CONFIG[tour.status] || STATUS_CONFIG.Scheduled;
+              return (
+                <div key={tour.id} className="flex items-start gap-3 px-4 py-3 bg-white min-h-[70px]">
+                  {/* Time badge left */}
+                  <div
+                    className="flex-shrink-0 mt-0.5 px-2 py-1 rounded-lg text-[11px] font-bold text-center min-w-[48px]"
+                    style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.borderColor}` }}
+                  >
+                    {tour.time.replace(':00', '').replace(' AM', 'AM').replace(' PM', 'PM')}
+                  </div>
+                  {/* Center info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 truncate">{tour.property}</p>
+                    <p className="text-xs text-slate-400 truncate mt-0.5">{tour.address}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{tour.client} · {tour.agent}</p>
+                  </div>
+                  {/* Status right */}
+                  <div className="flex-shrink-0 mt-0.5">
+                    <StatusDropdown tour={tour} onUpdate={handleUpdateStatus} />
+                  </div>
+                </div>
+              );
+            })
+          )}
+          {filtered.length > 0 && (
+            <div className="px-4 py-3 border-t border-slate-100">
+              <p className="text-xs text-slate-500">Showing {filtered.length} of {tours.length} tours</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block">
         <div className="overflow-x-auto">
-          <table className="w-full">
+        <table className="w-full">
             <thead>
               <tr className="bg-[#f8fafc] border-b border-slate-200">
                 <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Client</th>
@@ -552,6 +623,7 @@ export default function Tours() {
             </p>
           </div>
         )}
+        </div>{/* end hidden md:block */}
       </div>
 
       {showScheduleModal && (

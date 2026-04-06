@@ -3356,6 +3356,8 @@ export default function Listings() {
   const [propTypeFilter, setPropTypeFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [view, setView] = useState<'grid' | 'list'>('grid');
+  // Mobile chip filter: 'All' | listing_type | city
+  const [chipFilter, setChipFilter] = useState<string>('All');
   const [page, setPage] = useState(1);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -3491,6 +3493,8 @@ export default function Listings() {
   const getPrice = (l: Listing) =>
     l.listing_type === 'buy' ? l.sale_price : l.rent_price;
 
+  const CHIP_FILTERS = ['All', 'Sale', 'Rent', 'Achrafieh', 'Jounieh', 'Broumana', 'Verdun', 'Hamra', 'Dbayeh'] as const;
+
   const filtered = useMemo(() => {
     return listings.filter((l) => {
       if (typeFilter === 'buy' && l.listing_type !== 'buy') return false;
@@ -3509,9 +3513,15 @@ export default function Listings() {
           !l.area?.toLowerCase().includes(q)
         ) return false;
       }
+      // Mobile chip filter
+      if (chipFilter === 'Sale' && l.listing_type !== 'buy') return false;
+      if (chipFilter === 'Rent' && l.listing_type !== 'rent') return false;
+      if (chipFilter !== 'All' && chipFilter !== 'Sale' && chipFilter !== 'Rent') {
+        if (!l.city?.toLowerCase().includes(chipFilter.toLowerCase())) return false;
+      }
       return true;
     });
-  }, [listings, typeFilter, locationFilter, bedroomsFilter, propTypeFilter, search]);
+  }, [listings, typeFilter, locationFilter, bedroomsFilter, propTypeFilter, search, chipFilter]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -3533,30 +3543,64 @@ export default function Listings() {
   const hasActiveFilters = !!(locationFilter || bedroomsFilter || propTypeFilter);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 px-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-4 md:px-0">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Listings</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{totalCount} properties in your portfolio</p>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900">Listings</h1>
+          <p className="text-xs md:text-sm text-slate-500 mt-0.5">{totalCount} properties in your portfolio</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">
+          <button className="hidden md:inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">
             <Upload size={14} />
             Import CSV
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors"
+            className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors min-h-[44px]"
           >
             <Plus size={15} />
-            Add Listing
+            <span className="hidden sm:inline">Add Listing</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-3">
+      {/* Mobile search bar */}
+      <div className="px-4 md:hidden">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            className="w-full h-10 pl-9 pr-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700 placeholder:text-slate-400"
+            placeholder="Search listings..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Mobile horizontal filter chips */}
+      <div className="md:hidden px-4 overflow-x-auto">
+        <div className="flex gap-2 pb-2 w-max">
+          {CHIP_FILTERS.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => setChipFilter(chip)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all min-h-[36px] ${
+                chipFilter === chip
+                  ? 'bg-brand-600 text-white border-brand-600'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-brand-400'
+              }`}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats Row - hidden on mobile, 2-col on sm, 4-col on md+ */}
+      <div className="hidden md:grid grid-cols-4 gap-3 px-0">
         {[
           { label: 'Total Listings', value: totalCount, color: 'text-slate-900', sub: 'In portfolio' },
           { label: 'Available', value: availableCount, color: 'text-green-700', sub: 'Actively marketed' },
@@ -3571,8 +3615,21 @@ export default function Listings() {
         ))}
       </div>
 
-      {/* Controls Bar */}
-      <div className="flex items-center gap-2.5 bg-white rounded-xl border border-slate-200 px-4 py-3 flex-wrap">
+      {/* Mobile 2-col stats strip */}
+      <div className="md:hidden grid grid-cols-2 gap-2 px-4">
+        {[
+          { label: 'Total', value: totalCount, color: 'text-slate-900' },
+          { label: 'Available', value: availableCount, color: 'text-green-700' },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white rounded-xl border border-slate-200 px-3 py-2.5">
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{stat.label}</p>
+            <p className={`text-2xl font-black mt-0.5 ${stat.color}`}>{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Controls Bar - desktop only */}
+      <div className="hidden md:flex items-center gap-2.5 bg-white rounded-xl border border-slate-200 px-4 py-3 flex-wrap">
         {/* Search */}
         <div className="relative flex-1 min-w-[180px] max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -3642,9 +3699,9 @@ export default function Listings() {
         <span className="text-xs text-slate-400 whitespace-nowrap">{filtered.length} listings</span>
       </div>
 
-      {/* Expanded Filters Panel */}
+      {/* Expanded Filters Panel - desktop only */}
       {showFilters && (
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex-wrap">
+        <div className="hidden md:flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex-wrap">
           <select
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
@@ -3712,113 +3769,158 @@ export default function Listings() {
 
       {/* Grid View */}
       {!loading && filtered.length > 0 && view === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {paged.map((l) => {
-            const price = getPrice(l);
-            return (
-              <div
-                key={l.id}
-                className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${l.status === 'sold' ? 'opacity-80' : ''}`}
-                onClick={() => setSelectedListing(l)}
-              >
-                {/* Image */}
-                <div className="relative h-40 overflow-hidden bg-slate-100">
-                  {l.image_url ? (
-                    <img src={l.image_url} alt={l.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                      <Building2 size={40} className="text-slate-300" />
-                    </div>
-                  )}
-
-                  {/* Sold overlay */}
-                  {l.status === 'sold' && (
-                    <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
-                      <span className="text-white text-lg font-black tracking-widest">SOLD</span>
-                    </div>
-                  )}
-
-                  {/* HOT badge top-left */}
-                  {l.status === 'hot_listing' && (
-                    <div className="absolute top-2.5 left-2.5">
-                      <span className="flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        <Flame size={9} />
-                        HOT
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Type badge top-right */}
-                  <div className="absolute top-2.5 right-2.5">
-                    <span className="bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                      {l.listing_type === 'buy' ? 'For Sale' : 'For Rent'}
-                    </span>
+        <>
+          {/* Mobile: horizontal card list */}
+          <div className="md:hidden flex flex-col gap-0 bg-white rounded-2xl border border-slate-200 overflow-hidden mx-4">
+            {paged.map((l, idx) => {
+              const price = getPrice(l);
+              return (
+                <div
+                  key={l.id}
+                  className={`flex flex-row h-[90px] cursor-pointer active:bg-slate-50 transition-colors ${idx < paged.length - 1 ? 'border-b border-slate-100' : ''}`}
+                  onClick={() => setSelectedListing(l)}
+                >
+                  {/* Square image left */}
+                  <div className="relative w-[90px] h-[90px] flex-shrink-0 bg-slate-100">
+                    {l.image_url ? (
+                      <img src={l.image_url} alt={l.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Building2 size={24} className="text-slate-300" />
+                      </div>
+                    )}
+                    {l.status === 'sold' && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="text-white text-[10px] font-black tracking-widest">SOLD</span>
+                      </div>
+                    )}
+                    {l.status === 'hot_listing' && (
+                      <div className="absolute top-1 left-1">
+                        <span className="flex items-center gap-0.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                          <Flame size={7} />HOT
+                        </span>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Price overlay bottom-left */}
-                  <div className="absolute bottom-2.5 left-2.5">
-                    <span className="bg-black/65 backdrop-blur-sm text-white text-[13px] font-black px-2.5 py-1 rounded-lg">
-                      ${formatPrice(price)}{l.listing_type === 'rent' ? '/mo' : ''}
-                    </span>
+                  {/* Info right */}
+                  <div className="flex flex-col justify-center px-3 flex-1 min-w-0 gap-0.5">
+                    <p className="text-sm font-bold text-slate-900 truncate leading-tight">{l.title}</p>
+                    <p className="text-xs font-bold text-blue-600">${formatPrice(price)}{l.listing_type === 'rent' ? '/mo' : ''}</p>
+                    <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                      <MapPin size={10} />
+                      <span className="truncate">{l.city}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {l.bedrooms > 0 && (
+                        <span className="flex items-center gap-0.5 text-[11px] text-slate-600 font-medium">
+                          <Bed size={10} />{l.bedrooms}BR
+                        </span>
+                      )}
+                      {l.bathrooms > 0 && (
+                        <span className="flex items-center gap-0.5 text-[11px] text-slate-600 font-medium">
+                          <Bath size={10} />{l.bathrooms}BA
+                        </span>
+                      )}
+                      <StatusPill status={l.status} />
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Card Body */}
-                <div className="p-3.5">
-                  <h3 className="text-[13px] font-bold text-slate-900 leading-snug mb-1.5 line-clamp-1">{l.title}</h3>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-500 mb-2.5">
-                    <MapPin size={11} />
-                    <span className="line-clamp-1">{l.city}</span>
-                  </div>
-
-                  {/* Specs */}
-                  <div className="flex gap-3 mb-2.5">
-                    {l.bedrooms > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
-                        <Bed size={11} />{l.bedrooms} bed{l.bedrooms !== 1 ? 's' : ''}
+          {/* Desktop: original vertical card grid */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {paged.map((l) => {
+              const price = getPrice(l);
+              return (
+                <div
+                  key={l.id}
+                  className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${l.status === 'sold' ? 'opacity-80' : ''}`}
+                  onClick={() => setSelectedListing(l)}
+                >
+                  {/* Image */}
+                  <div className="relative h-40 overflow-hidden bg-slate-100">
+                    {l.image_url ? (
+                      <img src={l.image_url} alt={l.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                        <Building2 size={40} className="text-slate-300" />
+                      </div>
+                    )}
+                    {l.status === 'sold' && (
+                      <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
+                        <span className="text-white text-lg font-black tracking-widest">SOLD</span>
+                      </div>
+                    )}
+                    {l.status === 'hot_listing' && (
+                      <div className="absolute top-2.5 left-2.5">
+                        <span className="flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <Flame size={9} />HOT
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute top-2.5 right-2.5">
+                      <span className="bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                        {l.listing_type === 'buy' ? 'For Sale' : 'For Rent'}
                       </span>
-                    )}
-                    {l.bathrooms > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
-                        <Bath size={11} />{l.bathrooms} bath{l.bathrooms !== 1 ? 's' : ''}
+                    </div>
+                    <div className="absolute bottom-2.5 left-2.5">
+                      <span className="bg-black/65 backdrop-blur-sm text-white text-[13px] font-black px-2.5 py-1 rounded-lg">
+                        ${formatPrice(price)}{l.listing_type === 'rent' ? '/mo' : ''}
                       </span>
-                    )}
-                    {l.built_up_area > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
-                        <Maximize size={11} />{l.built_up_area}m&sup2;
+                    </div>
+                  </div>
+                  <div className="p-3.5">
+                    <h3 className="text-[13px] font-bold text-slate-900 leading-snug mb-1.5 line-clamp-1">{l.title}</h3>
+                    <div className="flex items-center gap-1 text-[11px] text-slate-500 mb-2.5">
+                      <MapPin size={11} />
+                      <span className="line-clamp-1">{l.city}</span>
+                    </div>
+                    <div className="flex gap-3 mb-2.5">
+                      {l.bedrooms > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
+                          <Bed size={11} />{l.bedrooms} bed{l.bedrooms !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {l.bathrooms > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
+                          <Bath size={11} />{l.bathrooms} bath{l.bathrooms !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {l.built_up_area > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
+                          <Maximize size={11} />{l.built_up_area}m&sup2;
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-2.5 min-h-[22px]">
+                      {l.generator && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">Generator</span>
+                      )}
+                      {l.parking != null && l.parking > 0 && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">Parking</span>
+                      )}
+                      {(l.furnishing === 'Fully Furnished' || l.furnishing === 'Furnished') && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full">Furnished</span>
+                      )}
+                      {l.view && l.view.toLowerCase().includes('sea') && (
+                        <span className="text-[10px] font-medium px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">Sea View</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between pt-2.5 border-t border-slate-100">
+                      <span className="flex items-center gap-1.5 text-[10px] text-purple-700 font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 inline-block" />
+                        2 AI matches
                       </span>
-                    )}
-                  </div>
-
-                  {/* Feature tags */}
-                  <div className="flex flex-wrap gap-1 mb-2.5 min-h-[22px]">
-                    {l.generator && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">Generator</span>
-                    )}
-                    {l.parking != null && l.parking > 0 && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">Parking</span>
-                    )}
-                    {(l.furnishing === 'Fully Furnished' || l.furnishing === 'Furnished') && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full">Furnished</span>
-                    )}
-                    {l.view && l.view.toLowerCase().includes('sea') && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">Sea View</span>
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-2.5 border-t border-slate-100">
-                    <span className="flex items-center gap-1.5 text-[10px] text-purple-700 font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500 inline-block" />
-                      2 AI matches
-                    </span>
-                    <StatusPill status={l.status} />
+                      <StatusPill status={l.status} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* List View */}

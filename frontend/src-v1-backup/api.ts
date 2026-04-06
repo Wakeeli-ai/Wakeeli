@@ -7,21 +7,63 @@ export const api = axios.create({
   baseURL: API_URL,
 });
 
-// Add Authorization header on every request
+// Decode JWT and check if expired (client-side, no library needed)
+// JWT uses base64url encoding; convert to standard base64 before calling atob()
+export function isTokenExpired(token: string): boolean {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
+    if (!payload.exp) return false;
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
+// Add Authorization header and pre-flight expiry check on every request
 api.interceptors.request.use((config) => {
+  // Never block or modify the login endpoint - it handles its own auth
+  if (config.url === '/auth/login') return config;
+
   const token = localStorage.getItem('token');
   if (token) {
+    // Reject the request immediately if the token is already expired
+    // rather than sending a doomed request to the server.
+    if (isTokenExpired(token)) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('wakeeli_authenticated');
+      localStorage.removeItem('wakeeli_remember');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login?expired=1';
+      }
+      // Abort the request
+      const controller = new AbortController();
+      controller.abort();
+      config.signal = controller.signal;
+      return config;
+    }
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Global error handling (no auto-redirect on 401)
+// Auto-logout on 401 and global network error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    if (status === 403) {
+    // A 401 on the login endpoint means wrong credentials, not an expired session
+    const isLoginEndpoint = error.config?.url === '/auth/login';
+    if (status === 401 && !isLoginEndpoint) {
+      toast.info('Session expired. Please log in again.');
+      localStorage.removeItem('token');
+      localStorage.removeItem('wakeeli_authenticated');
+      localStorage.removeItem('wakeeli_remember');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        setTimeout(() => { window.location.href = '/login?expired=1'; }, 1200);
+      }
+    } else if (status === 403) {
       toast.error('Access denied. You do not have permission for this action.');
     } else if (status === 404) {
       toast.error('Resource not found.');
@@ -96,7 +138,7 @@ export const deleteAgent = (id: number) => api.delete(`/agents/${id}`);
 export const getAgentDetails = (agentId: number) => api.get<Agent>(`/agents/${agentId}`);
 export const updateAgent = (agentId: number, data: any) => api.put(`/agents/${agentId}`, data);
 
-export const getConversations = (search?: string) =>
+export const getConversations = (search?: string) => 
   api.get('/conversations/', { params: search ? { search } : undefined });
 export const getConversation = (id: number) => api.get(`/conversations/${id}`);
 export const assignAgentToConversation = (conversationId: number, agentId: number) =>
@@ -121,7 +163,7 @@ export interface LoginResponse {
   user: UserInfo;
 }
 
-export const login = (username: string, password: string) =>
+export const login = (username: string, password: string) => 
   api.post<LoginResponse>('/auth/login', new URLSearchParams({ username, password }), {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
   });

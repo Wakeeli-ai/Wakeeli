@@ -16,7 +16,6 @@ import {
   X,
   User,
   CheckCheck,
-  UserCog,
 } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
 
@@ -84,7 +83,8 @@ type NavItem = {
   to: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
-  count?: number;
+  adminOnly?: boolean;
+  agentOnly?: boolean;
 };
 
 const adminNav: NavItem[] = [
@@ -93,17 +93,17 @@ const adminNav: NavItem[] = [
   { to: '/conversations', icon: MessageSquare, label: 'Conversations' },
   { to: '/listings', icon: Building2, label: 'Listings' },
   { to: '/tours', icon: Calendar, label: 'Tours' },
-  { to: '/agents', icon: UserCog, label: 'Agents' },
+  { to: '/agents', icon: Users, label: 'Agents' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 const agentNav: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/leads', icon: Users, label: 'My Leads', count: 6 },
-  { to: '/conversations', icon: MessageSquare, label: 'Inbox', count: 3 },
+  { to: '/leads', icon: Users, label: 'My Leads' },
+  { to: '/conversations', icon: MessageSquare, label: 'Inbox' },
   { to: '/listings', icon: Building2, label: 'Listings' },
-  { to: '/tours', icon: Calendar, label: 'My Tours' },
+  { to: '/tours', icon: Calendar, label: 'Tours' },
 ];
 
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -128,7 +128,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   const markRead = (id: number) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
   };
 
   useEffect(() => {
@@ -171,9 +171,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const displayLabel = user?.label || (role === 'admin' ? 'Admin' : 'Agent');
   const initials = displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const currentNavItem = navItems.find((item) => item.to === location.pathname);
-  const pageTitle = currentNavItem?.label || 'Dashboard';
-
   return (
     <div className="flex h-screen bg-slate-100 text-slate-900 overflow-hidden">
 
@@ -189,12 +186,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full z-50 flex flex-col
+          fixed top-0 left-0 h-full z-50 w-64 flex flex-col
           transition-transform duration-300
-          md:relative md:top-auto md:left-auto md:h-auto md:z-auto md:flex-shrink-0
+          md:relative md:top-auto md:left-auto md:h-auto md:z-auto md:w-60 md:flex-shrink-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
-        style={{ backgroundColor: '#0f1729', width: '232px' }}
+        style={{ backgroundColor: '#1a2744' }}
       >
         {/* Mobile close button */}
         <button
@@ -206,40 +203,31 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <X size={20} />
         </button>
 
-        {/* Logo pill */}
-        <div className="px-4 pt-6 pb-5">
+        {/* Logo block */}
+        <div className="flex flex-col items-center pt-8 pb-5 px-4">
           <div
-            className="flex flex-col items-center gap-[5px] rounded-[14px] py-3 px-5 w-full"
+            className="flex flex-col items-center rounded-2xl px-6 py-4 w-full"
             style={{
-              background: 'rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.07)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255,255,255,0.10)',
             }}
           >
-            <div
-              className="flex items-center justify-center rounded-lg flex-shrink-0"
-              style={{ width: 34, height: 34, background: '#2060e8', borderRadius: 8 }}
-            >
-              <img
-                src="/logo-icon.png"
-                alt="Wakeeli"
-                className="object-contain"
-                style={{ width: 18, height: 18 }}
-              />
-            </div>
-            <span
-              className="text-white font-bold uppercase"
-              style={{ fontSize: 11, letterSpacing: '0.18em' }}
-            >
-              Wakeeli
-            </span>
+            <img
+              src="/logo-icon.png"
+              alt="Wakeeli"
+              className="w-12 h-12 object-contain"
+            />
+            <span className="mt-2 text-white text-sm font-semibold tracking-[0.16em] uppercase">Wakeeli</span>
           </div>
         </div>
 
         {/* Divider */}
-        <div className="mx-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+        <div className="mx-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.10)' }} />
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto" style={{ padding: '10px 8px' }}>
+        <nav className="flex-1 py-3 px-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.to;
             const Icon = item.icon;
@@ -248,93 +236,30 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 key={item.to + item.label}
                 to={item.to}
                 onClick={closeSidebar}
-                className="flex items-center gap-[10px] rounded-lg font-medium transition-all duration-150 mb-[1px]"
-                style={{
-                  padding: '9px 12px',
-                  fontSize: 13,
-                  color: isActive ? '#fff' : 'rgba(255,255,255,0.5)',
-                  backgroundColor: isActive ? 'rgba(255,255,255,0.10)' : 'transparent',
-                  borderLeft: isActive ? '3px solid #2060e8' : '3px solid transparent',
-                  textDecoration: 'none',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.backgroundColor = 'rgba(255,255,255,0.07)';
-                    el.style.color = '#fff';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.backgroundColor = 'transparent';
-                    el.style.color = 'rgba(255,255,255,0.5)';
-                  }
-                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border-l-4 pl-2 ${
+                  isActive
+                    ? 'text-white border-white'
+                    : 'text-white/50 hover:text-white hover:bg-white/10 border-transparent'
+                }`}
+                style={isActive ? { backgroundColor: 'rgba(255,255,255,0.10)' } : undefined}
               >
-                <Icon
-                  size={16}
-                  style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.5)', flexShrink: 0 }}
-                />
-                <span className="flex-1">{item.label}</span>
-                {item.count !== undefined && (
-                  <span
-                    className="flex items-center justify-center font-bold text-white"
-                    style={{
-                      background: '#ef4444',
-                      minWidth: 18,
-                      height: 18,
-                      borderRadius: 9,
-                      fontSize: 10,
-                      padding: '0 4px',
-                    }}
-                  >
-                    {item.count}
-                  </span>
-                )}
+                <Icon size={20} className={isActive ? 'text-white' : 'text-white/50'} />
+                <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* User card footer */}
-        <div className="px-2 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <div
-            className="flex items-center gap-[10px] rounded-lg"
-            style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.06)' }}
+        {/* Logout */}
+        <div className="p-2" style={{ borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+          <button
+            type="button"
+            onClick={() => { closeSidebar(); handleLogout(); }}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 text-sm text-left transition-all duration-200 border-l-4 border-transparent pl-2"
           >
-            <div
-              className="flex items-center justify-center font-bold text-white flex-shrink-0 rounded-full"
-              style={{ width: 30, height: 30, background: '#2060e8', fontSize: 11 }}
-            >
-              {initials}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div
-                className="text-white font-semibold truncate"
-                style={{ fontSize: 12 }}
-              >
-                {displayName}
-              </div>
-              <div
-                className="truncate"
-                style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}
-              >
-                {displayLabel}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => { closeSidebar(); handleLogout(); }}
-              className="transition-colors flex-shrink-0 p-1 rounded"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
-              title="Logout"
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.3)'; }}
-            >
-              <LogOut size={14} />
-            </button>
-          </div>
+            <LogOut size={20} className="text-white/50" />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
@@ -359,21 +284,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-semibold text-slate-900 tracking-wide">Wakeeli</span>
           </div>
 
-          {/* Page title - desktop only */}
-          <div className="hidden md:block flex-shrink-0">
-            <span className="text-[15px] font-bold text-slate-900">{pageTitle}</span>
-          </div>
-
           {/* Search - desktop only */}
-          <form onSubmit={handleSearch} className="hidden md:block ml-4 w-72 flex-shrink-0">
+          <form onSubmit={handleSearch} className="hidden md:block w-80 flex-shrink-0">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search leads by phone or name..."
-                className="w-full pl-9 pr-4 py-[7px] bg-slate-100 border-0 rounded-lg text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors"
+                placeholder="Search leads by phone or message..."
+                className="w-full pl-9 pr-4 py-2 bg-slate-100 border-0 rounded-lg text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:bg-white"
               />
             </div>
           </form>
@@ -381,21 +301,20 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="ml-auto flex items-center gap-2 md:gap-3">
             <Link
               to="/leads"
-              className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 min-h-[36px] transition-colors"
+              className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 min-h-[44px]"
             >
-              <UserPlus size={16} />
+              <UserPlus size={18} />
               <span className="hidden sm:inline">New Lead</span>
-              <span className="bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">3</span>
+              <span className="bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">3</span>
             </Link>
-
             {/* Notification bell */}
             <div className="relative" ref={notifRef}>
               <button
                 type="button"
                 onClick={() => { setNotifOpen((v) => !v); setUserMenuOpen(false); }}
-                className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
+                className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
-                <Bell size={18} />
+                <Bell size={20} />
                 {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
                     {unreadCount}
@@ -472,13 +391,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 className="flex items-center gap-2 md:gap-3 pl-2 md:pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity"
               >
                 <div className="hidden sm:block text-right">
-                  <p className="text-sm font-semibold text-slate-900">{displayName}</p>
+                  <p className="text-sm font-medium text-slate-900">{displayName}</p>
                   <p className="text-xs text-slate-500">{displayLabel}</p>
                 </div>
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
-                  style={{ background: '#ede9fe', color: '#7c3aed' }}
-                >
+                <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-medium flex-shrink-0">
                   {initials}
                 </div>
               </button>

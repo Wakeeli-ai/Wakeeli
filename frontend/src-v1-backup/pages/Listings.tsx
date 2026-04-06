@@ -1,9 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { createListing, deleteListing, getListings } from '../api';
 import {
   Building2, Bed, Bath, Maximize, X, MapPin, Search, Loader2,
-  LayoutGrid, List, ChevronLeft, ChevronRight, SlidersHorizontal,
-  Upload, Plus, Flame,
 } from 'lucide-react';
 import { toast } from '../utils/toast';
 
@@ -3119,45 +3117,12 @@ function AddListingModal({
   );
 }
 
-// Status pill component
-
-interface StatusBadgeConfig {
-  bg: string;
-  text: string;
-  label: string;
-}
-
-const STATUS_BADGE_MAP: Record<string, StatusBadgeConfig> = {
-  available: { bg: 'bg-green-50', text: 'text-green-700', label: 'Available' },
-  hot_listing: { bg: 'bg-red-50', text: 'text-red-600', label: 'Hot' },
-  under_offer: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Under Offer' },
-  sold: { bg: 'bg-slate-100', text: 'text-slate-500', label: 'Sold' },
-};
-
-function StatusPill({ status }: { status: string }) {
-  const cfg = STATUS_BADGE_MAP[status] ?? STATUS_BADGE_MAP.available;
-  return (
-    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
-      {cfg.label}
-    </span>
-  );
-}
-
-const ITEMS_PER_PAGE = 12;
-
 // Main Page
 
 export default function Listings() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'buy' | 'rent'>('all');
-  const [locationFilter, setLocationFilter] = useState('');
-  const [bedroomsFilter, setBedroomsFilter] = useState('');
-  const [propTypeFilter, setPropTypeFilter] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [page, setPage] = useState(1);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -3169,7 +3134,6 @@ export default function Listings() {
     setLoading(true);
     try {
       const res = await getListings();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const raw: any[] = res.data || [];
       if (raw.length > 0) {
         setListings(raw.map(normalizeListing));
@@ -3216,475 +3180,155 @@ export default function Listings() {
     loadListings();
   };
 
-  // Reset to page 1 whenever filters change
-  useEffect(() => {
-    setPage(1);
-  }, [typeFilter, locationFilter, bedroomsFilter, propTypeFilter, search]);
+  const filtered = listings.filter((l) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      l.title?.toLowerCase().includes(q) ||
+      l.city?.toLowerCase().includes(q) ||
+      l.area?.toLowerCase().includes(q)
+    );
+  });
+
+  const forSaleCount = listings.filter((l) => l.listing_type === 'buy').length;
+  const forRentCount = listings.filter((l) => l.listing_type === 'rent').length;
 
   const getPrice = (l: Listing) =>
     l.listing_type === 'buy' ? l.sale_price : l.rent_price;
 
-  const filtered = useMemo(() => {
-    return listings.filter((l) => {
-      if (typeFilter === 'buy' && l.listing_type !== 'buy') return false;
-      if (typeFilter === 'rent' && l.listing_type !== 'rent') return false;
-      if (locationFilter && l.city !== locationFilter) return false;
-      if (bedroomsFilter) {
-        const minBeds = parseInt(bedroomsFilter, 10);
-        if (l.bedrooms < minBeds) return false;
-      }
-      if (propTypeFilter && l.property_type !== propTypeFilter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (
-          !l.title?.toLowerCase().includes(q) &&
-          !l.city?.toLowerCase().includes(q) &&
-          !l.area?.toLowerCase().includes(q)
-        ) return false;
-      }
-      return true;
-    });
-  }, [listings, typeFilter, locationFilter, bedroomsFilter, propTypeFilter, search]);
-
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-
-  const totalCount = listings.length;
-  const availableCount = listings.filter((l) => l.status === 'available' || l.status === 'hot_listing').length;
-  const underOfferCount = listings.filter((l) => l.status === 'under_offer').length;
-  const soldCount = listings.filter((l) => l.status === 'sold').length;
-
-  const locations = useMemo(
-    () => [...new Set(listings.map((l) => l.city).filter(Boolean))].sort(),
-    [listings],
-  );
-  const propTypes = useMemo(
-    () => [...new Set(listings.map((l) => l.property_type).filter(Boolean))].sort(),
-    [listings],
-  );
-
-  const hasActiveFilters = !!(locationFilter || bedroomsFilter || propTypeFilter);
-
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Listings</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{totalCount} properties in your portfolio</p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="px-2.5 py-0.5 bg-brand-50 text-brand-700 rounded-full text-xs font-medium">
+              For Sale: {forSaleCount}
+            </span>
+            <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
+              For Rent: {forRentCount}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors">
-            <Upload size={14} />
-            Import CSV
-          </button>
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              className="pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 w-full sm:w-56"
+              placeholder="Search listings..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors min-h-[44px]"
           >
-            <Plus size={15} />
+            <Building2 size={16} />
             Add Listing
           </button>
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { label: 'Total Listings', value: totalCount, color: 'text-slate-900', sub: 'In portfolio' },
-          { label: 'Available', value: availableCount, color: 'text-green-700', sub: 'Actively marketed' },
-          { label: 'Under Offer', value: underOfferCount, color: 'text-amber-700', sub: 'Negotiation stage' },
-          { label: 'Sold / Rented', value: soldCount, color: 'text-slate-400', sub: 'This quarter' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3.5">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{stat.label}</p>
-            <p className={`text-3xl font-black mt-1 ${stat.color}`}>{stat.value}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">{stat.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Controls Bar */}
-      <div className="flex items-center gap-2.5 bg-white rounded-xl border border-slate-200 px-4 py-3 flex-wrap">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[180px] max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700 placeholder:text-slate-400"
-            placeholder="Search by area, type, price..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* Type filter pills */}
-        <div className="flex gap-1.5">
-          {(['all', 'buy', 'rent'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className={`px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all ${
-                typeFilter === t
-                  ? 'bg-blue-50 border-blue-600 text-blue-600'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600'
-              }`}
-            >
-              {t === 'all' ? 'All' : t === 'buy' ? 'For Sale' : 'For Rent'}
-            </button>
-          ))}
-        </div>
-
-        {/* Filters toggle */}
-        <button
-          onClick={() => setShowFilters((v) => !v)}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all ${
-            showFilters || hasActiveFilters
-              ? 'bg-blue-50 border-blue-600 text-blue-600'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          <SlidersHorizontal size={12} />
-          Filters
-          {hasActiveFilters && (
-            <span className="w-4 h-4 bg-blue-600 text-white rounded-full text-[10px] flex items-center justify-center leading-none">
-              {[locationFilter, bedroomsFilter, propTypeFilter].filter(Boolean).length}
-            </span>
-          )}
-        </button>
-
-        <div className="flex-1" />
-
-        {/* View toggle */}
-        <div className="flex bg-slate-100 rounded-lg p-0.5 gap-0.5">
-          <button
-            onClick={() => setView('grid')}
-            className={`p-1.5 rounded-md transition-all ${view === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-            title="Grid view"
-          >
-            <LayoutGrid size={14} />
-          </button>
-          <button
-            onClick={() => setView('list')}
-            className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-            title="List view"
-          >
-            <List size={14} />
-          </button>
-        </div>
-
-        <span className="text-xs text-slate-400 whitespace-nowrap">{filtered.length} listings</span>
-      </div>
-
-      {/* Expanded Filters Panel */}
-      {showFilters && (
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex-wrap">
-          <select
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">All Locations</option>
-            {locations.map((loc) => (
-              <option key={loc} value={loc}>{loc}</option>
-            ))}
-          </select>
-
-          <select
-            value={bedroomsFilter}
-            onChange={(e) => setBedroomsFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">Any Bedrooms</option>
-            <option value="1">1+ Beds</option>
-            <option value="2">2+ Beds</option>
-            <option value="3">3+ Beds</option>
-            <option value="4">4+ Beds</option>
-          </select>
-
-          <select
-            value={propTypeFilter}
-            onChange={(e) => setPropTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">All Property Types</option>
-            {propTypes.map((pt) => (
-              <option key={pt} value={pt}>{pt}</option>
-            ))}
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              onClick={() => {
-                setLocationFilter('');
-                setBedroomsFilter('');
-                setPropTypeFilter('');
-              }}
-              className="ml-auto text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
-            >
-              Clear all filters
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
         </div>
       )}
 
-      {/* Empty State */}
-      {!loading && filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-slate-300">
-          <Building2 className="w-12 h-12 text-slate-300 mb-3" />
-          <h3 className="text-base font-semibold text-slate-900">No listings found</h3>
-          <p className="text-sm text-slate-500 mt-1">Try adjusting your search or filters.</p>
-        </div>
-      )}
+      {/* Grid */}
+      {!loading && (
+        <>
+          {filtered.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-dashed border-slate-300">
+              <Building2 className="mx-auto h-12 w-12 text-slate-300 mb-3" />
+              <h3 className="text-lg font-medium text-slate-900">No listings found</h3>
+              <p className="text-slate-500 text-sm mt-1">Add a listing or adjust your search.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filtered.map((l) => {
+                const status = l.status || 'available';
+                const statusLabel = STATUS_LABELS[status] || status;
+                const statusColor = STATUS_COLORS[status] || STATUS_COLORS.available;
+                const price = getPrice(l);
 
-      {/* Grid View */}
-      {!loading && filtered.length > 0 && view === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {paged.map((l) => {
-            const price = getPrice(l);
-            return (
-              <div
-                key={l.id}
-                className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${l.status === 'sold' ? 'opacity-80' : ''}`}
-                onClick={() => setSelectedListing(l)}
-              >
-                {/* Image */}
-                <div className="relative h-40 overflow-hidden bg-slate-100">
-                  {l.image_url ? (
-                    <img src={l.image_url} alt={l.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                      <Building2 size={40} className="text-slate-300" />
-                    </div>
-                  )}
+                return (
+                  <div
+                    key={l.id}
+                    className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setSelectedListing(l)}
+                  >
+                    {/* Cover photo */}
+                    <div className="h-48 relative overflow-hidden">
+                      {l.image_url ? (
+                        <img src={l.image_url} alt={l.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-300">
+                          <Building2 size={52} />
+                        </div>
+                      )}
 
-                  {/* Sold overlay */}
-                  {l.status === 'sold' && (
-                    <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
-                      <span className="text-white text-lg font-black tracking-widest">SOLD</span>
-                    </div>
-                  )}
+                      {/* Status badge top-left */}
+                      <div className="absolute top-3 left-3">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${statusColor}`}>
+                          {statusLabel}
+                        </span>
+                      </div>
 
-                  {/* HOT badge top-left */}
-                  {l.status === 'hot_listing' && (
-                    <div className="absolute top-2.5 left-2.5">
-                      <span className="flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        <Flame size={9} />
-                        HOT
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Type badge top-right */}
-                  <div className="absolute top-2.5 right-2.5">
-                    <span className="bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                      {l.listing_type === 'buy' ? 'For Sale' : 'For Rent'}
-                    </span>
-                  </div>
-
-                  {/* Price overlay bottom-left */}
-                  <div className="absolute bottom-2.5 left-2.5">
-                    <span className="bg-black/65 backdrop-blur-sm text-white text-[13px] font-black px-2.5 py-1 rounded-lg">
-                      ${formatPrice(price)}{l.listing_type === 'rent' ? '/mo' : ''}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card Body */}
-                <div className="p-3.5">
-                  <h3 className="text-[13px] font-bold text-slate-900 leading-snug mb-1.5 line-clamp-1">{l.title}</h3>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-500 mb-2.5">
-                    <MapPin size={11} />
-                    <span className="line-clamp-1">{l.city}</span>
-                  </div>
-
-                  {/* Specs */}
-                  <div className="flex gap-3 mb-2.5">
-                    {l.bedrooms > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
-                        <Bed size={11} />{l.bedrooms} bed{l.bedrooms !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {l.bathrooms > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
-                        <Bath size={11} />{l.bathrooms} bath{l.bathrooms !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {l.built_up_area > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-700 font-medium">
-                        <Maximize size={11} />{l.built_up_area}m&sup2;
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Feature tags */}
-                  <div className="flex flex-wrap gap-1 mb-2.5 min-h-[22px]">
-                    {l.generator && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">Generator</span>
-                    )}
-                    {l.parking != null && l.parking > 0 && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">Parking</span>
-                    )}
-                    {(l.furnishing === 'Fully Furnished' || l.furnishing === 'Furnished') && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full">Furnished</span>
-                    )}
-                    {l.view && l.view.toLowerCase().includes('sea') && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">Sea View</span>
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-2.5 border-t border-slate-100">
-                    <span className="flex items-center gap-1.5 text-[10px] text-purple-700 font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500 inline-block" />
-                      2 AI matches
-                    </span>
-                    <StatusPill status={l.status} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* List View */}
-      {!loading && filtered.length > 0 && view === 'list' && (
-        <div className="space-y-2">
-          {paged.map((l) => {
-            const price = getPrice(l);
-            return (
-              <div
-                key={l.id}
-                className="bg-white rounded-xl border border-slate-200 flex gap-4 p-3 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer"
-                onClick={() => setSelectedListing(l)}
-              >
-                {/* Thumbnail */}
-                <div className="relative w-28 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100">
-                  {l.image_url ? (
-                    <img src={l.image_url} alt={l.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Building2 size={24} className="text-slate-300" />
-                    </div>
-                  )}
-                  {l.status === 'hot_listing' && (
-                    <div className="absolute top-1 left-1">
-                      <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">HOT</span>
-                    </div>
-                  )}
-                  {l.status === 'sold' && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="text-white text-[10px] font-black tracking-widest">SOLD</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-bold text-slate-900 line-clamp-1">{l.title}</h3>
-                      <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                        <MapPin size={11} />
-                        <span>{l.city}</span>
+                      {/* Price badge top-right */}
+                      <div className="absolute top-3 right-3">
+                        <span className="px-3 py-1 bg-slate-900/80 backdrop-blur rounded-full text-xs font-bold text-white shadow-sm">
+                          ${formatPrice(price)}{l.listing_type === 'rent' ? '/mo' : ''}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
-                      <span className="text-sm font-black text-slate-900">
-                        ${formatPrice(price)}{l.listing_type === 'rent' ? '/mo' : ''}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-4 mt-2 flex-wrap">
-                    <div className="flex gap-3">
-                      {l.bedrooms > 0 && (
-                        <span className="flex items-center gap-1 text-xs text-slate-600 font-medium">
-                          <Bed size={11} />{l.bedrooms}
+                    {/* Card body */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-slate-900 line-clamp-1 mb-1">{l.title}</h3>
+                      <div className="flex items-center gap-1 text-sm text-slate-500 mb-3">
+                        <MapPin size={13} className="flex-shrink-0" />
+                        <span className="line-clamp-1">{l.city}</span>
+                      </div>
+
+                      {/* Stats row */}
+                      <div className="flex items-center gap-3 text-sm text-slate-600 mb-3">
+                        {l.bedrooms > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Bed size={14} />
+                            {l.bedrooms}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Bath size={14} />
+                          {l.bathrooms}
                         </span>
-                      )}
-                      {l.bathrooms > 0 && (
-                        <span className="flex items-center gap-1 text-xs text-slate-600 font-medium">
-                          <Bath size={11} />{l.bathrooms}
-                        </span>
-                      )}
-                      {l.built_up_area > 0 && (
-                        <span className="flex items-center gap-1 text-xs text-slate-600 font-medium">
-                          <Maximize size={11} />{l.built_up_area}m&sup2;
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-1.5 ml-auto">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.listing_type === 'buy' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {l.built_up_area > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Maximize size={14} />
+                            {l.built_up_area} m&sup2;
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Listing type badge */}
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        l.listing_type === 'buy'
+                          ? 'bg-brand-100 text-brand-700'
+                          : 'bg-amber-100 text-amber-700'
+                      }`}>
                         {l.listing_type === 'buy' ? 'For Sale' : 'For Rent'}
                       </span>
-                      <StatusPill status={l.status} />
                     </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1.5 pt-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="p-2 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition-colors"
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-            let pageNum: number;
-            if (totalPages <= 7) {
-              pageNum = i + 1;
-            } else if (page <= 4) {
-              pageNum = i < 6 ? i + 1 : totalPages;
-            } else if (page >= totalPages - 3) {
-              pageNum = i === 0 ? 1 : totalPages - 6 + i;
-            } else {
-              const mid = [1, page - 2, page - 1, page, page + 1, page + 2, totalPages];
-              pageNum = mid[i];
-            }
-            return (
-              <button
-                key={`page-${pageNum}-${i}`}
-                onClick={() => setPage(pageNum)}
-                className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
-                  page === pageNum
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {pageNum}
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="p-2 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition-colors"
-          >
-            <ChevronRight size={16} />
-          </button>
-
-          <span className="ml-2 text-xs text-slate-400">
-            Page {page} of {totalPages}
-          </span>
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* Detail Drawer */}

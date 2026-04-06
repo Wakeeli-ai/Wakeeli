@@ -3,115 +3,9 @@ import { Link } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { getConversations, getAnalyticsCosts } from '../api';
 import { toast } from '../utils/toast';
-import {
-  Users,
-  MessageSquare,
-  Calendar,
-  TrendingUp,
-  Loader2,
-  MapPin,
-  User,
-} from 'lucide-react';
+import { Users, MessageSquare, Calendar, TrendingUp, MapPin } from 'lucide-react';
 
-const FILTER_TABS = ['All', 'Urgent', 'AI Handover', 'Waiting', 'New'] as const;
-type FilterTab = typeof FILTER_TABS[number];
-
-const QUICK_ACTIONS = [
-  { label: 'View Unassigned Leads', to: '/leads' },
-  { label: 'Add New Listing', to: '/listings' },
-  { label: "View Today's Tours", to: '/tours' },
-  { label: 'Edit Existing Listing', to: '/listings' },
-  { label: 'View Analytics Report', to: '/analytics' },
-];
-
-const TOURS = [
-  {
-    id: 1,
-    property: '2BR Apartment in Achrafieh',
-    time: '9:00 AM',
-    address: 'Rue Sursock, Achrafieh, Beirut',
-    lead: 'Rami Khoury',
-    agent: 'Joelle Rizk',
-    status: 'Confirmed',
-  },
-  {
-    id: 2,
-    property: '3BR Villa in Broummana',
-    time: '11:00 AM',
-    address: 'Main Road, Broummana, Metn',
-    lead: 'Nadia Saade',
-    agent: 'Elie Khoury',
-    status: 'Confirmed',
-  },
-  {
-    id: 3,
-    property: 'Studio in Mar Mikhael',
-    time: '1:00 PM',
-    address: 'Armenia Street, Mar Mikhael',
-    lead: 'Tony Frem',
-    agent: 'Joelle Rizk',
-    status: 'Pending',
-  },
-  {
-    id: 4,
-    property: '4BR Duplex in Verdun',
-    time: '3:00 PM',
-    address: 'Verdun Street, Ras Beirut',
-    lead: 'Maya Nassar',
-    agent: 'Roula Bou Jawde',
-    status: 'Confirmed',
-  },
-  {
-    id: 5,
-    property: 'Sea View Apt in Kaslik',
-    time: '4:30 PM',
-    address: "Rue de l'Eglise, Kaslik, Jounieh",
-    lead: 'Hassan Mourad',
-    agent: 'Elie Khoury',
-    status: 'Pending',
-  },
-  {
-    id: 6,
-    property: '1BR Apartment in Hamra',
-    time: '6:00 PM',
-    address: 'Bliss Street, Hamra, Beirut',
-    lead: 'Lara Bou Jawde',
-    agent: 'Joelle Rizk',
-    status: 'Cancelled',
-  },
-];
-
-const TOUR_STATUS_COLORS: Record<string, string> = {
-  Confirmed: 'bg-emerald-100 text-emerald-700',
-  Pending: 'bg-amber-100 text-amber-700',
-  Cancelled: 'bg-red-100 text-red-700',
-};
-
-const RECENT_LEADS = [
-  { name: 'Rami Khoury', phone: '+961 71 234 567', source: 'WhatsApp', status: 'new', ago: '2h ago' },
-  { name: 'Nadia Saade', phone: '+961 76 891 234', source: 'Website', status: 'qualified', ago: '5h ago' },
-  { name: 'Tony Frem', phone: '+961 70 345 678', source: 'Instagram', status: 'urgent', ago: '1d ago' },
-  { name: 'Maya Nassar', phone: '+961 03 567 890', source: 'Referral', status: 'new', ago: '1d ago' },
-  { name: 'Hassan Mourad', phone: '+961 71 123 456', source: 'WhatsApp', status: 'follow_up', ago: '2d ago' },
-  { name: 'Lara Bou Jawde', phone: '+961 76 234 567', source: 'Website', status: 'new', ago: '2d ago' },
-];
-
-const SOURCE_COLORS: Record<string, string> = {
-  WhatsApp: 'bg-emerald-100 text-emerald-700',
-  Website: 'bg-blue-100 text-blue-700',
-  Instagram: 'bg-purple-100 text-purple-700',
-  Referral: 'bg-amber-100 text-amber-700',
-};
-
-const LEAD_STATUS_COLORS: Record<string, { label: string; cls: string }> = {
-  new: { label: 'New', cls: 'bg-emerald-100 text-emerald-700' },
-  urgent: { label: 'Urgent', cls: 'bg-red-100 text-red-700' },
-  qualified: { label: 'Qualified', cls: 'bg-amber-100 text-amber-700' },
-  follow_up: { label: 'Follow-up', cls: 'bg-amber-100 text-amber-700' },
-  handed_off: { label: 'AI Handover', cls: 'bg-purple-100 text-purple-700' },
-  waiting: { label: 'Waiting', cls: 'bg-blue-100 text-blue-700' },
-  closed: { label: 'Closed', cls: 'bg-slate-100 text-slate-600' },
-};
+// ─── Mock Conversations (preserved for API fallback + KPI count) ───────────
 
 const MOCK_CONVERSATIONS = [
   {
@@ -236,6 +130,177 @@ const MOCK_CONVERSATIONS = [
   },
 ];
 
+// ─── Tours ────────────────────────────────────────────────────────────────
+
+const TOURS = [
+  {
+    id: 1,
+    property: '2BR Apartment in Achrafieh',
+    time: '9:00 AM',
+    address: 'Rue Sursock, Achrafieh, Beirut',
+    lead: 'Rami Khoury',
+    agent: 'Joelle Rizk',
+    status: 'Confirmed',
+  },
+  {
+    id: 2,
+    property: '3BR Villa in Broummana',
+    time: '11:00 AM',
+    address: 'Main Road, Broummana, Metn',
+    lead: 'Nadia Saade',
+    agent: 'Elie Khoury',
+    status: 'Confirmed',
+  },
+  {
+    id: 3,
+    property: 'Studio in Mar Mikhael',
+    time: '1:00 PM',
+    address: 'Armenia Street, Mar Mikhael',
+    lead: 'Tony Frem',
+    agent: 'Joelle Rizk',
+    status: 'Pending',
+  },
+  {
+    id: 4,
+    property: '4BR Duplex in Verdun',
+    time: '3:00 PM',
+    address: 'Verdun Street, Ras Beirut',
+    lead: 'Maya Nassar',
+    agent: 'Roula Bou Jawde',
+    status: 'Confirmed',
+  },
+  {
+    id: 5,
+    property: 'Sea View Apt in Kaslik',
+    time: '4:30 PM',
+    address: "Rue de l'Eglise, Kaslik, Jounieh",
+    lead: 'Hassan Mourad',
+    agent: 'Elie Khoury',
+    status: 'Pending',
+  },
+  {
+    id: 6,
+    property: '1BR Apartment in Hamra',
+    time: '6:00 PM',
+    address: 'Bliss Street, Hamra, Beirut',
+    lead: 'Lara Bou Jawde',
+    agent: 'Joelle Rizk',
+    status: 'Cancelled',
+  },
+];
+
+const TOUR_STATUS_COLORS: Record<string, string> = {
+  Confirmed: 'bg-emerald-100 text-emerald-700',
+  Pending: 'bg-amber-100 text-amber-700',
+  Cancelled: 'bg-red-100 text-red-700',
+};
+
+// ─── Recent Leads ─────────────────────────────────────────────────────────
+
+const RECENT_LEADS = [
+  {
+    name: 'Rami Khoury',
+    initials: 'RK',
+    avatarColor: '#2060e8',
+    phone: '+961 70 123 456',
+    source: 'WhatsApp',
+    type: 'Buy',
+    statusLabel: 'Qualified',
+    statusCls: 'bg-amber-50 text-amber-700',
+    budget: '$350,000',
+    ago: '2h ago',
+  },
+  {
+    name: 'Nadia Haddad',
+    initials: 'NH',
+    avatarColor: '#7c3aed',
+    phone: '+961 71 234 567',
+    source: 'Instagram',
+    type: 'Rent',
+    statusLabel: 'New',
+    statusCls: 'bg-emerald-50 text-emerald-700',
+    budget: '$1,200/mo',
+    ago: '5h ago',
+  },
+  {
+    name: 'Tony Gemayel',
+    initials: 'TG',
+    avatarColor: '#0891b2',
+    phone: '+961 76 345 678',
+    source: 'WhatsApp',
+    type: 'Buy',
+    statusLabel: 'Tour Booked',
+    statusCls: 'bg-blue-50 text-blue-700',
+    budget: '$500,000',
+    ago: '1d ago',
+  },
+  {
+    name: 'Maya Nasrallah',
+    initials: 'MN',
+    avatarColor: '#be185d',
+    phone: '+961 78 456 789',
+    source: 'Website',
+    type: 'Rent',
+    statusLabel: 'Qualifying',
+    statusCls: 'bg-amber-50 text-amber-700',
+    budget: '$1,500/mo',
+    ago: '1d ago',
+  },
+  {
+    name: 'Sami Aoun',
+    initials: 'SA',
+    avatarColor: '#c2410c',
+    phone: '+961 03 567 890',
+    source: 'WhatsApp',
+    type: 'Buy',
+    statusLabel: 'Handed Off',
+    statusCls: 'bg-slate-100 text-slate-600',
+    budget: '$250,000',
+    ago: '1 week ago',
+  },
+];
+
+const SOURCE_BADGE: Record<string, string> = {
+  WhatsApp: 'bg-emerald-50 text-emerald-700',
+  Website: 'bg-blue-50 text-blue-700',
+  Instagram: 'bg-purple-50 text-purple-700',
+  Referral: 'bg-amber-50 text-amber-700',
+};
+
+const TYPE_BADGE: Record<string, string> = {
+  Buy: 'bg-blue-50 text-blue-700',
+  Rent: 'bg-amber-50 text-amber-700',
+};
+
+// ─── Funnel ───────────────────────────────────────────────────────────────
+
+const FUNNEL_DATA = [
+  { label: 'New Leads', count: 214, pct: 100, color: '#2060e8' },
+  { label: 'Qualified', count: 154, pct: 72, color: '#7c3aed' },
+  { label: 'Tours Booked', count: 94, pct: 44, color: '#f59e0b' },
+  { label: 'Deals Closed', count: 24, pct: 11, color: '#16a34a' },
+];
+
+// ─── Agent Leaderboard ────────────────────────────────────────────────────
+
+const AGENT_LEADERBOARD = [
+  { rank: 1, initials: 'JR', name: 'Joelle Rizk', deals: 14, conversion: '14.2%', delta: '+2.1%', color: '#2060e8' },
+  { rank: 2, initials: 'EK', name: 'Elie Khoury', deals: 11, conversion: '11.0%', delta: '+1.0%', color: '#7c3aed' },
+  { rank: 3, initials: 'RB', name: 'Roula Bou Jawde', deals: 8, conversion: '9.4%', delta: null, color: '#0891b2' },
+  { rank: 4, initials: 'MN', name: 'Marc Nader', deals: 4, conversion: '7.3%', delta: null, color: '#c2410c' },
+];
+
+// ─── Quick Actions ────────────────────────────────────────────────────────
+
+const QUICK_ACTIONS = [
+  { label: 'View Unassigned Leads', to: '/leads' },
+  { label: 'Add New Listing', to: '/listings' },
+  { label: "View Today's Tours", to: '/tours' },
+  { label: 'View Analytics Report', to: '/analytics' },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────
+
 function formatTimeAgo(dateStr: string): string {
   const d = new Date(dateStr);
   const now = new Date();
@@ -248,38 +313,35 @@ function formatTimeAgo(dateStr: string): string {
   return `${diffDays}d ago`;
 }
 
-function getInitials(phone: string): string {
-  return String(phone).slice(-2).toUpperCase();
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
-function statusBadge(status: string): { label: string; cls: string } {
-  const map: Record<string, { label: string; cls: string }> = {
-    urgent: { label: 'Urgent', cls: 'bg-red-100 text-red-700' },
-    handed_off: { label: 'AI Handover', cls: 'bg-purple-100 text-purple-700' },
-    waiting: { label: 'Waiting', cls: 'bg-blue-100 text-blue-700' },
-    new: { label: 'New', cls: 'bg-emerald-100 text-emerald-700' },
-    follow_up: { label: 'Follow-up', cls: 'bg-amber-100 text-amber-700' },
-    qualified: { label: 'Follow-up', cls: 'bg-amber-100 text-amber-700' },
-    closed: { label: 'Closed', cls: 'bg-slate-100 text-slate-600' },
-  };
-  return map[status] ?? { label: status.replace('_', ' '), cls: 'bg-slate-100 text-slate-600' };
+function getTodayString(): string {
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 }
 
-function filterConversations(convos: any[], tab: FilterTab): any[] {
-  if (tab === 'All') return convos;
-  if (tab === 'Urgent') return convos.filter((c) => c.status === 'urgent');
-  if (tab === 'AI Handover') return convos.filter((c) => c.status === 'handed_off');
-  if (tab === 'Waiting') return convos.filter((c) => c.status === 'waiting');
-  if (tab === 'New') return convos.filter((c) => c.status === 'new');
-  return convos;
+function rankColor(rank: number): string {
+  if (rank === 1) return 'text-amber-400';
+  if (rank === 2) return 'text-slate-400';
+  if (rank === 3) return 'text-orange-700';
+  return 'text-slate-300';
 }
+
+// ─── Component ────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const { user } = useRole();
   const [conversations, setConversations] = useState<any[]>(MOCK_CONVERSATIONS);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<FilterTab>('All');
-  const [selectedConvo, setSelectedConvo] = useState<any | null>(MOCK_CONVERSATIONS[0]);
   const [kpi, setKpi] = useState<{ totalConversations: number; activeConversations: number } | null>(null);
 
   useEffect(() => {
@@ -288,12 +350,10 @@ export default function Dashboard() {
         const data = Array.isArray(r.data) ? r.data : [];
         const list = data.length > 0 ? data : MOCK_CONVERSATIONS;
         setConversations(list);
-        setSelectedConvo((prev: any) => prev ?? list[0]);
       })
       .catch(() => {
         toast.error('Failed to load conversations.');
         setConversations(MOCK_CONVERSATIONS);
-        setSelectedConvo(MOCK_CONVERSATIONS[0]);
       })
       .finally(() => setLoading(false));
 
@@ -308,297 +368,292 @@ export default function Dashboard() {
         }
       })
       .catch(() => {
-        // Analytics costs are optional on dashboard, fail silently
         console.warn('[Dashboard] Analytics unavailable.');
       });
   }, []);
 
-  const filtered = filterConversations(conversations, activeTab);
+  const activeConvCount = conversations.filter((c) => c.status !== 'closed').length || 23;
+  const totalLeads = kpi?.totalConversations || 1847;
+  const toursToday = TOURS.filter((t) => t.status !== 'Cancelled').length;
+  const firstName = user.name.split(' ')[0];
+  const activeTours = TOURS.filter((t) => t.status !== 'Cancelled').slice(0, 4);
+
+  // Suppress unused var warning while preserving the function
+  void formatTimeAgo;
+  void loading;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+
+      {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500 mt-1 text-sm">
-          Welcome back, {user.name.split(' ')[0]}! Here's what's happening today.
+        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+          {getGreeting()}, {firstName}!
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          {getTodayString()} · Here is what is happening today.
         </p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Total Leads</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
-                {kpi ? kpi.totalConversations : conversations.length || 847}
-              </p>
-              <p className="text-xs text-emerald-600 mt-1">+23 this week</p>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
-              <Users className="text-brand-600" size={20} />
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+            <Users size={20} className="text-blue-600" />
           </div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-3.5">Total Leads</p>
+          <p className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">
+            {totalLeads.toLocaleString()}
+          </p>
+          <p className="text-xs font-semibold text-emerald-600 mt-1">+23 this week</p>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Active Conversations</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
-                {conversations.filter((c) => c.status !== 'closed').length || 23}
-              </p>
-              <p className="text-xs text-emerald-600 mt-1">+5 since yesterday</p>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
-              <MessageSquare className="text-purple-600" size={20} />
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+            <MessageSquare size={20} className="text-purple-600" />
           </div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-3.5">Active Conversations</p>
+          <p className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">{activeConvCount}</p>
+          <p className="text-xs font-semibold text-emerald-600 mt-1">+5 since yesterday</p>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Scheduled Tours</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">12</p>
-              <p className="text-xs text-emerald-600 mt-1">+3 this week</p>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-              <Calendar className="text-amber-600" size={20} />
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+            <Calendar size={20} className="text-amber-600" />
           </div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-3.5">Tours Today</p>
+          <p className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">{toursToday}</p>
+          <p className="text-xs font-semibold text-emerald-600 mt-1">Next at 9:00 AM</p>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Conversion Rate</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">8.2%</p>
-              <p className="text-xs text-emerald-600 mt-1">+1.4% vs last month</p>
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="text-emerald-600" size={20} />
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+            <TrendingUp size={20} className="text-emerald-600" />
           </div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-3.5">Conversion Rate</p>
+          <p className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">11.2%</p>
+          <p className="text-xs font-semibold text-emerald-600 mt-1">+1.4% vs last month</p>
         </div>
+
       </div>
 
-      {/* Recent Leads */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Recent Leads</h2>
-          <Link to="/leads" className="text-sm text-brand-600 hover:text-brand-700 font-medium">
-            View all
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Phone</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Source</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Added</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {RECENT_LEADS.map((lead) => {
-                const statusInfo = LEAD_STATUS_COLORS[lead.status] ?? { label: lead.status, cls: 'bg-slate-100 text-slate-600' };
-                return (
-                  <tr key={lead.phone} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                          {lead.name.split(' ').map((n) => n[0]).join('')}
+      {/* Main Grid: Recent Leads (2fr) + Funnel/Quick Actions (1fr) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        {/* Recent Leads Table */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <h2 className="text-sm font-bold text-slate-900">Recent Leads</h2>
+            <Link
+              to="/leads"
+              className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              View all {totalLeads.toLocaleString()}
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">Name</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">Source</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">Type</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">Budget</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">Added</th>
+                </tr>
+              </thead>
+              <tbody>
+                {RECENT_LEADS.map((lead) => (
+                  <tr
+                    key={lead.phone}
+                    className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                          style={{ backgroundColor: lead.avatarColor }}
+                        >
+                          {lead.initials}
                         </div>
-                        <span className="font-medium text-slate-900 text-sm">{lead.name}</span>
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900 leading-tight">{lead.name}</div>
+                          <div className="text-xs text-slate-400">{lead.phone}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-sm text-slate-600">{lead.phone}</td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${SOURCE_COLORS[lead.source] ?? 'bg-slate-100 text-slate-600'}`}>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SOURCE_BADGE[lead.source] ?? 'bg-slate-100 text-slate-600'}`}>
                         {lead.source}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${statusInfo.cls}`}>
-                        {statusInfo.label}
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${TYPE_BADGE[lead.type] ?? 'bg-slate-100 text-slate-600'}`}>
+                        {lead.type}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-sm text-slate-400">{lead.ago}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${lead.statusCls}`}>
+                        {lead.statusLabel}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-slate-800">{lead.budget}</td>
+                    <td className="px-4 py-3 text-xs text-slate-400">{lead.ago}</td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Right Column: Funnel + Quick Actions */}
+        <div className="flex flex-col gap-5">
+
+          {/* Conversion Funnel */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-bold text-slate-900">Conversion Funnel</h2>
+              <span className="text-xs text-slate-400">This month</span>
+            </div>
+            <div className="p-5 space-y-3">
+              {FUNNEL_DATA.map((item) => (
+                <div key={item.label} className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-slate-500 w-24 flex-shrink-0 leading-tight">
+                    {item.label}
+                  </span>
+                  <div className="flex-1 h-6 bg-slate-100 rounded-md overflow-hidden">
+                    <div
+                      className="h-full rounded-md flex items-center pl-2.5"
+                      style={{ width: `${item.pct}%`, backgroundColor: item.color }}
+                    >
+                      <span className="text-xs font-bold text-white">{item.count}</span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 w-8 text-right flex-shrink-0">
+                    {item.count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div
+            className="rounded-xl p-5 text-white"
+            style={{ background: 'linear-gradient(160deg, #0f1729 0%, #1e3a8a 100%)' }}
+          >
+            <h2 className="text-sm font-bold">Quick Actions</h2>
+            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              Streamline your workflow
+            </p>
+            <div className="mt-3.5 space-y-1.5">
+              {QUICK_ACTIONS.map((action) => (
+                <Link
+                  key={action.label}
+                  to={action.to}
+                  className="block w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-white/10 text-white/90 transition-colors hover:bg-white/20"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                >
+                  {action.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {/* Main 2-col layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Conversations panel */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">Conversations</h2>
-            <Link to="/conversations" className="text-sm text-brand-600 hover:text-brand-700 font-medium">
-              View all
+      {/* Bottom Grid: Today's Tours + Agent Leaderboard */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        {/* Today's Tours */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <h2 className="text-sm font-bold text-slate-900">Today's Tours</h2>
+            <Link
+              to="/tours"
+              className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              View All
             </Link>
           </div>
-
-          <div className="flex gap-1 px-4 pt-3 border-b border-slate-100">
-            {FILTER_TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
-                  activeTab === tab
-                    ? 'bg-brand-50 text-brand-600 border-b-2 border-brand-600'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
+          <div className="p-4 grid grid-cols-2 gap-3">
+            {activeTours.map((tour) => (
+              <div
+                key={tour.id}
+                className="bg-slate-50 border border-slate-200 rounded-xl p-3.5"
               >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex min-h-[320px]">
-            <div className="w-full sm:w-80 flex-shrink-0 border-r border-slate-100 max-h-[420px] overflow-y-auto">
-              {loading ? (
-                <div className="flex items-center justify-center py-10">
-                  <Loader2 className="w-6 h-6 text-brand-600 animate-spin" />
-                </div>
-              ) : filtered.length === 0 ? (
-                <p className="p-6 text-center text-slate-500 text-sm">No conversations here.</p>
-              ) : (
-                filtered.slice(0, 15).map((c) => {
-                  const msgs: any[] = c.messages ?? [];
-                  const lastMsg: string = msgs.length ? msgs[msgs.length - 1]?.content ?? '' : '';
-                  const badge = statusBadge(c.status);
-                  const isSelected = selectedConvo?.id === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => setSelectedConvo(c)}
-                      className={`w-full text-left flex items-start gap-3 px-4 py-3 border-b border-slate-100 last:border-0 transition-colors ${
-                        isSelected ? 'bg-brand-50' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 flex-shrink-0">
-                        {getInitials(c.user_phone)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-medium text-slate-900 text-sm truncate">{c.user_phone}</span>
-                          <span className="text-xs text-slate-400 flex-shrink-0">
-                            {formatTimeAgo(c.updated_at || c.created_at)}
-                          </span>
-                        </div>
-                        <span className={`inline-block text-xs px-2 py-0.5 rounded-full mt-1 font-medium ${badge.cls}`}>
-                          {badge.label}
-                        </span>
-                        {lastMsg && (
-                          <p className="text-xs text-slate-500 truncate mt-1">{lastMsg.slice(0, 50)}</p>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="hidden sm:block flex-1 bg-slate-50/50 p-5 overflow-y-auto max-h-[420px]">
-              {selectedConvo && (selectedConvo.messages ?? []).length > 0 ? (
-                <div className="space-y-3">
-                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
-                    {selectedConvo.user_phone}
-                  </p>
-                  {((selectedConvo.messages ?? []) as any[]).slice(-5).map((msg: any, i: number) => (
-                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                      <div
-                        className={`max-w-xs rounded-xl px-3 py-2 text-sm ${
-                          msg.role === 'user'
-                            ? 'bg-white border border-slate-200 text-slate-700'
-                            : 'bg-brand-600 text-white'
-                        }`}
-                      >
-                        {msg.content}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-slate-400 text-sm text-center">
-                    <Link to="/conversations" className="text-brand-600 hover:underline font-medium">
-                      Open Conversations
-                    </Link>{' '}
-                    to view and manage chats
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-wakeeli-sidebar rounded-xl p-5 text-white">
-          <h2 className="font-semibold text-lg">Quick Actions</h2>
-          <p className="text-white/70 text-sm mt-1">Streamline your workflow</p>
-          <div className="mt-4 space-y-2">
-            {QUICK_ACTIONS.map((action) => (
-              <Link
-                key={action.label}
-                to={action.to}
-                className="block w-full px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
-              >
-                {action.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Today's Tours */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Today's Tours</h2>
-          <Link to="/tours" className="text-sm text-brand-600 hover:text-brand-700 font-medium">
-            View All
-          </Link>
-        </div>
-        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {TOURS.map((tour) => (
-            <div key={tour.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-semibold text-slate-900 text-sm leading-snug">{tour.property}</p>
-                <span className="flex-shrink-0 text-xs font-medium bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                <span className="inline-block text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-md mb-2">
                   {tour.time}
                 </span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                <MapPin size={12} className="flex-shrink-0" />
-                <span className="truncate">{tour.address}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 flex-shrink-0">
-                  {tour.lead.split(' ').map((n) => n[0]).join('')}
+                <div className="text-sm font-bold text-slate-900 leading-snug">{tour.property}</div>
+                <div className="flex items-center gap-1 mt-1">
+                  <MapPin size={10} className="text-slate-400 flex-shrink-0" />
+                  <span className="text-xs text-slate-500 truncate">{tour.address}</span>
                 </div>
-                <span className="text-xs text-slate-700 font-medium truncate">{tour.lead}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <User size={12} className="flex-shrink-0" />
-                  <span>Agent: {tour.agent}</span>
+                <div className="flex items-center justify-between mt-2.5 gap-2">
+                  <span className="text-xs font-semibold text-slate-700 truncate">{tour.lead}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${TOUR_STATUS_COLORS[tour.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                    {tour.status}
+                  </span>
                 </div>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${TOUR_STATUS_COLORS[tour.status] ?? 'bg-slate-100 text-slate-600'}`}>
-                  {tour.status}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Agent Leaderboard */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <h2 className="text-sm font-bold text-slate-900">Agent Leaderboard</h2>
+            <span className="text-xs text-slate-400">This month</span>
+          </div>
+          <div className="px-5 pt-4 pb-5">
+
+            {AGENT_LEADERBOARD.map((agent) => (
+              <div
+                key={agent.rank}
+                className="flex items-center gap-2.5 py-2.5 border-b border-slate-100 last:border-0"
+              >
+                <span className={`text-sm font-extrabold w-5 text-center flex-shrink-0 ${rankColor(agent.rank)}`}>
+                  {agent.rank}
                 </span>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                  style={{ backgroundColor: agent.color }}
+                >
+                  {agent.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-700 leading-tight">{agent.name}</div>
+                  <div className="text-xs text-slate-400">{agent.deals} deals closed</div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-xs font-bold text-slate-900">
+                    {agent.conversion}
+                    {agent.delta && (
+                      <span className="text-emerald-600 font-semibold ml-1">{agent.delta}</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400">conversion</div>
+                </div>
+              </div>
+            ))}
+
+            {/* AI Performance */}
+            <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="text-xs font-semibold text-slate-500 mb-1">AI Performance</div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-extrabold text-purple-600">94%</span>
+                <span className="text-xs text-slate-400">conversations handled without agent</span>
               </div>
             </div>
-          ))}
+
+          </div>
         </div>
+
       </div>
     </div>
   );

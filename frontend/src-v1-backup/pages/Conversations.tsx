@@ -13,12 +13,11 @@ import {
   MessageSquare,
   Loader2,
   UserPlus,
+  Info,
   X,
   ChevronDown,
   ChevronLeft,
   Bot,
-  Search,
-  Send,
 } from 'lucide-react';
 
 type Message = {
@@ -41,14 +40,21 @@ type Conversation = {
   messages?: Message[];
 };
 
-// Solid avatar background colors matching the mockup palette
-const AVATAR_BG_COLORS = [
-  '#2060e8', '#7c3aed', '#0891b2', '#be185d',
-  '#0f766e', '#c2410c', '#dc2626', '#16a34a', '#d97706', '#64748b',
+const AVATAR_COLORS = [
+  'bg-brand-100 text-brand-700',
+  'bg-blue-100 text-blue-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-rose-100 text-rose-700',
+  'bg-purple-100 text-purple-700',
+  'bg-amber-100 text-amber-700',
+  'bg-teal-100 text-teal-700',
+  'bg-indigo-100 text-indigo-700',
+  'bg-orange-100 text-orange-700',
+  'bg-cyan-100 text-cyan-700',
 ];
 
-function avatarBg(id: number): string {
-  return AVATAR_BG_COLORS[Math.abs(id) % AVATAR_BG_COLORS.length];
+function avatarColor(id: number): string {
+  return AVATAR_COLORS[Math.abs(id) % AVATAR_COLORS.length];
 }
 
 function initials(name: string): string {
@@ -58,43 +64,10 @@ function initials(name: string): string {
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   new:        { label: 'New',     cls: 'bg-emerald-100 text-emerald-700' },
-  qualified:  { label: 'Hot',     cls: 'bg-amber-100 text-amber-700' },
+  qualified:  { label: 'Hot',     cls: 'bg-rose-100 text-rose-700' },
   handed_off: { label: 'Waiting', cls: 'bg-blue-100 text-blue-700' },
-  closed:     { label: 'Closed',  cls: 'bg-slate-100 text-slate-500' },
+  closed:     { label: 'Cold',    cls: 'bg-slate-100 text-slate-500' },
   urgent:     { label: 'Urgent',  cls: 'bg-red-100 text-red-700' },
-};
-
-// Conversations with simulated unread messages
-const UNREAD_IDS = new Set([102, 104]);
-
-// Matching listings per conversation id
-const CONV_LISTINGS: Record<number, Array<{ title: string; details: string; tags: string[] }>> = {
-  101: [
-    { title: '2BR Apt, Rue Sursock', details: '120m2 · 4th floor · $1,200/mo', tags: ['Parking', 'Generator'] },
-    { title: '2BR Apt, Sassine Square', details: '105m2 · 3rd floor · $980/mo', tags: [] },
-  ],
-  102: [
-    { title: '4BR Villa with Pool, Beit Mery', details: '500m2 garden · Sea view · $4,500/mo', tags: ['Pool', 'Furnished'] },
-    { title: '3BR Villa, Beit Mery', details: 'Fully furnished · $2,800/mo', tags: ['Furnished'] },
-  ],
-  105: [
-    { title: '3BR Chalet, Broummana', details: '180m2 · Mountain view · $3,500/mo', tags: ['Parking', 'Fiber'] },
-  ],
-  107: [
-    { title: '180m2, 8th Floor, Jounieh', details: 'Sea and mountain view · $380,000', tags: ['Parking', 'Rooftop'] },
-  ],
-  108: [
-    { title: '350m2 Villa, Dbayeh', details: '4BR · 600m2 garden · Pool · $950,000', tags: ['Pool', 'Garden', 'Gated'] },
-  ],
-};
-
-// Lead score by status
-const LEAD_SCORE: Record<string, number> = {
-  urgent: 95,
-  qualified: 82,
-  handed_off: 73,
-  new: 61,
-  closed: 100,
 };
 
 const MOCK_CONVERSATIONS: Conversation[] = [
@@ -103,7 +76,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     user_name: 'Charbel Khoury',
     user_phone: '+961 3 712 456',
     status: 'urgent',
-    user_requirements: { area: 'Achrafieh', type: 'rent', bedrooms: 2, budget: 1000 },
+    user_requirements: { area: 'Achrafieh', type: 'rent', bedrooms: 2 },
     agent_id: null,
     created_at: '2026-04-01T06:00:00.000Z',
     updated_at: '2026-04-01T07:55:00.000Z',
@@ -301,20 +274,6 @@ function isAiActive(c: Conversation): boolean {
   return c.agent_id == null && c.status !== 'closed';
 }
 
-function formatMsgTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  }) + ', ' + new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-// Tag keys shown as pills in requirements section
-const TAG_KEYS = ['area', 'bedrooms', 'type', 'duration', 'property_type', 'view', 'size'];
-
 export default function Conversations() {
   useRole();
   const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
@@ -327,28 +286,19 @@ export default function Conversations() {
   const [assigningAgent, setAssigningAgent] = useState(false);
   const [endingChat, setEndingChat] = useState(false);
   const [listFilter, setListFilter] = useState<'All' | 'AI Active' | 'Agent' | 'Waiting'>('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
   const [messageInput, setMessageInput] = useState('');
-  const [overrideAI, setOverrideAI] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
-
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const aiActiveCount = conversations.filter(isAiActive).length;
-  const urgentCount = conversations.filter((c) => c.status === 'urgent').length;
 
   const filteredConversations = conversations.filter((c) => {
-    const q = searchQuery.toLowerCase().trim();
-    if (q) {
-      const matchName = c.user_name?.toLowerCase().includes(q) ?? false;
-      const matchPhone = c.user_phone.toLowerCase().includes(q);
-      const matchMsg = c.messages?.some((m) => m.content.toLowerCase().includes(q)) ?? false;
-      if (!matchName && !matchPhone && !matchMsg) return false;
-    }
+    if (listFilter === 'All') return true;
     if (listFilter === 'AI Active') return isAiActive(c);
     if (listFilter === 'Agent') return c.agent_id != null;
-    if (listFilter === 'Waiting') return c.status === 'handed_off';
+    if (listFilter === 'Waiting') return c.status === 'handed_off' || c.status === 'waiting';
     return true;
   });
 
@@ -381,9 +331,7 @@ export default function Conversations() {
     setLoadingDetail(true);
     setDetail(null);
     getConversation(selected.id)
-      .then((res) => {
-        if (!cancelled) { setDetail(res.data); setLoadingDetail(false); }
-      })
+      .then((res) => { if (!cancelled) { setDetail(res.data); setLoadingDetail(false); } })
       .catch(() => {
         if (!cancelled) {
           const mockConvo = MOCK_CONVERSATIONS.find((c) => c.id === selected.id) ?? selected;
@@ -408,12 +356,6 @@ export default function Conversations() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleSelectConversation = (c: Conversation) => {
-    setSelected(c);
-    setOverrideAI(false);
-    setMobileView('chat');
-  };
-
   const handleAssignAgentOpen = async () => {
     if (agents.length === 0) {
       try {
@@ -434,7 +376,8 @@ export default function Conversations() {
       await loadList();
     } catch {
       toast.error('Failed to assign agent.');
-    } finally { setAssigningAgent(false); }
+    }
+    finally { setAssigningAgent(false); }
   };
 
   const handleEndChat = async () => {
@@ -446,23 +389,8 @@ export default function Conversations() {
       await loadList();
     } catch {
       toast.error('Failed to close conversation.');
-    } finally { setEndingChat(false); }
-  };
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageInput.trim() || !detail) return;
-    const newMsg: Message = {
-      id: Date.now(),
-      role: 'assistant',
-      content: messageInput.trim(),
-      timestamp: new Date().toISOString(),
-    };
-    setDetail((prev) =>
-      prev ? { ...prev, messages: [...(prev.messages ?? []), newMsg] } : prev,
-    );
-    setMessageInput('');
-    toast.success('Message sent.');
+    }
+    finally { setEndingChat(false); }
   };
 
   return (
@@ -473,30 +401,19 @@ export default function Conversations() {
         </div>
       )}
 
-      <div className="flex flex-1 min-h-0 rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="flex flex-1 min-h-0 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
 
-        {/* ===== LEFT: Conversation List ===== */}
-        <div className={`w-[280px] flex-shrink-0 bg-white border-r border-slate-200 flex flex-col ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
-
-          {/* Panel header */}
-          <div className="px-4 pt-3.5 pb-2.5 border-b border-slate-100 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-slate-900">All Chats</span>
-              <div className="flex items-center gap-1.5">
-                {aiActiveCount > 0 && (
-                  <span className="flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                    AI: {aiActiveCount}
-                  </span>
-                )}
-                {urgentCount > 0 && (
-                  <span className="flex items-center gap-1 text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
-                    {urgentCount}
-                  </span>
-                )}
-              </div>
-            </div>
+        {/* LEFT PANEL */}
+        <div className={`w-full md:w-80 md:flex-shrink-0 border-r border-slate-200 flex flex-col ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+            <h2 className="font-semibold text-slate-900 text-base">Conversations</h2>
+            {aiActiveCount > 0 && (
+              <span className="flex items-center gap-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-1 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                AI Active ({aiActiveCount})
+              </span>
+            )}
           </div>
 
           {/* Filter tabs */}
@@ -506,10 +423,10 @@ export default function Conversations() {
                 key={tab}
                 type="button"
                 onClick={() => setListFilter(tab)}
-                className={`flex-1 py-2 text-[11px] font-semibold text-center border-b-2 transition-colors ${
+                className={`flex-1 px-1 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
                   listFilter === tab
-                    ? 'text-brand-600 border-brand-600 bg-brand-50/40'
-                    : 'text-slate-400 border-transparent hover:text-slate-600'
+                    ? 'text-brand-600 border-b-2 border-brand-600 bg-brand-50/40'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
                 {tab}
@@ -517,85 +434,57 @@ export default function Conversations() {
             ))}
           </div>
 
-          {/* Search box */}
-          <div className="mx-3 my-2 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 flex-shrink-0">
-            <Search className="w-3 h-3 text-slate-400 flex-shrink-0" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search conversations..."
-              className="flex-1 bg-transparent text-xs text-slate-700 placeholder-slate-400 outline-none min-w-0"
-            />
-            {searchQuery && (
-              <button type="button" onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-
-          {/* Conversation list */}
+          {/* List */}
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length === 0 ? (
-              <div className="p-6 text-center">
-                <MessageSquare className="mx-auto w-8 h-8 text-slate-200 mb-2" />
-                <p className="text-xs text-slate-400">No conversations found</p>
+              <div className="p-6 text-center text-slate-400 text-sm">
+                <MessageSquare className="mx-auto h-10 w-10 text-slate-200 mb-2" />
+                No conversations yet
               </div>
             ) : (
               filteredConversations.map((c) => {
                 const lastMsg = c.messages?.[c.messages.length - 1];
-                const isSelected = selected?.id === c.id;
-                const isUnread = UNREAD_IDS.has(c.id);
                 const b = getBadge(c.status);
-                const isUrgent = c.status === 'urgent';
+                const isSelected = selected?.id === c.id;
                 return (
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => handleSelectConversation(c)}
-                    className={`w-full flex items-start gap-2.5 px-3.5 py-2.5 border-b border-slate-100 text-left transition-colors relative ${
-                      isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'
+                    onClick={() => { setSelected(c); setMobileView('chat'); }}
+                    className={`w-full flex items-start gap-3 px-4 py-3 text-left border-b border-slate-100 hover:bg-slate-50 transition-colors ${
+                      isSelected ? 'bg-brand-50' : ''
                     }`}
                   >
-                    {/* Urgent left accent bar */}
-                    {isUrgent && (
-                      <div className="absolute left-0 inset-y-0 w-[3px] bg-red-500 rounded-r" />
-                    )}
-
-                    {/* Avatar */}
-                    <div
-                      className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                      style={{ backgroundColor: avatarBg(c.id) }}
-                    >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${avatarColor(c.id)}`}>
                       {c.user_name ? initials(c.user_name) : c.user_phone.slice(-2)}
                     </div>
-
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span className="font-semibold text-[13px] text-slate-900 truncate">
+                        <span className="font-medium text-slate-900 text-sm truncate">
                           {c.user_name ?? c.user_phone}
                         </span>
-                        <span className="text-[10px] text-slate-400 flex-shrink-0">
+                        <span className="text-xs text-slate-400 flex-shrink-0">
                           {timeAgo(c.updated_at ?? c.created_at)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${b.cls}`}>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${b.cls}`}>
                           {b.label}
                         </span>
-                        <span className={`text-[10px] ${c.agent_id ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
-                          {c.agent_id ? c.agent?.name ?? 'Agent' : 'AI'}
+                        <span className="text-xs text-slate-500">
+                          {c.agent_id
+                            ? `Agent: ${c.agent?.name ?? 'Assigned'}`
+                            : 'AI Active'}
                         </span>
                       </div>
                       {lastMsg && (
-                        <p className="text-[11px] text-slate-400 truncate max-w-[168px]">
-                          {lastMsg.content}
+                        <p className="text-xs text-slate-400 truncate mt-0.5">
+                          {lastMsg.content.length > 50
+                            ? lastMsg.content.slice(0, 50) + '...'
+                            : lastMsg.content}
                         </p>
                       )}
                     </div>
-
-                    {isUnread && (
-                      <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-2" />
-                    )}
                   </button>
                 );
               })
@@ -603,10 +492,10 @@ export default function Conversations() {
           </div>
         </div>
 
-        {/* ===== MIDDLE: Chat Panel ===== */}
-        <div className={`flex-1 flex flex-col bg-slate-50/60 min-w-0 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
+        {/* RIGHT PANEL */}
+        <div className={`flex-1 flex flex-col min-w-0 bg-slate-50/30 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
           {!selected ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400">
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">
               <MessageSquare className="w-12 h-12 text-slate-200" />
               <p className="text-sm">Select a conversation</p>
             </div>
@@ -617,118 +506,124 @@ export default function Conversations() {
           ) : detail ? (
             <>
               {/* Chat header */}
-              <div className="bg-white border-b border-slate-200 px-5 py-3 flex items-center gap-3 flex-shrink-0">
-                {/* Mobile back button */}
-                <button
-                  type="button"
-                  onClick={() => setMobileView('list')}
-                  className="md:hidden text-brand-600 -ml-1 mr-1 flex-shrink-0"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-
-                {/* Avatar */}
-                <div
-                  className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                  style={{ backgroundColor: avatarBg(detail.id) }}
-                >
-                  {detail.user_name ? initials(detail.user_name) : detail.user_phone.slice(-2)}
-                </div>
-
-                {/* Contact info */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-slate-900 text-sm leading-tight">
-                    {detail.user_name ?? detail.user_phone}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block flex-shrink-0" />
-                    Online
-                    {detail.user_name && <span className="text-slate-400">· {detail.user_phone}</span>}
-                    {detail.status === 'urgent' && (
-                      <span className="text-red-600 font-bold">· Urgent</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* Assign agent dropdown */}
-                  <div className="relative" ref={dropdownRef}>
-                    <button
-                      type="button"
-                      onClick={handleAssignAgentOpen}
-                      disabled={assigningAgent}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
-                    >
-                      {assigningAgent
-                        ? <Loader2 className="w-3 h-3 animate-spin" />
-                        : <UserPlus className="w-3 h-3" />}
-                      Assign Agent
-                      <ChevronDown className="w-3 h-3" />
-                    </button>
-                    {showAgentDropdown && (
-                      <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-20 py-1 overflow-hidden">
-                        {agents.length === 0 ? (
-                          <p className="px-3 py-2 text-xs text-slate-400">No agents available</p>
-                        ) : (
-                          agents.map((a) => (
-                            <button
-                              key={a.id}
-                              type="button"
-                              onClick={() => handleAssignAgent(a.id)}
-                              className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                            >
-                              {a.name}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* End chat button */}
+              <div className="px-4 py-3 border-b border-slate-200 bg-white flex-shrink-0">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  {/* Back button - mobile only */}
                   <button
                     type="button"
-                    onClick={handleEndChat}
-                    disabled={endingChat || detail.status === 'closed'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-600 rounded-lg hover:bg-red-100 disabled:opacity-40 transition-colors"
+                    onClick={() => setMobileView('list')}
+                    className="md:hidden flex items-center gap-1 text-brand-600 font-medium text-sm flex-shrink-0 min-h-[44px] px-1"
                   >
-                    {endingChat
-                      ? <Loader2 className="w-3 h-3 animate-spin" />
-                      : <X className="w-3 h-3" />}
-                    End Chat
+                    <ChevronLeft size={18} />
+                    Back
                   </button>
+                  {/* Contact info */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${avatarColor(detail.id)}`}>
+                      {detail.user_name ? initials(detail.user_name) : detail.user_phone.slice(-2)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-slate-900 text-sm">
+                          {detail.user_name ?? detail.user_phone}
+                        </span>
+                        {detail.user_name && (
+                          <span className="text-xs text-slate-400">{detail.user_phone}</span>
+                        )}
+                        <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                          Online
+                        </span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getBadge(detail.status).cls}`}>
+                          {getBadge(detail.status).label}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="relative" ref={dropdownRef}>
+                      <button
+                        type="button"
+                        onClick={handleAssignAgentOpen}
+                        disabled={assigningAgent}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                      >
+                        {assigningAgent
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <UserPlus className="w-3.5 h-3.5" />}
+                        Assign Agent
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                      {showAgentDropdown && (
+                        <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-20 py-1 overflow-hidden">
+                          {agents.length === 0 ? (
+                            <p className="px-3 py-2 text-xs text-slate-400">No agents available</p>
+                          ) : (
+                            agents.map((a) => (
+                              <button
+                                key={a.id}
+                                type="button"
+                                onClick={() => handleAssignAgent(a.id)}
+                                className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                {a.name}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowDetails((v) => !v)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                        showDetails
+                          ? 'bg-brand-100 text-brand-700'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                      {showDetails ? 'Hide Details' : 'View Details'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleEndChat}
+                      disabled={endingChat || detail.status === 'closed'}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 rounded-lg hover:bg-red-100 disabled:opacity-40 transition-colors"
+                    >
+                      {endingChat
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <X className="w-3.5 h-3.5" />}
+                      End Chat
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
-                {/* Day divider */}
-                <div className="flex items-center gap-3 my-1">
-                  <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-[11px] font-semibold text-slate-400 whitespace-nowrap">
-                    {new Date(detail.created_at).toLocaleDateString('en-US', {
-                      weekday: 'long', month: 'long', day: 'numeric',
-                    })}
-                  </span>
-                  <div className="flex-1 h-px bg-slate-200" />
-                </div>
-
+              {/* Message thread */}
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
                 {(detail.messages ?? []).map((m) => {
                   const isUser = m.role === 'user';
                   return (
                     <div key={m.id} className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}>
                       <div
-                        className={`max-w-[70%] rounded-2xl px-3.5 py-2.5 ${
+                        className={`max-w-[72%] rounded-2xl px-4 py-2.5 ${
                           isUser
-                            ? 'bg-white border border-slate-200 text-slate-700 rounded-bl-[4px]'
-                            : 'bg-brand-600 text-white rounded-br-[4px]'
+                            ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
+                            : 'bg-brand-600 text-white rounded-tr-sm'
                         }`}
                       >
-                        <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{m.content}</p>
-                        <p className={`text-[10px] mt-1 ${isUser ? 'text-slate-400' : 'text-white/55'}`}>
-                          {formatMsgTime(m.timestamp)}
-                          {!isUser && <span className="opacity-60"> · AI</span>}
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                        <p className={`text-xs mt-1 ${isUser ? 'text-slate-400' : 'text-white/60'}`}>
+                          {new Date(m.timestamp).toLocaleTimeString(undefined, {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                          {!isUser && ' · AI'}
                         </p>
                       </div>
                     </div>
@@ -738,7 +633,8 @@ export default function Conversations() {
                 {/* AI typing indicator */}
                 {isAiActive(detail) && (
                   <div className="flex justify-end">
-                    <div className="bg-brand-600 rounded-2xl rounded-br-[4px] px-4 py-3 flex items-center gap-1">
+                    <div className="bg-brand-600 rounded-2xl rounded-tr-sm px-4 py-2.5 flex items-center gap-1.5">
+                      <span className="text-xs text-white/70 mr-1">AI is typing</span>
                       {[0, 1, 2].map((i) => (
                         <span
                           key={i}
@@ -754,36 +650,44 @@ export default function Conversations() {
               </div>
 
               {/* Input bar */}
-              <div className="bg-white border-t border-slate-200 px-5 py-3 flex-shrink-0">
-                {isAiActive(detail) && !overrideAI ? (
-                  <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5">
+              <div className="px-4 py-3 border-t border-slate-200 bg-white flex-shrink-0">
+                {isAiActive(detail) ? (
+                  <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200">
                     <Bot className="w-4 h-4 text-brand-500 flex-shrink-0" />
-                    <span className="text-sm text-slate-500">
-                      AI is handling this conversation.{' '}
-                      <button
-                        type="button"
-                        onClick={() => setOverrideAI(true)}
-                        className="text-brand-600 font-semibold hover:underline"
-                      >
-                        Override to type manually
-                      </button>
-                    </span>
+                    <span className="text-sm text-slate-500">AI is handling this conversation</span>
                   </div>
                 ) : (
-                  <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!messageInput.trim()) return;
+                      const newMsg: Message = {
+                        id: Date.now(),
+                        role: 'assistant',
+                        content: messageInput.trim(),
+                        timestamp: new Date().toISOString(),
+                      };
+                      setDetail((prev) =>
+                        prev ? { ...prev, messages: [...(prev.messages ?? []), newMsg] } : prev,
+                      );
+                      setMessageInput('');
+                      toast.success('Message sent.');
+                    }}
+                    className="flex items-center gap-2"
+                  >
                     <input
                       type="text"
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
                       placeholder="Type a message..."
-                      className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400 transition"
+                      className="flex-1 px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
                     />
                     <button
                       type="submit"
                       disabled={!messageInput.trim()}
-                      className="p-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                      className="px-4 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      <Send className="w-4 h-4" />
+                      Send
                     </button>
                   </form>
                 )}
@@ -796,181 +700,88 @@ export default function Conversations() {
           )}
         </div>
 
-        {/* ===== RIGHT: Lead Info Panel ===== */}
-        {selected && detail && (
-          <div className="hidden xl:flex w-[260px] flex-shrink-0 bg-white border-l border-slate-200 flex-col overflow-y-auto">
-
-            {/* Contact section */}
-            <div className="p-4 border-b border-slate-100">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center text-[15px] font-bold text-white flex-shrink-0"
-                  style={{ backgroundColor: avatarBg(detail.id) }}
-                >
-                  {detail.user_name ? initials(detail.user_name) : detail.user_phone.slice(-2)}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-slate-900 text-sm leading-tight truncate">
-                    {detail.user_name ?? 'Unknown'}
+        {/* DETAILS PANEL */}
+        {showDetails && detail && (
+          <div className="w-72 flex-shrink-0 border-l border-slate-200 flex flex-col bg-white overflow-y-auto">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+              <span className="font-semibold text-slate-900 text-sm">Lead Details</span>
+              <button
+                type="button"
+                onClick={() => setShowDetails(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-4 space-y-5">
+              {/* Contact */}
+              <section>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Contact</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${avatarColor(detail.id)}`}>
+                      {detail.user_name ? initials(detail.user_name) : detail.user_phone.slice(-2)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">{detail.user_name ?? 'Unknown'}</p>
+                      <p className="text-xs text-slate-500">{detail.user_phone}</p>
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-500 mt-0.5">{detail.user_phone}</div>
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${getBadge(detail.status).cls}`}>
+              </section>
+
+              {/* Status */}
+              <section>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Status</p>
+                <span className={`inline-flex text-xs px-2.5 py-1 rounded-full font-medium ${getBadge(detail.status).cls}`}>
                   {getBadge(detail.status).label}
                 </span>
-                {detail.user_requirements?.type && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 capitalize">
-                    {String(detail.user_requirements.type)}
-                  </span>
-                )}
-                {isAiActive(detail) && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                    AI Active
-                  </span>
-                )}
-              </div>
-            </div>
+              </section>
 
-            {/* Lead score */}
-            <div className="p-4 border-b border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Lead Score</p>
-              <div className="flex items-center gap-2.5">
-                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-brand-600 rounded-full transition-all duration-500"
-                    style={{ width: `${LEAD_SCORE[detail.status] ?? 60}%` }}
-                  />
-                </div>
-                <span className="text-sm font-bold text-slate-900 tabular-nums w-6 text-right">
-                  {LEAD_SCORE[detail.status] ?? 60}
-                </span>
-              </div>
-            </div>
+              {/* Agent */}
+              <section>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assigned Agent</p>
+                <p className="text-sm text-slate-700">
+                  {detail.agent?.name ?? <span className="text-slate-400 italic">AI Handling</span>}
+                </p>
+              </section>
 
-            {/* Requirements section */}
-            {detail.user_requirements && Object.keys(detail.user_requirements).length > 0 && (
-              <div className="p-4 border-b border-slate-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Requirements</p>
-                <div className="flex flex-wrap gap-1 mb-2.5">
-                  {TAG_KEYS.map((key) =>
-                    detail.user_requirements?.[key] ? (
-                      <span
-                        key={key}
-                        className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-md capitalize"
-                      >
-                        {key === 'bedrooms'
-                          ? `${detail.user_requirements[key]} BR`
-                          : String(detail.user_requirements[key])}
-                      </span>
-                    ) : null
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  {detail.user_requirements.budget && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">Budget</span>
-                      <span className="font-semibold text-slate-700">
-                        ${Number(detail.user_requirements.budget).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                  {detail.agent_id && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">Source</span>
-                      <span className="font-semibold text-slate-700">WhatsApp</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Matching listings */}
-            {CONV_LISTINGS[detail.id] && (
-              <div className="p-4 border-b border-slate-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Matching Listings</p>
-                <div className="space-y-2">
-                  {CONV_LISTINGS[detail.id].map((listing, idx) => (
-                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-2.5">
-                      <div className="text-xs font-bold text-slate-900">{listing.title}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{listing.details}</div>
-                      {listing.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {listing.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-md"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <div className="mt-1.5">
-                        <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">
-                          Available
-                        </span>
+              {/* Requirements */}
+              {detail.user_requirements && Object.keys(detail.user_requirements).length > 0 && (
+                <section>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Requirements</p>
+                  <div className="space-y-1.5">
+                    {Object.entries(detail.user_requirements).map(([k, v]) => (
+                      <div key={k} className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500 capitalize">{k.replace(/_/g, ' ')}</span>
+                        <span className="font-medium text-slate-800 capitalize">{String(v)}</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                    ))}
+                  </div>
+                </section>
+              )}
 
-            {/* Timeline */}
-            <div className="p-4 border-b border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Timeline</p>
-              <div className="space-y-3">
-                {detail.updated_at && detail.updated_at !== detail.created_at && (
-                  <div className="flex gap-2.5">
-                    <div className="w-2 h-2 rounded-full bg-brand-600 flex-shrink-0 mt-1.5" />
-                    <div>
-                      <div className="text-[11px] text-slate-700 font-medium">Last activity</div>
-                      <div className="text-[10px] text-slate-400">{formatDate(detail.updated_at)}</div>
-                    </div>
+              {/* Timeline */}
+              <section>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Timeline</p>
+                <div className="space-y-1.5 text-xs text-slate-600">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Created</span>
+                    <span>{new Date(detail.created_at).toLocaleDateString()}</span>
                   </div>
-                )}
-                {detail.status === 'qualified' && (
-                  <div className="flex gap-2.5">
-                    <div className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 mt-1.5" />
-                    <div>
-                      <div className="text-[11px] text-slate-700 font-medium">Lead qualified by AI</div>
-                      <div className="text-[10px] text-slate-400">{formatDate(detail.updated_at ?? detail.created_at)}</div>
+                  {detail.updated_at && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Last activity</span>
+                      <span>{new Date(detail.updated_at).toLocaleDateString()}</span>
                     </div>
-                  </div>
-                )}
-                <div className="flex gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-slate-300 flex-shrink-0 mt-1.5" />
-                  <div>
-                    <div className="text-[11px] text-slate-700 font-medium">Lead created via WhatsApp</div>
-                    <div className="text-[10px] text-slate-400">{formatDate(detail.created_at)}</div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Messages</span>
+                    <span className="font-medium">{detail.messages?.length ?? 0}</span>
                   </div>
                 </div>
-              </div>
+              </section>
             </div>
-
-            {/* Assigned agent */}
-            <div className="p-4">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Assigned Agent</p>
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                  style={{ backgroundColor: detail.agent ? '#64748b' : '#94a3b8' }}
-                >
-                  {detail.agent ? initials(detail.agent.name) : 'AI'}
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-slate-700">
-                    {detail.agent?.name ?? 'AI Handling'}
-                  </div>
-                  <div className="text-[10px] text-slate-400">
-                    {detail.agent ? 'Agent assigned' : 'No agent assigned'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
           </div>
         )}
 

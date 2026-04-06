@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  UserPlus, Filter, Users, UserCheck, Clock, TrendingUp,
+  UserPlus, Users, UserCheck, Clock, TrendingUp,
   X, Mail, Phone, Briefcase, ChevronLeft, ChevronRight,
-  Loader2, Search,
+  Loader2, Search, Filter,
 } from 'lucide-react';
 import { getAgents, createAgent, deleteAgent } from '../api';
 import { toast } from '../utils/toast';
 
-// ---- Types ----
+// Types
 
 type Agent = {
   id: number;
@@ -24,7 +24,7 @@ type Agent = {
 
 type AgentStatus = 'available' | 'on_break' | 'offline';
 
-// ---- Mock Data ----
+// Mock data
 
 const MOCK_AGENTS: Agent[] = [
   {
@@ -42,7 +42,7 @@ const MOCK_AGENTS: Agent[] = [
   {
     id: 2,
     name: 'Joelle Rizk',
-    role: 'Agent',
+    role: 'Senior Agent',
     specialization: 'Residential Rentals',
     email: 'joelle.r@wakeeli.app',
     phone: '+961 70 123 456',
@@ -54,7 +54,7 @@ const MOCK_AGENTS: Agent[] = [
   {
     id: 3,
     name: 'Elie Khoury',
-    role: 'Senior Agent',
+    role: 'Agent',
     specialization: 'Commercial',
     email: 'elie.k@wakeeli.app',
     phone: '+961 71 789 012',
@@ -89,7 +89,7 @@ const MOCK_AGENTS: Agent[] = [
   },
 ];
 
-// ---- Helpers ----
+// Helpers
 
 function getInitials(name: string): string {
   return name
@@ -100,12 +100,21 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-/** Deterministic mock performance data seeded by agent id */
+const AVATAR_COLORS = [
+  { bg: '#dbeafe', text: '#2563eb' },
+  { bg: '#ede9fe', text: '#7c3aed' },
+  { bg: '#d1fae5', text: '#059669' },
+  { bg: '#fce7f3', text: '#db2777' },
+  { bg: '#fed7aa', text: '#ea580c' },
+];
+
+function getAvatarColor(id: number) {
+  return AVATAR_COLORS[id % AVATAR_COLORS.length];
+}
+
 function mockPerf(id: number) {
   const s = id * 17;
   return {
-    role: s % 3 === 0 ? 'Senior Agent' : 'Agent',
-    status: 'available' as AgentStatus,
     totalLeads: 40 + (s % 60),
     liveLoad: 3 + (s % 8),
     conversionRate: 25 + (s % 30),
@@ -114,6 +123,7 @@ function mockPerf(id: number) {
     toursCompleted: 12 + (s % 20),
     dealsClosed: 3 + (s % 8),
     satisfaction: 87 + (s % 12),
+    convPct: Math.min(95, 25 + (s % 30)),
   };
 }
 
@@ -126,21 +136,15 @@ const MOCK_ASSIGNMENT_POOL = [
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const SLOTS = ['Morning', 'Afternoon'];
 
-const STATUS_COLORS: Record<AgentStatus, string> = {
-  available: 'bg-emerald-100 text-emerald-800',
-  on_break: 'bg-amber-100 text-amber-800',
-  offline: 'bg-slate-100 text-slate-600',
-};
-
-const STATUS_LABELS: Record<AgentStatus, string> = {
-  available: 'Available',
-  on_break: 'On Break',
-  offline: 'Offline',
+const STATUS_CONFIG: Record<AgentStatus, { bg: string; text: string; dot: string; label: string }> = {
+  available: { bg: '#f0fdf4', text: '#16a34a', dot: '#16a34a', label: 'Available' },
+  on_break: { bg: '#fffbeb', text: '#b45309', dot: '#f59e0b', label: 'On Break' },
+  offline: { bg: '#f8fafc', text: '#475569', dot: '#94a3b8', label: 'Offline' },
 };
 
 const PAGE_SIZE = 10;
 
-// ---- Agent Detail Drawer ----
+// Agent Detail Drawer
 
 function AgentDrawer({
   agent,
@@ -152,113 +156,135 @@ function AgentDrawer({
   onDelete: (id: number) => void;
 }) {
   const perf = mockPerf(agent.id);
-  const agentStatus: AgentStatus = agent.status ?? perf.status;
-  const agentRole = agent.role ?? perf.role;
+  const agentStatus: AgentStatus = agent.status ?? 'available';
+  const agentRole = agent.role ?? 'Agent';
   const initials = getInitials(agent.name);
+  const avatarColor = getAvatarColor(agent.id);
   const assignments = MOCK_ASSIGNMENT_POOL[agent.id % MOCK_ASSIGNMENT_POOL.length];
+  const statusCfg = STATUS_CONFIG[agentStatus];
 
   const assignmentStatuses = ['New', 'Touring', 'Negotiating', 'New'];
   const assignmentColors = [
-    'bg-blue-100 text-blue-700',
-    'bg-emerald-100 text-emerald-700',
-    'bg-purple-100 text-purple-700',
-    'bg-blue-100 text-blue-700',
+    { bg: '#eff6ff', text: '#2563eb' },
+    { bg: '#f0fdf4', text: '#16a34a' },
+    { bg: '#faf5ff', text: '#7c3aed' },
+    { bg: '#eff6ff', text: '#2563eb' },
   ];
 
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
-
-      {/* Drawer panel */}
-      <div className="fixed right-0 top-0 h-full w-[500px] max-w-full bg-white shadow-xl z-50 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
+      <div className="fixed right-0 top-0 h-full w-[480px] max-w-full bg-white shadow-2xl z-50 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300 border-l border-slate-200">
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold flex-shrink-0">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
+              style={{ background: avatarColor.bg, color: avatarColor.text }}
+            >
               {initials}
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">{agent.name}</h2>
-              <p className="text-sm text-slate-500">{agentRole}</p>
+              <p className="text-sm text-slate-500 mt-0.5">{agentRole}</p>
               <span
-                className={`inline-flex mt-1 px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[agentStatus]}`}
+                className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                style={{ background: statusCfg.bg, color: statusCfg.text }}
               >
-                {STATUS_LABELS[agentStatus]}
+                <span className="w-[5px] h-[5px] rounded-full" style={{ background: statusCfg.dot }} />
+                {statusCfg.label}
               </span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 mt-1 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors mt-0.5"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 px-6 py-5 space-y-7">
-          {/* Contact Info */}
-          <section>
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-              Contact Info
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-slate-600">
-                <Mail size={15} className="text-slate-400 flex-shrink-0" />
-                {agent.email || 'No email on file'}
+        <div className="flex-1 px-6 py-5 space-y-6">
+          {/* Stats overview */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Active Leads', value: String(perf.activeLeads), color: '#2563eb' },
+              { label: 'Tours Done', value: String(perf.toursCompleted), color: '#7c3aed' },
+              { label: 'Deals Closed', value: String(perf.dealsClosed), color: '#16a34a' },
+              { label: 'Satisfaction', value: `${perf.satisfaction}%`, color: '#f59e0b' },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="bg-[#f8fafc] rounded-xl p-4 border border-slate-100"
+              >
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{stat.label}</p>
+                <p className="text-xl font-bold mt-1" style={{ color: stat.color }}>{stat.value}</p>
               </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Phone size={15} className="text-slate-400 flex-shrink-0" />
-                {agent.phone || 'No phone on file'}
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Briefcase size={15} className="text-slate-400 flex-shrink-0" />
-                {agent.specialization ||
-                  (agent.specialties && agent.specialties.length > 0
-                    ? agent.specialties.join(', ')
-                    : 'General')}
-              </div>
-            </div>
-          </section>
+            ))}
+          </div>
 
-          {/* Performance Summary */}
+          {/* Conversion rate bar */}
+          <div className="bg-[#f8fafc] rounded-xl p-4 border border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Conversion Rate</span>
+              <span className="text-sm font-bold text-slate-900">{perf.conversionRate}%</span>
+            </div>
+            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${perf.convPct}%`, background: 'linear-gradient(90deg, #2563eb, #7c3aed)' }}
+              />
+            </div>
+            <p className="text-xs text-slate-400 mt-1.5">Avg response: {perf.avgResponse}</p>
+          </div>
+
+          {/* Contact info */}
           <section>
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-              Performance Summary
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Active Leads', value: String(perf.activeLeads) },
-                { label: 'Tours Completed', value: String(perf.toursCompleted) },
-                { label: 'Deals Closed', value: String(perf.dealsClosed) },
-                { label: 'Satisfaction Rate', value: `${perf.satisfaction}%` },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="bg-slate-50 rounded-lg p-3 border border-slate-100"
-                >
-                  <p className="text-xs text-slate-500">{stat.label}</p>
-                  <p className="text-xl font-bold text-slate-900 mt-0.5">{stat.value}</p>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Contact</h3>
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <Mail size={14} className="text-slate-400" />
                 </div>
-              ))}
+                <span className="text-slate-700">{agent.email || 'No email on file'}</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <Phone size={14} className="text-slate-400" />
+                </div>
+                <span className="text-slate-700">{agent.phone || 'No phone on file'}</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <Briefcase size={14} className="text-slate-400" />
+                </div>
+                <span className="text-slate-700">
+                  {agent.specialization ||
+                    (agent.specialties && agent.specialties.length > 0
+                      ? agent.specialties.join(', ')
+                      : 'General')}
+                </span>
+              </div>
             </div>
           </section>
 
-          {/* Current Assignments */}
+          {/* Current assignments */}
           <section>
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-              Current Assignments
-            </h3>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Current Assignments</h3>
             <div className="space-y-2">
               {assignments.map((name, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 border border-slate-100"
+                  className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-[#f8fafc] border border-slate-100"
                 >
-                  <span className="text-sm text-slate-700">{name}</span>
+                  <span className="text-sm font-medium text-slate-700">{name}</span>
                   <span
-                    className={`text-xs px-2 py-0.5 rounded font-medium ${assignmentColors[i % assignmentColors.length]}`}
+                    className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                    style={{
+                      background: assignmentColors[i % assignmentColors.length].bg,
+                      color: assignmentColors[i % assignmentColors.length].text,
+                    }}
                   >
                     {assignmentStatuses[i % assignmentStatuses.length]}
                   </span>
@@ -269,37 +295,31 @@ function AgentDrawer({
 
           {/* Schedule */}
           <section>
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-              Schedule &amp; Availability
-            </h3>
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Schedule</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-center">
                 <thead>
                   <tr>
                     <th className="py-1 pr-3 text-left text-slate-400 font-normal w-20"></th>
                     {DAYS.map((d) => (
-                      <th key={d} className="py-1 px-1 text-slate-500 font-medium">
-                        {d}
-                      </th>
+                      <th key={d} className="py-1 px-1 text-slate-500 font-semibold">{d}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {SLOTS.map((slot, si) => (
                     <tr key={slot}>
-                      <td className="py-1 pr-3 text-left text-slate-400 whitespace-nowrap">
-                        {slot}
-                      </td>
+                      <td className="py-1 pr-3 text-left text-slate-400 whitespace-nowrap text-xs">{slot}</td>
                       {DAYS.map((d, di) => {
                         const on = (agent.id + si + di) % 4 !== 0;
                         return (
                           <td key={d} className="py-1 px-0.5">
                             <span
-                              className={`inline-block w-full py-1 rounded text-xs font-medium ${
-                                on
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : 'bg-slate-100 text-slate-400'
-                              }`}
+                              className="inline-flex w-full py-1 rounded-lg text-xs font-semibold items-center justify-center"
+                              style={{
+                                background: on ? '#f0fdf4' : '#f8fafc',
+                                color: on ? '#16a34a' : '#94a3b8',
+                              }}
                             >
                               {on ? 'On' : 'Off'}
                             </span>
@@ -314,17 +334,14 @@ function AgentDrawer({
           </section>
         </div>
 
-        {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-slate-100 flex gap-3 flex-shrink-0">
-          <button className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-100 flex gap-3 flex-shrink-0 bg-[#f8fafc]/50">
+          <button className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition-colors">
             Edit Agent
           </button>
           <button
-            onClick={() => {
-              onDelete(agent.id);
-              onClose();
-            }}
-            className="flex-1 px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+            onClick={() => { onDelete(agent.id); onClose(); }}
+            className="flex-1 px-4 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-sm font-semibold transition-colors"
           >
             Remove Agent
           </button>
@@ -334,7 +351,7 @@ function AgentDrawer({
   );
 }
 
-// ---- Add Agent Modal ----
+// Add Agent Modal
 
 const EMPTY_FORM = {
   name: '',
@@ -368,55 +385,46 @@ function AddAgentModal({
     <>
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 className="text-base font-semibold text-slate-900">Add Agent</h3>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
+                <UserPlus size={15} className="text-brand-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">Add Agent</h3>
+            </div>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
           <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            {[
+              { key: 'name', label: 'Full Name', placeholder: 'e.g. Joelle Rizk', required: true, type: 'text' },
+              { key: 'email', label: 'Email', placeholder: 'agent@wakeeli.app', required: false, type: 'email' },
+              { key: 'phone', label: 'Phone', placeholder: '+961 70 000 000', required: false, type: 'text' },
+              { key: 'specialization', label: 'Specialization', placeholder: 'e.g. Residential, Luxury, Commercial', required: false, type: 'text' },
+            ].map(({ key, label, placeholder, required, type }) => (
+              <div key={key}>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  {label}{required && ' *'}
+                </label>
+                <input
+                  required={required}
+                  type={type}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
+                  placeholder={placeholder}
+                  value={form[key as keyof typeof EMPTY_FORM]}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                />
+              </div>
+            ))}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Full Name
-              </label>
-              <input
-                required
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Phone
-              </label>
-              <input
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Role
-              </label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Role</label>
               <select
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
               >
@@ -424,31 +432,20 @@ function AddAgentModal({
                 <option>Senior Agent</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Specialization
-              </label>
-              <input
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                placeholder="e.g. Residential, Luxury, Commercial"
-                value={form.specialization}
-                onChange={(e) => setForm({ ...form, specialization: e.target.value })}
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                className="px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60"
+                className="px-4 py-2.5 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-60"
               >
-                {saving ? 'Saving...' : 'Save Agent'}
+                {saving ? 'Saving...' : 'Add Agent'}
               </button>
             </div>
           </form>
@@ -458,7 +455,7 @@ function AddAgentModal({
   );
 }
 
-// ---- Main Page ----
+// Main page
 
 export default function Agents() {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -518,7 +515,6 @@ export default function Agents() {
 
   const handleDelete = (id: number) => {
     if (!confirm('Remove this agent?')) return;
-    // Optimistically remove from UI
     setAgents((prev) => prev.filter((a) => a.id !== id));
     setSelectedAgent(null);
     deleteAgent(id)
@@ -577,11 +573,7 @@ export default function Agents() {
   });
 
   const hasActiveFilters = nameSearch !== '' || roleFilter !== '';
-
-  const clearFilters = () => {
-    setNameSearch('');
-    setRoleFilter('');
-  };
+  const clearFilters = () => { setNameSearch(''); setRoleFilter(''); };
 
   const totalPages = Math.max(1, Math.ceil(filteredAgents.length / PAGE_SIZE));
   const paged = filteredAgents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -595,69 +587,71 @@ export default function Agents() {
       value: loading ? '...' : String(agents.length),
       sub: '+2 this month',
       icon: Users,
-      color: 'text-brand-600',
+      iconBg: '#eff6ff',
+      iconColor: '#2563eb',
+      borderColor: '#2563eb',
     },
     {
       label: 'Active Now',
-      value: loading ? '...' : String(agents.length),
-      sub: `${availabilityPct}% availability`,
+      value: loading ? '...' : String(tabCounts.available),
+      sub: `${availabilityPct}% available`,
       icon: UserCheck,
-      color: 'text-emerald-600',
+      iconBg: '#f0fdf4',
+      iconColor: '#16a34a',
+      borderColor: '#16a34a',
     },
     {
-      label: 'Avg Response Time',
+      label: 'Avg Response',
       value: '8m',
-      sub: '-2m improvement',
+      sub: '2m improvement',
       icon: Clock,
-      color: 'text-blue-600',
+      iconBg: '#eff6ff',
+      iconColor: '#2563eb',
+      borderColor: '#93c5fd',
     },
     {
       label: 'Avg Conversion',
       value: '34%',
       sub: '+5% this quarter',
       icon: TrendingUp,
-      color: 'text-purple-600',
+      iconBg: '#faf5ff',
+      iconColor: '#7c3aed',
+      borderColor: '#7c3aed',
     },
   ];
-
-  const tabLabels: Record<AgentStatus, string> = {
-    available: 'Available',
-    on_break: 'On Break',
-    offline: 'Offline',
-  };
 
   const showStart = filteredAgents.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const showEnd = Math.min(page * PAGE_SIZE, filteredAgents.length);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Agents</h1>
-          <p className="text-slate-500 mt-1 text-sm">
+          <h1 className="text-xl font-bold text-slate-900">Agents</h1>
+          <p className="text-slate-500 mt-0.5 text-sm">
             Manage your team, track performance, and optimize lead assignments
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm"
           >
-            <UserPlus size={16} />
+            <UserPlus size={15} />
             Add Agent
           </button>
           <div className="relative" ref={filterRef}>
             <button
               type="button"
               onClick={() => setFilterOpen((v) => !v)}
-              className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+              className={`inline-flex items-center gap-2 px-3 py-2.5 border rounded-lg text-sm font-medium transition-colors shadow-sm ${
                 hasActiveFilters
                   ? 'border-brand-400 bg-brand-50 text-brand-700'
-                  : 'border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+                  : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
               }`}
             >
-              <Filter size={16} />
+              <Filter size={15} />
               Filter
               {hasActiveFilters && (
                 <span className="w-4 h-4 bg-brand-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
@@ -669,52 +663,40 @@ export default function Agents() {
             {filterOpen && (
               <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-30 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-900">Filter Agents</span>
+                  <span className="text-sm font-bold text-slate-900">Filter Agents</span>
                   {hasActiveFilters && (
-                    <button
-                      type="button"
-                      onClick={clearFilters}
-                      className="text-xs text-brand-600 hover:text-brand-700 font-medium"
-                    >
+                    <button type="button" onClick={clearFilters} className="text-xs text-brand-600 hover:text-brand-700 font-semibold">
                       Clear all
                     </button>
                   )}
                 </div>
-
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Search by name
-                  </label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Search by name</label>
                   <div className="relative">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="text"
                       value={nameSearch}
                       onChange={(e) => { setNameSearch(e.target.value); setPage(1); }}
                       placeholder="e.g. Joelle"
-                      className="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                     {nameSearch && (
-                      <button
-                        type="button"
-                        onClick={() => setNameSearch('')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
+                      <button type="button" onClick={() => setNameSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                         <X size={13} />
                       </button>
                     )}
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Role</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Role</label>
                   <div className="flex gap-2 flex-wrap">
                     {['', 'Agent', 'Senior Agent'].map((r) => (
                       <button
                         key={r || 'all'}
                         type="button"
                         onClick={() => { setRoleFilter(r); setPage(1); }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
                           roleFilter === r
                             ? 'bg-brand-600 text-white border-brand-600'
                             : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -725,11 +707,10 @@ export default function Agents() {
                     ))}
                   </div>
                 </div>
-
                 <button
                   type="button"
                   onClick={() => setFilterOpen(false)}
-                  className="w-full py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+                  className="w-full py-2 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors"
                 >
                   Apply
                 </button>
@@ -740,66 +721,80 @@ export default function Agents() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {kpiCards.map((card) => {
           const Icon = card.icon;
           return (
             <div
               key={card.label}
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm"
+              className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm border-l-4"
+              style={{ borderLeftColor: card.borderColor }}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500">{card.label}</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{card.label}</p>
                   <p className="text-2xl font-bold text-slate-900 mt-1">{card.value}</p>
-                  <p className="text-xs text-slate-500 mt-1">{card.sub}</p>
+                  <p className="text-xs text-slate-400 mt-1">{card.sub}</p>
                 </div>
-                <Icon className={card.color} size={24} />
+                <div className="rounded-lg p-2" style={{ background: card.iconBg }}>
+                  <Icon size={18} style={{ color: card.iconColor }} />
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Status Filter Tabs */}
-      <div className="flex gap-2">
-        {(['available', 'on_break', 'offline'] as AgentStatus[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => {
-              setStatusTab(tab);
-              setPage(1);
-            }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              statusTab === tab
-                ? 'bg-brand-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            {tabLabels[tab]} ({tabCounts[tab]})
-          </button>
-        ))}
+      {/* Status Tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {(['available', 'on_break', 'offline'] as AgentStatus[]).map((tab) => {
+          const cfg = STATUS_CONFIG[tab];
+          const isActive = statusTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => { setStatusTab(tab); setPage(1); }}
+              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all border shadow-sm"
+              style={isActive
+                ? { background: cfg.bg, color: cfg.text, borderColor: cfg.dot }
+                : { background: '#fff', color: '#475569', borderColor: '#e2e8f0' }
+              }
+            >
+              <span
+                className="inline-block w-2 h-2 rounded-full mr-1.5"
+                style={{ background: isActive ? cfg.dot : '#94a3b8' }}
+              />
+              {cfg.label}
+              <span
+                className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                style={isActive ? { background: cfg.dot, color: '#fff' } : { background: '#f1f5f9', color: '#64748b' }}
+              >
+                {tabCounts[tab]}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+            <Loader2 className="w-7 h-7 text-brand-600 animate-spin" />
           </div>
         ) : paged.length === 0 ? (
-          <div className="text-center py-16 text-slate-500 text-sm">
+          <div className="text-center py-16 text-slate-400 text-sm">
             No agents with this status.
           </div>
         ) : (
           <>
-            {/* Mobile card view */}
+            {/* Mobile cards */}
             <div className="sm:hidden divide-y divide-slate-100">
               {paged.map((agent) => {
                 const perf = mockPerf(agent.id);
-                const agentInitials = getInitials(agent.name);
                 const agentStatus: AgentStatus = agent.status ?? 'available';
-                const agentRole = agent.role ?? perf.role;
+                const cfg = STATUS_CONFIG[agentStatus];
+                const ac = getAvatarColor(agent.id);
                 return (
                   <div
                     key={agent.id}
@@ -807,97 +802,129 @@ export default function Agents() {
                     onClick={() => setSelectedAgent(agent)}
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        {agentInitials}
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                        style={{ background: ac.bg, color: ac.text }}
+                      >
+                        {getInitials(agent.name)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="font-medium text-slate-900 truncate">{agent.name}</p>
-                          <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded font-medium ${STATUS_COLORS[agentStatus]}`}>
-                            {STATUS_LABELS[agentStatus]}
+                          <p className="font-semibold text-slate-900 truncate">{agent.name}</p>
+                          <span
+                            className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold"
+                            style={{ background: cfg.bg, color: cfg.text }}
+                          >
+                            {cfg.label}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">{agentRole} · {agent.email || 'No email'}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{agent.role} · {agent.email || 'No email'}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-xs text-center">
                       <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                        <p className="font-bold text-slate-900 text-base">{perf.totalLeads}</p>
-                        <p className="text-slate-400">Leads</p>
+                        <p className="font-bold text-slate-900 text-sm">{perf.totalLeads}</p>
+                        <p className="text-slate-400 mt-0.5">Leads</p>
                       </div>
                       <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                        <p className="font-bold text-slate-900 text-base">{perf.conversionRate}%</p>
-                        <p className="text-slate-400">Conversion</p>
+                        <p className="font-bold text-slate-900 text-sm">{perf.conversionRate}%</p>
+                        <p className="text-slate-400 mt-0.5">Conv.</p>
                       </div>
                       <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                        <p className="font-bold text-slate-900 text-base">{perf.avgResponse}</p>
-                        <p className="text-slate-400">Avg Response</p>
+                        <p className="font-bold text-slate-900 text-sm">{perf.avgResponse}</p>
+                        <p className="text-slate-400 mt-0.5">Resp.</p>
                       </div>
                     </div>
                   </div>
                 );
               })}
-              {/* Mobile pagination */}
               <div className="px-4 py-3 flex items-center justify-between text-sm text-slate-500 border-t border-slate-100">
-                <span>Showing {showStart} to {showEnd} of {filteredAgents.length}</span>
+                <span className="text-xs">Showing {showStart} to {showEnd} of {filteredAgents.length}</span>
                 <div className="flex gap-1">
-                  <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft size={14} /></button>
-                  <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronRight size={14} /></button>
+                  <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[36px] min-w-[36px] flex items-center justify-center"><ChevronLeft size={14} /></button>
+                  <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-2 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 min-h-[36px] min-w-[36px] flex items-center justify-center"><ChevronRight size={14} /></button>
                 </div>
               </div>
             </div>
 
-            {/* Desktop table view */}
+            {/* Desktop table */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    <th className="px-6 py-3">Agent</th>
-                    <th className="px-6 py-3">Role</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Total Assigned Leads</th>
-                    <th className="px-6 py-3">Live Load: Today</th>
-                    <th className="px-6 py-3">Conversion Rate</th>
-                    <th className="px-6 py-3">Avg Response</th>
+                  <tr className="bg-[#f8fafc] border-b border-slate-200">
+                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Agent</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Role</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Leads Assigned</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Live Load</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Conversion</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Performance</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Avg Response</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {paged.map((agent) => {
+                <tbody>
+                  {paged.map((agent, i) => {
                     const perf = mockPerf(agent.id);
-                    const initials = getInitials(agent.name);
                     const agentStatus: AgentStatus = agent.status ?? 'available';
-                    const agentRole = agent.role ?? perf.role;
+                    const cfg = STATUS_CONFIG[agentStatus];
+                    const ac = getAvatarColor(agent.id);
+                    const rowBg = i % 2 === 1 ? 'bg-[#f8fafc]/60' : 'bg-white';
                     return (
                       <tr
                         key={agent.id}
-                        className="hover:bg-slate-50 cursor-pointer transition-colors"
+                        className={`${rowBg} hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-100 last:border-0`}
                         onClick={() => setSelectedAgent(agent)}
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                              {initials}
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                              style={{ background: ac.bg, color: ac.text }}
+                            >
+                              {getInitials(agent.name)}
                             </div>
                             <div>
-                              <p className="font-medium text-slate-900">{agent.name}</p>
-                              <p className="text-xs text-slate-500">
-                                {agent.email || 'No email'}
-                              </p>
+                              <p className="font-semibold text-slate-900">{agent.name}</p>
+                              <p className="text-xs text-slate-400">{agent.email || 'No email'}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">{agentRole}</td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[agentStatus]}`}
-                          >
-                            {STATUS_LABELS[agentStatus]}
+                        <td className="px-5 py-3.5">
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-slate-100 text-slate-600">
+                            {agent.role ?? 'Agent'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">{perf.totalLeads}</td>
-                        <td className="px-6 py-4 text-slate-700">{perf.liveLoad}</td>
-                        <td className="px-6 py-4 text-slate-700">{perf.conversionRate}%</td>
-                        <td className="px-6 py-4 text-slate-700">{perf.avgResponse}</td>
+                        <td className="px-5 py-3.5">
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                            style={{ background: cfg.bg, color: cfg.text }}
+                          >
+                            <span className="w-[5px] h-[5px] rounded-full" style={{ background: cfg.dot }} />
+                            {cfg.label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-700 font-medium">{perf.totalLeads}</td>
+                        <td className="px-5 py-3.5 text-slate-700">{perf.liveLoad}</td>
+                        <td className="px-5 py-3.5">
+                          <span
+                            className="font-bold text-sm"
+                            style={{ color: perf.conversionRate >= 45 ? '#16a34a' : perf.conversionRate >= 35 ? '#2563eb' : '#b45309' }}
+                          >
+                            {perf.conversionRate}%
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${perf.convPct}%`,
+                                background: perf.conversionRate >= 45 ? '#16a34a' : perf.conversionRate >= 35 ? '#2563eb' : '#f59e0b',
+                              }}
+                            />
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-600 text-sm">{perf.avgResponse}</td>
                       </tr>
                     );
                   })}
@@ -905,16 +932,16 @@ export default function Agents() {
               </table>
             </div>
 
-            {/* Desktop Pagination */}
-            <div className="hidden sm:flex px-6 py-3 border-t border-slate-100 items-center justify-between text-sm text-slate-500">
-              <span>
+            {/* Desktop pagination */}
+            <div className="hidden sm:flex px-5 py-3.5 border-t border-slate-100 items-center justify-between text-sm text-slate-500 bg-[#f8fafc]/50">
+              <span className="text-xs text-slate-500">
                 Showing {showStart} to {showEnd} of {filteredAgents.length} agents
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft size={14} />
                 </button>
@@ -922,7 +949,7 @@ export default function Agents() {
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`px-3 py-1.5 rounded border text-sm font-medium transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
                       page === p
                         ? 'bg-brand-600 text-white border-brand-600'
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -934,7 +961,7 @@ export default function Agents() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="p-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight size={14} />
                 </button>
@@ -944,7 +971,6 @@ export default function Agents() {
         )}
       </div>
 
-      {/* Agent Detail Drawer */}
       {selectedAgent && (
         <AgentDrawer
           agent={selectedAgent}
@@ -953,7 +979,6 @@ export default function Agents() {
         />
       )}
 
-      {/* Add Agent Modal */}
       {showAddModal && (
         <AddAgentModal
           onClose={() => setShowAddModal(false)}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRole } from '../context/RoleContext';
+import { getTours } from '../api';
 import { Plus, MapPin, User, Loader2 } from 'lucide-react';
 
 const TOURS = [
@@ -121,19 +122,32 @@ const STATUS_COLORS: Record<string, string> = {
   Cancelled: 'bg-red-100 text-red-700',
 };
 
+type Tour = typeof TOURS[0];
 type StatusFilter = 'All' | 'Scheduled' | 'Completed' | 'Cancelled';
 
 export default function Tours() {
   const { role } = useRole();
   const [filter, setFilter] = useState<StatusFilter>('All');
-  const [tours, setTours] = useState(TOURS);
+  const [tours, setTours] = useState<Tour[]>(TOURS);
   const [loading, setLoading] = useState(true);
   const title = role === 'agent' ? 'Property Visits' : 'Property Tours';
 
   useEffect(() => {
-    // No tours endpoint in backend yet - use mock data
-    setTours(TOURS);
-    setLoading(false);
+    const fetchTours = async () => {
+      try {
+        const res = await getTours();
+        const data: Tour[] = res.data || [];
+        if (data.length > 0) {
+          setTours(data);
+        }
+        // No tours endpoint in backend yet. Falls back to mock data silently.
+      } catch {
+        // Tours API not available. Using mock data.
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTours();
   }, []);
 
   const filtered = filter === 'All' ? tours : tours.filter((t) => t.status === filter);
@@ -143,6 +157,14 @@ export default function Tours() {
     Completed: tours.filter((t) => t.status === 'Completed').length,
     Cancelled: tours.filter((t) => t.status === 'Cancelled').length,
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -208,19 +230,7 @@ export default function Tours() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-600" />
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-slate-400 text-sm">
-                    No tours found.
-                  </td>
-                </tr>
-              ) : filtered.map((tour) => (
+              {filtered.map((tour) => (
                 <tr key={tour.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">

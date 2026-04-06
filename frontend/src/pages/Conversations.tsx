@@ -286,6 +286,7 @@ export default function Conversations() {
   const [assigningAgent, setAssigningAgent] = useState(false);
   const [endingChat, setEndingChat] = useState(false);
   const [listFilter, setListFilter] = useState<'All' | 'AI Active' | 'Agent' | 'Waiting'>('All');
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -401,7 +402,7 @@ export default function Conversations() {
       <div className="flex flex-1 min-h-0 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
 
         {/* LEFT PANEL */}
-        <div className="w-80 flex-shrink-0 border-r border-slate-200 flex flex-col">
+        <div className={`w-full md:w-80 md:flex-shrink-0 border-r border-slate-200 flex flex-col ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
           {/* Header */}
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
             <h2 className="font-semibold text-slate-900 text-base">Conversations</h2>
@@ -447,7 +448,7 @@ export default function Conversations() {
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => setSelected(c)}
+                    onClick={() => { setSelected(c); setMobileView('chat'); }}
                     className={`w-full flex items-start gap-3 px-4 py-3 text-left border-b border-slate-100 hover:bg-slate-50 transition-colors ${
                       isSelected ? 'bg-brand-50' : ''
                     }`}
@@ -490,7 +491,7 @@ export default function Conversations() {
         </div>
 
         {/* RIGHT PANEL */}
-        <div className="flex-1 flex flex-col min-w-0 bg-slate-50/30">
+        <div className={`flex-1 flex flex-col min-w-0 bg-slate-50/30 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
           {!selected ? (
             <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">
               <MessageSquare className="w-12 h-12 text-slate-200" />
@@ -505,6 +506,15 @@ export default function Conversations() {
               {/* Chat header */}
               <div className="px-4 py-3 border-b border-slate-200 bg-white flex-shrink-0">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
+                  {/* Back button - mobile only */}
+                  <button
+                    type="button"
+                    onClick={() => setMobileView('list')}
+                    className="md:hidden flex items-center gap-1 text-brand-600 font-medium text-sm flex-shrink-0 min-h-[44px] px-1"
+                  >
+                    <ChevronLeft size={18} />
+                    Back
+                  </button>
                   {/* Contact info */}
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${avatarColor(detail.id)}`}>

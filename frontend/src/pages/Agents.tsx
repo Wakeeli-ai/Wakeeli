@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   UserPlus, Filter, Users, UserCheck, Clock, TrendingUp,
   X, Mail, Phone, Briefcase, ChevronLeft, ChevronRight,
-  Loader2,
+  Loader2, Search,
 } from 'lucide-react';
 import { getAgents, createAgent, deleteAgent } from '../api';
 import { toast } from '../utils/toast';
@@ -467,6 +467,20 @@ export default function Agents() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [page, setPage] = useState(1);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [nameSearch, setNameSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     loadAgents();

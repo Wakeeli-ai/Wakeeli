@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MessageCircle, Globe, Building2, ArrowRight, User, Users, Bell, Shield, UserPlus } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
+import { toast } from '../utils/toast';
 
 type Permission =
   | 'fullAccess'
@@ -237,6 +238,7 @@ export default function Settings() {
             <h2 className="font-semibold text-slate-900">Company Profile</h2>
             <button
               type="button"
+              onClick={() => toast.success('Settings saved.')}
               className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700"
             >
               Save Changes

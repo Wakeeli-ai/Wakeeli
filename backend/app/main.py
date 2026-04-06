@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import text, inspect
 from app.database import engine, Base
-from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics
+from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics, demo
 from app.models import Listing
 from app.config import settings
 
@@ -44,6 +44,7 @@ app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])
 app.include_router(conversations.router, prefix="/api/conversations", tags=["Conversations"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(demo.router, prefix="/api/demo", tags=["Demo"])
 
 # Backend static files (chat-test and costs-dashboard HTML)
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
@@ -144,6 +145,34 @@ def read_root():
     return {"message": "Wakeeli AI Backend is running."}
 
 
+@app.get("/demo/auto")
+def demo_auto():
+    """Serve the Wakeeli demo chat in Auto Booking mode."""
+    html_path = os.path.join(os.path.dirname(__file__), "..", "demo", "demo.html")
+    return FileResponse(
+        html_path,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
+@app.get("/demo/handoff")
+def demo_handoff():
+    """Serve the Wakeeli demo chat in Agent Handoff mode."""
+    html_path = os.path.join(os.path.dirname(__file__), "..", "demo", "demo.html")
+    return FileResponse(
+        html_path,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
 # SPA catch-all: must be registered LAST
 # Serves index.html for any non-API, non-static path (React Router support)
 @app.get("/{full_path:path}")
@@ -156,6 +185,10 @@ async def serve_spa(full_path: str):
     # The dedicated /superadmin/{path:path} route above handles these, but
     # this guard is a hard safety net in case route ordering ever shifts.
     if full_path == "superadmin" or full_path.startswith("superadmin/"):
+        return JSONResponse({"error": "Not found"}, status_code=404)
+
+    # Never intercept demo paths - the explicit routes above handle these.
+    if full_path == "demo/auto" or full_path == "demo/handoff":
         return JSONResponse({"error": "Not found"}, status_code=404)
 
     frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")

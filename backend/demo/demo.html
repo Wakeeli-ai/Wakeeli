@@ -495,6 +495,17 @@
     messages.appendChild(label);
   }
 
+  function stripMarkdown(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/gs, '$1')
+      .replace(/\*(.*?)\*/gs, '$1')
+      .replace(/__(.*?)__/gs, '$1')
+      .replace(/_(.*?)_/gs, '$1')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^[-*]\s+/gm, '')
+      .trim();
+  }
+
   function appendBubble(role, text) {
     hideEmptyState();
     const messages = document.getElementById('messages');
@@ -505,8 +516,9 @@
     const bubble = document.createElement('div');
     bubble.className = 'bubble ' + role;
 
-    // Render text (preserve newlines)
-    const textNode = document.createTextNode(text);
+    // Strip markdown from bot messages, preserve newlines
+    const displayText = role === 'bot' ? stripMarkdown(text) : text;
+    const textNode = document.createTextNode(displayText);
     bubble.appendChild(textNode);
 
     const ts = document.createElement('div');

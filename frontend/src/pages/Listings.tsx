@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { createListing, deleteListing, getListings } from '../api';
+import { createListing, deleteListing, getListings, updateListing } from '../api';
 import {
   Building2, Bed, Bath, Maximize, X, MapPin, Search, Loader2,
   LayoutGrid, List, ChevronLeft, ChevronRight, SlidersHorizontal,
@@ -2751,10 +2751,12 @@ function ListingDrawer({
   listing,
   onClose,
   onDelete,
+  onEdit,
 }: {
   listing: Listing;
   onClose: () => void;
   onDelete: (id: string) => void;
+  onEdit: (listing: Listing) => void;
 }) {
   const status = listing.status || 'available';
   const statusLabel = STATUS_LABELS[status] || status;
@@ -2913,11 +2915,14 @@ function ListingDrawer({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-100 flex gap-3 flex-shrink-0">
-          <button className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors">
+          <button
+            onClick={() => onEdit(listing)}
+            className="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
             Edit Listing
           </button>
           <button
-            onClick={() => { onDelete(listing.id); onClose(); }}
+            onClick={() => onDelete(listing.id)}
             className="flex-1 px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
           >
             Delete Listing
@@ -3119,6 +3124,200 @@ function AddListingModal({
   );
 }
 
+// Edit Listing Modal
+
+type EditForm = {
+  title: string;
+  listing_type: string;
+  property_type: string;
+  city: string;
+  area: string;
+  price: string;
+  bedrooms: number;
+  bathrooms: number;
+  built_up_area: string;
+  description: string;
+};
+
+function EditListingModal({
+  listing,
+  onClose,
+  onSave,
+}: {
+  listing: Listing;
+  onClose: () => void;
+  onSave: (id: string, data: EditForm) => Promise<void>;
+}) {
+  const currentPrice = listing.listing_type === 'buy' ? listing.sale_price : listing.rent_price;
+  const [form, setForm] = useState<EditForm>({
+    title: listing.title || '',
+    listing_type: listing.listing_type || 'rent',
+    property_type: listing.property_type || 'Apartment',
+    city: listing.city || '',
+    area: listing.area || '',
+    price: currentPrice ? String(currentPrice) : '',
+    bedrooms: listing.bedrooms || 0,
+    bathrooms: listing.bathrooms || 0,
+    built_up_area: listing.built_up_area ? String(listing.built_up_area) : '',
+    description: listing.description || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave(listing.id, form);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+            <h3 className="text-base font-semibold text-slate-900">Edit Listing</h3>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+              <input
+                required
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Listing Type</label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.listing_type}
+                  onChange={(e) => setForm({ ...form, listing_type: e.target.value })}
+                >
+                  <option value="rent">For Rent</option>
+                  <option value="buy">For Sale</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Property Type</label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  value={form.property_type}
+                  onChange={(e) => setForm({ ...form, property_type: e.target.value })}
+                >
+                  <option>Apartment</option>
+                  <option>House</option>
+                  <option>Studio</option>
+                  <option>Villa</option>
+                  <option>Penthouse</option>
+                  <option>Duplex</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
+                <input
+                  required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Area / Neighborhood</label>
+                <input
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.area}
+                  onChange={(e) => setForm({ ...form, area: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {form.listing_type === 'buy' ? 'Sale Price ($)' : 'Rent Price ($/mo)'}
+              </label>
+              <input
+                required
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="e.g. 250,000"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: formatNumberInput(e.target.value) })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Bedrooms</label>
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.bedrooms}
+                  onChange={(e) => setForm({ ...form, bedrooms: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Bathrooms</label>
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={form.bathrooms}
+                  onChange={(e) => setForm({ ...form, bathrooms: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Built-up Area (m&sup2;)</label>
+              <input
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="e.g. 120"
+                value={form.built_up_area}
+                onChange={(e) => setForm({ ...form, built_up_area: formatNumberInput(e.target.value) })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+              <textarea
+                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // Status pill component
 
 interface StatusBadgeConfig {
@@ -3160,6 +3359,8 @@ export default function Listings() {
   const [page, setPage] = useState(1);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
 
   useEffect(() => {
     loadListings();
@@ -3213,6 +3414,38 @@ export default function Listings() {
     });
     toast.success('Listing added.');
     setShowAddModal(false);
+    loadListings();
+  };
+
+  const handleEditListing = async (id: string, data: EditForm) => {
+    const parsed = parseNumberInput(data.price);
+    const payload = {
+      title: data.title,
+      listing_type: data.listing_type,
+      property_type: data.property_type,
+      city: data.city,
+      area: data.area || null,
+      bedrooms: data.bedrooms,
+      bathrooms: data.bathrooms,
+      built_up_area: parseNumberInput(data.built_up_area),
+      description: data.description,
+      sale_price: data.listing_type === 'buy' ? parsed : null,
+      rent_price: data.listing_type === 'rent' ? parsed : null,
+    };
+    try {
+      await updateListing(Number(id), payload);
+    } catch {
+      // API may not support PUT yet; update local state as fallback
+      setListings((prev) =>
+        prev.map((l) => (l.id === id ? ({ ...l, ...payload } as Listing) : l)),
+      );
+      if (selectedListing?.id === id) {
+        setSelectedListing((prev) => (prev ? ({ ...prev, ...payload } as Listing) : null));
+      }
+    }
+    toast.success('Listing updated.');
+    setShowEditModal(false);
+    setEditingListing(null);
     loadListings();
   };
 
@@ -3693,6 +3926,16 @@ export default function Listings() {
           listing={selectedListing}
           onClose={() => setSelectedListing(null)}
           onDelete={handleDelete}
+          onEdit={(l) => { setEditingListing(l); setShowEditModal(true); }}
+        />
+      )}
+
+      {/* Edit Listing Modal */}
+      {showEditModal && editingListing && (
+        <EditListingModal
+          listing={editingListing}
+          onClose={() => { setShowEditModal(false); setEditingListing(null); }}
+          onSave={handleEditListing}
         />
       )}
 

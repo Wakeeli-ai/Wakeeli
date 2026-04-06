@@ -36,6 +36,7 @@ api.interceptors.response.use(
 
 export const getListings = () => api.get('/listings/');
 export const createListing = (data: any) => api.post('/listings/', data);
+export const updateListing = (id: number, data: any) => api.put(`/listings/${id}`, data);
 export const deleteListing = (id: number) => api.delete(`/listings/${id}`);
 
 export interface MatchedListing {

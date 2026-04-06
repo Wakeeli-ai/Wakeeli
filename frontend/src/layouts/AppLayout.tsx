@@ -8,15 +8,16 @@ import {
   Calendar,
   Settings,
   BarChart3,
-  Search,
   Bell,
   LogOut,
   UserPlus,
-  Menu,
   X,
   User,
   CheckCheck,
   UserCog,
+  MoreHorizontal,
+  Search,
+  Menu,
 } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
 
@@ -106,17 +107,41 @@ const agentNav: NavItem[] = [
   { to: '/tours', icon: Calendar, label: 'My Tours' },
 ];
 
+// Bottom 4 tab items (mobile)
+const bottomTabItems = [
+  { to: '/', icon: LayoutDashboard, label: 'Home' },
+  { to: '/conversations', icon: MessageSquare, label: 'Inbox' },
+  { to: '/listings', icon: Building2, label: 'Listings' },
+  { to: '/leads', icon: Users, label: 'Leads' },
+];
+
+// "More" sheet items (admin only)
+const adminMoreItems = [
+  { to: '/tours', icon: Calendar, label: 'Tours' },
+  { to: '/agents', icon: UserCog, label: 'Agents' },
+  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
+];
+
+// "More" sheet items (agent)
+const agentMoreItems = [
+  { to: '/tours', icon: Calendar, label: 'My Tours' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
+];
+
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { role, user, logout } = useRole();
   const navItems = role === 'admin' ? adminNav : agentNav;
+  const moreItems = role === 'admin' ? adminMoreItems : agentMoreItems;
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -143,6 +168,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Close More sheet when route changes
+  useEffect(() => {
+    setMoreOpen(false);
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   const NOTIF_TYPE_COLORS: Record<string, string> = {
     lead: 'bg-brand-100 text-brand-600',
@@ -174,10 +205,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const currentNavItem = navItems.find((item) => item.to === location.pathname);
   const pageTitle = currentNavItem?.label || 'Dashboard';
 
+  // Check if current route is in "More" items (for active state highlighting)
+  const isMoreActive = moreItems.some((item) => item.to === location.pathname);
+
   return (
     <div className="flex h-screen bg-slate-100 text-slate-900 overflow-hidden">
 
-      {/* Mobile backdrop */}
+      {/* Desktop sidebar backdrop (mobile legacy, unused now) */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -186,26 +220,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* ===== SIDEBAR - desktop only ===== */}
       <aside
-        className={`
-          fixed top-0 left-0 h-full z-50 flex flex-col
-          transition-transform duration-300
-          md:relative md:top-auto md:left-auto md:h-auto md:z-auto md:flex-shrink-0
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}
+        className="hidden md:flex flex-col flex-shrink-0"
         style={{ backgroundColor: '#0f1729', width: '232px' }}
       >
-        {/* Mobile close button */}
-        <button
-          type="button"
-          onClick={closeSidebar}
-          className="absolute top-4 right-4 text-white/50 hover:text-white md:hidden p-1"
-          aria-label="Close menu"
-        >
-          <X size={20} />
-        </button>
-
         {/* Logo pill */}
         <div className="px-4 pt-6 pb-5">
           <div
@@ -235,7 +254,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="mx-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
         {/* Nav */}
@@ -247,7 +265,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.to + item.label}
                 to={item.to}
-                onClick={closeSidebar}
                 className="flex items-center gap-[10px] rounded-lg font-medium transition-all duration-150 mb-[1px]"
                 style={{
                   padding: '9px 12px',
@@ -310,22 +327,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <div
-                className="text-white font-semibold truncate"
-                style={{ fontSize: 12 }}
-              >
+              <div className="text-white font-semibold truncate" style={{ fontSize: 12 }}>
                 {displayName}
               </div>
-              <div
-                className="truncate"
-                style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}
-              >
+              <div className="truncate" style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
                 {displayLabel}
               </div>
             </div>
             <button
               type="button"
-              onClick={() => { closeSidebar(); handleLogout(); }}
+              onClick={handleLogout}
               className="transition-colors flex-shrink-0 p-1 rounded"
               style={{ color: 'rgba(255,255,255,0.3)' }}
               title="Logout"
@@ -338,34 +349,158 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main */}
+      {/* ===== MAIN AREA ===== */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-14 flex-shrink-0 bg-white border-b border-slate-200 flex items-center px-3 md:px-6 gap-2 md:gap-3">
 
-          {/* Hamburger - mobile only */}
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
-            aria-label="Open menu"
-          >
-            <Menu size={22} />
-          </button>
-
-          {/* Logo in header - mobile only */}
-          <div className="md:hidden flex items-center gap-2 flex-shrink-0">
-            <img src="/logo-icon.png" alt="Wakeeli" className="w-7 h-7 object-contain" />
-            <span className="text-sm font-semibold text-slate-900 tracking-wide">Wakeeli</span>
+        {/* ===== MOBILE HEADER ===== */}
+        <header className="md:hidden h-14 flex-shrink-0 bg-white border-b border-slate-200 flex items-center px-4 gap-3 z-30">
+          {/* Logo */}
+          <div className="flex items-center gap-2 flex-1">
+            <div
+              className="flex items-center justify-center rounded-lg flex-shrink-0"
+              style={{ width: 28, height: 28, background: '#2060e8', borderRadius: 6 }}
+            >
+              <img src="/logo-icon.png" alt="Wakeeli" className="object-contain" style={{ width: 14, height: 14 }} />
+            </div>
+            <span className="text-sm font-bold text-slate-900 tracking-wide">Wakeeli</span>
           </div>
 
-          {/* Page title - desktop only */}
-          <div className="hidden md:block flex-shrink-0">
+          {/* New Lead shortcut */}
+          <Link
+            to="/leads"
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-semibold"
+          >
+            <UserPlus size={14} />
+            <span className="bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">3</span>
+          </Link>
+
+          {/* Notification bell */}
+          <div className="relative" ref={notifRef}>
+            <button
+              type="button"
+              onClick={() => { setNotifOpen((v) => !v); setUserMenuOpen(false); }}
+              className="relative p-2 text-slate-600 rounded-lg min-w-[40px] min-h-[40px] flex items-center justify-center"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell size={14} className="text-slate-600" />
+                    <span className="font-semibold text-slate-900 text-sm">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={markAllRead}
+                      className="flex items-center gap-1 text-xs text-brand-600 font-medium"
+                    >
+                      <CheckCheck size={12} />
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-[320px] overflow-y-auto divide-y divide-slate-50">
+                  {notifications.map((n) => (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => markRead(n.id)}
+                      className={`w-full text-left px-4 py-3 flex gap-3 items-start ${!n.read ? 'bg-brand-50/40' : ''}`}
+                    >
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold ${NOTIF_TYPE_COLORS[n.type]}`}>
+                        {n.type === 'lead' ? 'L' : n.type === 'tour' ? 'T' : n.type === 'agent' ? 'A' : 'S'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-xs font-semibold ${!n.read ? 'text-slate-900' : 'text-slate-600'}`}>
+                            {n.title}
+                          </p>
+                          {!n.read && <span className="w-2 h-2 rounded-full bg-brand-600 flex-shrink-0 mt-1" />}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{n.body}</p>
+                        <p className="text-[10px] text-slate-400 mt-1">{n.time}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Avatar */}
+          <div className="relative" ref={userMenuRef}>
+            <button
+              type="button"
+              onClick={() => { setUserMenuOpen((v) => !v); setNotifOpen(false); }}
+              className="flex items-center"
+            >
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                style={{ background: '#ede9fe', color: '#7c3aed' }}
+              >
+                {initials}
+              </div>
+            </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100">
+                  <p className="text-sm font-semibold text-slate-900">{displayName}</p>
+                  <p className="text-xs text-slate-500">{displayLabel}</p>
+                </div>
+                <div className="py-1">
+                  <Link
+                    to="/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700"
+                  >
+                    <User size={14} className="text-slate-400" />
+                    My Profile
+                  </Link>
+                  <Link
+                    to="/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700"
+                  >
+                    <Settings size={14} className="text-slate-400" />
+                    Settings
+                  </Link>
+                </div>
+                <div className="border-t border-slate-100 py-1">
+                  <button
+                    type="button"
+                    onClick={() => { setUserMenuOpen(false); handleLogout(); }}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 w-full text-left"
+                  >
+                    <LogOut size={14} className="text-red-400" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* ===== DESKTOP HEADER ===== */}
+        <header className="hidden md:flex h-14 flex-shrink-0 bg-white border-b border-slate-200 items-center px-6 gap-3">
+          <div className="flex-shrink-0">
             <span className="text-[15px] font-bold text-slate-900">{pageTitle}</span>
           </div>
 
-          {/* Search - desktop only */}
-          <form onSubmit={handleSearch} className="hidden md:block ml-4 w-72 flex-shrink-0">
+          <form onSubmit={handleSearch} className="ml-4 w-72 flex-shrink-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
               <input
@@ -378,13 +513,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </form>
 
-          <div className="ml-auto flex items-center gap-2 md:gap-3">
+          <div className="ml-auto flex items-center gap-3">
             <Link
               to="/leads"
-              className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 min-h-[36px] transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
             >
               <UserPlus size={16} />
-              <span className="hidden sm:inline">New Lead</span>
+              New Lead
               <span className="bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">3</span>
             </Link>
 
@@ -453,10 +588,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                     ))}
                   </div>
                   <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50">
-                    <button
-                      type="button"
-                      className="text-xs text-brand-600 hover:text-brand-700 font-medium transition-colors"
-                    >
+                    <button type="button" className="text-xs text-brand-600 hover:text-brand-700 font-medium transition-colors">
                       View all notifications
                     </button>
                   </div>
@@ -469,7 +601,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => { setUserMenuOpen((v) => !v); setNotifOpen(false); }}
-                className="flex items-center gap-2 md:gap-3 pl-2 md:pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-3 pl-3 border-l border-slate-200 hover:opacity-80 transition-opacity"
               >
                 <div className="hidden sm:block text-right">
                   <p className="text-sm font-semibold text-slate-900">{displayName}</p>
@@ -523,12 +655,139 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6">
+        {/* ===== PAGE CONTENT ===== */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">
           {children}
         </main>
       </div>
+
+      {/* ===== BOTTOM TAB BAR - mobile only ===== */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200"
+        style={{ height: 60 }}
+      >
+        <div className="flex h-full">
+          {bottomTabItems.map((tab) => {
+            const isActive = location.pathname === tab.to;
+            const Icon = tab.icon;
+            return (
+              <Link
+                key={tab.to}
+                to={tab.to}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] transition-colors"
+              >
+                <Icon
+                  size={22}
+                  className={isActive ? 'text-brand-600' : 'text-slate-400'}
+                />
+                <span
+                  className={`text-[10px] font-semibold ${isActive ? 'text-brand-600' : 'text-slate-400'}`}
+                >
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+
+          {/* More button */}
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px]"
+          >
+            <MoreHorizontal
+              size={22}
+              className={isMoreActive ? 'text-brand-600' : 'text-slate-400'}
+            />
+            <span
+              className={`text-[10px] font-semibold ${isMoreActive ? 'text-brand-600' : 'text-slate-400'}`}
+            >
+              More
+            </span>
+          </button>
+        </div>
+      </nav>
+
+      {/* ===== MORE SHEET - mobile only ===== */}
+      {moreOpen && (
+        <>
+          <div
+            className="md:hidden fixed inset-0 bg-black/40 z-50"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div
+            className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+
+            <div className="flex items-center justify-between px-5 py-3">
+              <span className="font-bold text-slate-900 text-base">More</span>
+              <button
+                type="button"
+                onClick={() => setMoreOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* More nav items grid */}
+            <div className="px-4 pb-4 grid grid-cols-2 gap-2">
+              {moreItems.map((item) => {
+                const isActive = location.pathname === item.to;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMoreOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
+                      isActive
+                        ? 'bg-brand-50 border-brand-200 text-brand-700'
+                        : 'border-slate-100 text-slate-700 bg-slate-50'
+                    }`}
+                  >
+                    <Icon size={20} className={isActive ? 'text-brand-600' : 'text-slate-500'} />
+                    <span className="font-semibold text-sm">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* User section */}
+            <div className="mx-4 mb-4 bg-slate-50 rounded-xl border border-slate-100 p-3 flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0"
+                style={{ background: '#2060e8', fontSize: 13 }}
+              >
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-slate-900 text-sm truncate">{displayName}</div>
+                <div className="text-xs text-slate-500 truncate">{displayLabel}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setMoreOpen(false); handleLogout(); }}
+                className="p-2 text-red-500 rounded-lg"
+                title="Logout"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
+// Suppress unused import warnings
+void Menu;
+void Search;
 
 export default AppLayout;

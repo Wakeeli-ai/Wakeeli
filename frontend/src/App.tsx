@@ -11,6 +11,9 @@ import Leads from './pages/Leads';
 import Tours from './pages/Tours';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import Notifications from './pages/Notifications';
+import AgentAnalytics from './pages/AgentAnalytics';
+import AgentSettings from './pages/AgentSettings';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useRole();
@@ -63,6 +66,9 @@ function AppRoutes() {
                 <Route path="/agents" element={<AdminRoute><Agents /></AdminRoute>} />
                 <Route path="/analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
                 <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/agent-analytics" element={<AgentAnalytics />} />
+                <Route path="/agent-settings" element={<AgentSettings />} />
               </Routes>
             </AppLayout>
           </ProtectedRoute>

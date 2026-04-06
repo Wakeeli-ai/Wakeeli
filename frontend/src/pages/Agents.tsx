@@ -150,11 +150,14 @@ function AgentDrawer({
   agent,
   onClose,
   onDelete,
+  onEdit,
 }: {
   agent: Agent;
   onClose: () => void;
   onDelete: (id: number) => void;
+  onEdit: (id: number, updated: Partial<Agent>) => void;
 }) {
+  const [showEditModal, setShowEditModal] = useState(false);
   const perf = mockPerf(agent.id);
   const agentStatus: AgentStatus = agent.status ?? 'available';
   const agentRole = agent.role ?? 'Agent';
@@ -173,7 +176,7 @@ function AgentDrawer({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/30 z-40" onClick={!showEditModal ? onClose : undefined} />
       <div className="fixed right-0 top-0 h-full w-[480px] max-w-full bg-white shadow-2xl z-50 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300 border-l border-slate-200">
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 flex-shrink-0">
@@ -336,7 +339,10 @@ function AgentDrawer({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-100 flex gap-3 flex-shrink-0 bg-[#f8fafc]/50">
-          <button className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition-colors">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition-colors"
+          >
             Edit Agent
           </button>
           <button
@@ -347,6 +353,24 @@ function AgentDrawer({
           </button>
         </div>
       </div>
+
+      {showEditModal && (
+        <EditAgentModal
+          agent={agent}
+          onClose={() => setShowEditModal(false)}
+          onSave={(data) => {
+            onEdit(agent.id, {
+              name: data.name,
+              email: data.email || undefined,
+              phone: data.phone || undefined,
+              role: data.role,
+              specialization: data.specialization || undefined,
+              status: data.status,
+            });
+            setShowEditModal(false);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -455,6 +479,129 @@ function AddAgentModal({
   );
 }
 
+// Edit Agent Modal
+
+type EditAgentForm = {
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  specialization: string;
+  status: AgentStatus;
+};
+
+function EditAgentModal({
+  agent,
+  onClose,
+  onSave,
+}: {
+  agent: Agent;
+  onClose: () => void;
+  onSave: (data: EditAgentForm) => void;
+}) {
+  const [form, setForm] = useState<EditAgentForm>({
+    name: agent.name,
+    email: agent.email || '',
+    phone: agent.phone || '',
+    role: agent.role || 'Agent',
+    specialization: agent.specialization || '',
+    status: agent.status || 'available',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    await new Promise((r) => setTimeout(r, 500));
+    setSaving(false);
+    onSave(form);
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
+                <UserPlus size={15} className="text-brand-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">Edit Agent</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            {[
+              { key: 'name', label: 'Full Name', type: 'text', required: true },
+              { key: 'email', label: 'Email', type: 'email', required: false },
+              { key: 'phone', label: 'Phone', type: 'text', required: false },
+              { key: 'specialization', label: 'Specialization', type: 'text', required: false },
+            ].map(({ key, label, type, required }) => (
+              <div key={key}>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  {label}{required && ' *'}
+                </label>
+                <input
+                  required={required}
+                  type={type}
+                  className="w-full px-3 h-11 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors"
+                  value={form[key as keyof EditAgentForm] as string}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                />
+              </div>
+            ))}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Role</label>
+              <select
+                className="w-full px-3 h-11 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+              >
+                <option>Agent</option>
+                <option>Senior Agent</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Status</label>
+              <select
+                className="w-full px-3 h-11 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value as AgentStatus })}
+              >
+                <option value="available">Available</option>
+                <option value="on_break">On Break</option>
+                <option value="offline">Offline</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-4 py-2.5 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-60"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // Main page
 
 export default function Agents() {
@@ -511,6 +658,12 @@ export default function Agents() {
         setAgents(MOCK_AGENTS);
       })
       .finally(() => setLoading(false));
+  };
+
+  const handleEditAgent = (id: number, updated: Partial<Agent>) => {
+    setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, ...updated } : a)));
+    setSelectedAgent((prev) => (prev && prev.id === id ? { ...prev, ...updated } : prev));
+    toast.success('Agent updated.');
   };
 
   const handleDelete = (id: number) => {
@@ -1073,6 +1226,7 @@ export default function Agents() {
           agent={selectedAgent}
           onClose={() => setSelectedAgent(null)}
           onDelete={handleDelete}
+          onEdit={handleEditAgent}
         />
       )}
 

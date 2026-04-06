@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { Download, X, Loader2, Phone, MessageCircle, UserPlus, Search } from 'lucide-react';
+import { Download, X, Loader2, Phone, MessageCircle, UserPlus, Search, Plus } from 'lucide-react';
 import LeadDetailPanel from '../components/LeadDetailPanel';
 import { getConversations } from '../api';
 import { toast } from '../utils/toast';
@@ -10,6 +10,7 @@ type Lead = {
   id: number;
   name: string;
   phone: string;
+  email?: string;
   source: 'WhatsApp' | 'Instagram' | 'Website';
   type: 'buy' | 'rent';
   status: 'new' | 'qualifying' | 'qualified' | 'tour_booked' | 'handed_to_agent';
@@ -18,7 +19,16 @@ type Lead = {
   activityText: string;
   notes: string;
   budget: string;
-  score: number;
+};
+
+type NewLeadForm = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  source: Lead['source'];
+  notes: string;
+  status: Lead['status'];
 };
 
 const MOCK_LEADS: Lead[] = [
@@ -34,7 +44,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Requirements confirmed',
     notes: 'Looking for a 3BR apartment in Achrafieh. Prefers high floor with city view.',
     budget: '$350,000',
-    score: 82,
   },
   {
     id: 2,
@@ -48,7 +57,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'AI follow-up sent',
     notes: 'Interested in a furnished apartment in Hamra. Needs parking.',
     budget: '$1,200/mo',
-    score: 45,
   },
   {
     id: 3,
@@ -62,7 +70,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Tour scheduled',
     notes: 'Wants a spacious 4BR in Achrafieh. Flexible on floor, prefers garden access.',
     budget: '$500,000',
-    score: 91,
   },
   {
     id: 4,
@@ -76,7 +83,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Viewed listing',
     notes: 'Looking for a 2BR in Verdun, close to schools. Prefers modern building.',
     budget: '$1,500/mo',
-    score: 61,
   },
   {
     id: 5,
@@ -90,7 +96,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Handed to agent',
     notes: 'Interested in a 2BR apartment in Jounieh. Sea view preferred.',
     budget: '$250,000',
-    score: 78,
   },
   {
     id: 6,
@@ -104,7 +109,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Requirements confirmed',
     notes: 'Furnished studio or 1BR in Dbayeh. Near highway access. Moving in 3 weeks.',
     budget: '$900/mo',
-    score: 76,
   },
   {
     id: 7,
@@ -118,7 +122,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'AI follow-up sent',
     notes: 'Looking for a chalet or villa in Broummana area. Mountain views essential.',
     budget: '$600,000',
-    score: 38,
   },
   {
     id: 8,
@@ -132,7 +135,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Viewed listing',
     notes: 'Wants 2BR in Beit Mery. Quiet neighborhood, away from main road.',
     budget: '$1,100/mo',
-    score: 54,
   },
   {
     id: 9,
@@ -146,7 +148,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Requirements confirmed',
     notes: 'Investment apartment in Hamra, 1BR or studio. Wants rental yield potential.',
     budget: '$200,000',
-    score: 70,
   },
   {
     id: 10,
@@ -160,7 +161,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Tour scheduled',
     notes: 'High-end 3BR in Achrafieh or Saifi. Must have concierge and gym.',
     budget: '$2,000/mo',
-    score: 88,
   },
   {
     id: 11,
@@ -174,7 +174,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Handed to agent',
     notes: 'Commercial retail space in Verdun or Hamra. Ground floor preferred.',
     budget: '$450,000',
-    score: 65,
   },
   {
     id: 12,
@@ -188,7 +187,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'AI follow-up sent',
     notes: 'Studio or 1BR in Jounieh. Furnished. Close to the waterfront.',
     budget: '$800/mo',
-    score: 42,
   },
   {
     id: 13,
@@ -202,7 +200,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Viewed listing',
     notes: 'Looking for a beachfront or sea-view apartment in Batroun. 2-3BR.',
     budget: '$300,000',
-    score: 58,
   },
   {
     id: 14,
@@ -216,7 +213,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Requirements confirmed',
     notes: 'Luxury 3BR in Dbayeh or Antelias. Building must have generator and water tank.',
     budget: '$1,800/mo',
-    score: 74,
   },
   {
     id: 15,
@@ -230,7 +226,6 @@ const MOCK_LEADS: Lead[] = [
     activityText: 'Handed to agent',
     notes: 'Mountain villa or large chalet in Broummana or Beit Mery. Pool preferred.',
     budget: '$750,000',
-    score: 80,
   },
 ];
 
@@ -256,18 +251,6 @@ const TYPE_STYLES: Record<string, { bg: string; text: string }> = {
 };
 
 const PAGE_SIZE = 10;
-
-function ScoreBar({ score }: { score: number }) {
-  const color = score >= 80 ? '#16a34a' : score >= 60 ? '#2060e8' : score >= 40 ? '#f59e0b' : '#ef4444';
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${score}%`, background: color }} />
-      </div>
-      <span className="text-xs font-semibold tabular-nums" style={{ color }}>{score}</span>
-    </div>
-  );
-}
 
 function StatusBadge({ status }: { status: string }) {
   const s = STATUS_STYLES[status] || { bg: '#f1f5f9', text: '#64748b', dot: '#94a3b8', label: status };
@@ -320,9 +303,18 @@ function mapConversationToLead(conv: any, idx: number): Lead {
     activityText: conv.status === 'handed_off' ? 'Handed to agent' : 'AI active',
     notes: req.location ? `Looking in ${req.location}` : '',
     budget: budgetStr,
-    score: 50 + (conv.id % 40),
   };
 }
+
+const EMPTY_NEW_LEAD_FORM: NewLeadForm = {
+  firstName: '',
+  lastName: '',
+  phone: '',
+  email: '',
+  source: 'WhatsApp',
+  notes: '',
+  status: 'new',
+};
 
 export default function Leads() {
   const { role } = useRole();
@@ -335,11 +327,51 @@ export default function Leads() {
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [localSearch, setLocalSearch] = useState('');
-  // Mobile status tab filter
   const [mobileStatusTab, setMobileStatusTab] = useState<string>('All');
+  const [showNewLeadDrawer, setShowNewLeadDrawer] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState<NewLeadForm>(EMPTY_NEW_LEAD_FORM);
+  const [newLeadDrawerVisible, setNewLeadDrawerVisible] = useState(false);
+
+  const openNewLeadDrawer = () => {
+    setShowNewLeadDrawer(true);
+    requestAnimationFrame(() => setNewLeadDrawerVisible(true));
+  };
+
+  const closeNewLeadDrawer = () => {
+    setNewLeadDrawerVisible(false);
+    setTimeout(() => {
+      setShowNewLeadDrawer(false);
+      setNewLeadForm(EMPTY_NEW_LEAD_FORM);
+    }, 280);
+  };
+
+  const handleAddLead = () => {
+    const fullName = `${newLeadForm.firstName} ${newLeadForm.lastName}`.trim();
+    if (!fullName) {
+      toast.error('Please enter a name.');
+      return;
+    }
+    const newLead: Lead = {
+      id: Date.now(),
+      name: fullName,
+      phone: newLeadForm.phone,
+      email: newLeadForm.email,
+      source: newLeadForm.source,
+      type: 'buy',
+      status: newLeadForm.status,
+      agent: null,
+      lastActivity: 'Just now',
+      activityText: 'Lead created',
+      notes: newLeadForm.notes,
+      budget: 'N/A',
+    };
+    setLeads((prev) => [newLead, ...prev]);
+    closeNewLeadDrawer();
+    toast.success('Lead added.');
+  };
 
   const handleExport = (filteredLeads: Lead[]) => {
-    const headers = ['Name', 'Phone', 'Source', 'Type', 'Status', 'Agent', 'Budget', 'Last Activity', 'Score'];
+    const headers = ['Name', 'Phone', 'Source', 'Type', 'Status', 'Agent', 'Budget', 'Last Activity'];
     const rows = filteredLeads.map((l) => [
       l.name,
       l.phone,
@@ -349,7 +381,6 @@ export default function Leads() {
       l.agent || 'AI Routing',
       l.budget,
       l.lastActivity,
-      String(l.score),
     ]);
     const csv = [headers, ...rows]
       .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
@@ -393,12 +424,12 @@ export default function Leads() {
   };
 
   const filtered = leads.filter((lead) => {
-    if (
-      effectiveSearch &&
-      !lead.name.toLowerCase().includes(effectiveSearch.toLowerCase()) &&
-      !lead.phone.includes(effectiveSearch)
-    )
-      return false;
+    if (effectiveSearch) {
+      const searchLower = effectiveSearch.toLowerCase();
+      const nameParts = lead.name.toLowerCase().split(' ');
+      const nameMatch = nameParts.some((part) => part.startsWith(searchLower));
+      if (!nameMatch && !lead.phone.includes(effectiveSearch)) return false;
+    }
     if (filters.source && lead.source !== filters.source) return false;
     if (filters.type && lead.type !== filters.type) return false;
     if (filters.status && lead.status !== filters.status) return false;
@@ -417,6 +448,9 @@ export default function Leads() {
   const paginated = filtered.slice(pageStart, pageEnd);
 
   const hasFilters = filters.source !== '' || filters.type !== '' || filters.status !== '' || filters.agent !== '';
+
+  // colSpan: checkbox + lead + contact + source + type + status + agent(admin) + lastActivity + actions
+  const colCount = isAgent ? 8 : 9;
 
   return (
     <div className="space-y-4">
@@ -468,6 +502,14 @@ export default function Leads() {
             <Download size={15} />
             Export CSV
           </button>
+          <button
+            type="button"
+            onClick={openNewLeadDrawer}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors shadow-sm min-h-[44px]"
+          >
+            <Plus size={15} />
+            New Lead
+          </button>
         </div>
       </div>
 
@@ -494,7 +536,6 @@ export default function Leads() {
           onChange={(e) => { setFilters({ ...filters, source: e.target.value }); setPage(1); }}
           className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-700"
         >
-          <option value="">All Sources</option>
           <option value="WhatsApp">WhatsApp</option>
           <option value="Instagram">Instagram</option>
           <option value="Website">Website</option>
@@ -614,7 +655,6 @@ export default function Leads() {
                 <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Source</th>
                 <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
                 <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Score</th>
                 {!isAgent && <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Agent</th>}
                 <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Last Activity</th>
                 <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
@@ -623,13 +663,13 @@ export default function Leads() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={isAgent ? 9 : 10} className="px-5 py-12 text-center text-slate-400">
+                  <td colSpan={colCount} className="px-5 py-12 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-600" />
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={isAgent ? 9 : 10} className="px-5 py-12 text-center text-slate-400 text-sm">
+                  <td colSpan={colCount} className="px-5 py-12 text-center text-slate-400 text-sm">
                     No leads found.
                   </td>
                 </tr>
@@ -692,11 +732,6 @@ export default function Leads() {
                       {/* Status */}
                       <td className="px-5 py-3.5">
                         <StatusBadge status={lead.status} />
-                      </td>
-
-                      {/* Score */}
-                      <td className="px-5 py-3.5">
-                        <ScoreBar score={lead.score} />
                       </td>
 
                       {/* Agent */}
@@ -808,6 +843,149 @@ export default function Leads() {
           onClose={() => setSelectedLeadId(null)}
           onUpdate={() => {}}
         />
+      )}
+
+      {/* New Lead Drawer */}
+      {showNewLeadDrawer && (
+        <>
+          {/* Overlay - fixed full screen */}
+          <div
+            onClick={closeNewLeadDrawer}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50 }}
+            className={`bg-black/30 transition-opacity duration-300 ${newLeadDrawerVisible ? 'opacity-100' : 'opacity-0'}`}
+          />
+
+          {/* Drawer panel */}
+          <div
+            style={{ position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 51, width: '460px' }}
+            className={`bg-white shadow-xl flex flex-col transition-transform duration-300 ease-out ${newLeadDrawerVisible ? 'translate-x-0' : 'translate-x-full'}`}
+          >
+            {/* Drawer header */}
+            <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">New Lead</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Add a lead manually</p>
+              </div>
+              <button
+                onClick={closeNewLeadDrawer}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Drawer form */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              {/* Name row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">First Name</label>
+                  <input
+                    type="text"
+                    value={newLeadForm.firstName}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, firstName: e.target.value })}
+                    placeholder="Rami"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 placeholder:text-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Last Name</label>
+                  <input
+                    type="text"
+                    value={newLeadForm.lastName}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, lastName: e.target.value })}
+                    placeholder="Khoury"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Phone</label>
+                <input
+                  type="tel"
+                  value={newLeadForm.phone}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
+                  placeholder="+961 70 123 456"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 placeholder:text-slate-300"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={newLeadForm.email}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, email: e.target.value })}
+                  placeholder="rami@example.com"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 placeholder:text-slate-300"
+                />
+              </div>
+
+              {/* Source + Status row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Source</label>
+                  <select
+                    value={newLeadForm.source}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, source: e.target.value as Lead['source'] })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-700"
+                  >
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Website">Website</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Status</label>
+                  <select
+                    value={newLeadForm.status}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, status: e.target.value as Lead['status'] })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-700"
+                  >
+                    <option value="new">New</option>
+                    <option value="qualifying">Qualifying</option>
+                    <option value="qualified">Qualified</option>
+                    <option value="tour_booked">Tour Booked</option>
+                    <option value="handed_to_agent">With Agent</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Notes</label>
+                <textarea
+                  value={newLeadForm.notes}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, notes: e.target.value })}
+                  placeholder="Requirements, preferences, context..."
+                  rows={4}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 placeholder:text-slate-300 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Drawer footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex gap-3 flex-shrink-0">
+              <button
+                type="button"
+                onClick={closeNewLeadDrawer}
+                className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddLead}
+                className="flex-1 px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+              >
+                Add Lead
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

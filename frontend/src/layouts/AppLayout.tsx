@@ -18,6 +18,8 @@ import {
   MoreHorizontal,
   Search,
   Menu,
+  Edit2,
+  Save,
 } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
 
@@ -105,6 +107,8 @@ const agentNav: NavItem[] = [
   { to: '/conversations', icon: MessageSquare, label: 'Inbox', count: 3 },
   { to: '/listings', icon: Building2, label: 'Listings' },
   { to: '/tours', icon: Calendar, label: 'My Tours' },
+  { to: '/agent-analytics', icon: BarChart3, label: 'My Analytics' },
+  { to: '/agent-settings', icon: Settings, label: 'Settings' },
 ];
 
 // Bottom 4 tab items (mobile)
@@ -126,7 +130,8 @@ const adminMoreItems = [
 // "More" sheet items (agent)
 const agentMoreItems = [
   { to: '/tours', icon: Calendar, label: 'My Tours' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/agent-analytics', icon: BarChart3, label: 'My Analytics' },
+  { to: '/agent-settings', icon: Settings, label: 'Settings' },
 ];
 
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -143,10 +148,38 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileEditMode, setProfileEditMode] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '+961 3 123 456' });
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Sync profile form when user data loads
+  useEffect(() => {
+    setProfileForm({
+      name: user?.name || user?.username || '',
+      email: user?.email || '',
+      phone: '+961 3 123 456',
+    });
+  }, [user]);
+
+  const getNotifRoute = (type: Notification['type']): string => {
+    switch (type) {
+      case 'lead': return '/conversations';
+      case 'tour': return '/tours';
+      case 'agent': return '/agents';
+      case 'system': return '/settings';
+      default: return '/';
+    }
+  };
+
+  const handleNotifClick = (n: Notification) => {
+    markRead(n.id);
+    setNotifOpen(false);
+    navigate(getNotifRoute(n.type));
+  };
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -417,7 +450,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                     <button
                       key={n.id}
                       type="button"
-                      onClick={() => markRead(n.id)}
+                      onClick={() => handleNotifClick(n)}
                       className={`w-full text-left px-4 py-3 flex gap-3 items-start ${!n.read ? 'bg-brand-50/40' : ''}`}
                     >
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold ${NOTIF_TYPE_COLORS[n.type]}`}>
@@ -435,6 +468,15 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                       </div>
                     </button>
                   ))}
+                </div>
+                <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50">
+                  <button
+                    type="button"
+                    onClick={() => { setNotifOpen(false); navigate('/notifications'); }}
+                    className="text-xs text-brand-600 font-medium w-full text-center"
+                  >
+                    View all notifications
+                  </button>
                 </div>
               </div>
             )}
@@ -462,16 +504,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                   <p className="text-xs text-slate-500">{displayLabel}</p>
                 </div>
                 <div className="py-1">
-                  <Link
-                    to="/settings"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700"
+                  <button
+                    type="button"
+                    onClick={() => { setUserMenuOpen(false); setProfileEditMode(false); setProfileOpen(true); }}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 w-full text-left"
                   >
                     <User size={14} className="text-slate-400" />
                     My Profile
-                  </Link>
+                  </button>
                   <Link
-                    to="/settings"
+                    to={role === 'admin' ? '/settings' : '/agent-settings'}
                     onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700"
                   >
@@ -566,7 +608,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                       <button
                         key={n.id}
                         type="button"
-                        onClick={() => markRead(n.id)}
+                        onClick={() => handleNotifClick(n)}
                         className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3 items-start ${!n.read ? 'bg-brand-50/40' : ''}`}
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold ${NOTIF_TYPE_COLORS[n.type]}`}>
@@ -588,7 +630,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                     ))}
                   </div>
                   <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50">
-                    <button type="button" className="text-xs text-brand-600 hover:text-brand-700 font-medium transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => { setNotifOpen(false); navigate('/notifications'); }}
+                      className="text-xs text-brand-600 hover:text-brand-700 font-medium transition-colors w-full text-center"
+                    >
                       View all notifications
                     </button>
                   </div>
@@ -622,16 +668,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                     <p className="text-xs text-slate-500">{displayLabel}</p>
                   </div>
                   <div className="py-1">
-                    <Link
-                      to="/settings"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => { setUserMenuOpen(false); setProfileEditMode(false); setProfileOpen(true); }}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors w-full text-left"
                     >
                       <User size={15} className="text-slate-400" />
                       My Profile
-                    </Link>
+                    </button>
                     <Link
-                      to="/settings"
+                      to={role === 'admin' ? '/settings' : '/agent-settings'}
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                     >
@@ -707,6 +753,126 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </nav>
+
+      {/* ===== PROFILE MODAL ===== */}
+      {profileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
+          onClick={() => { setProfileOpen(false); setProfileEditMode(false); }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">My Profile</h2>
+              <button
+                type="button"
+                onClick={() => { setProfileOpen(false); setProfileEditMode(false); }}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Avatar + name */}
+            <div className="px-6 py-5 flex items-center gap-4 bg-slate-50 border-b border-slate-100">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold text-white flex-shrink-0"
+                style={{ background: '#2060e8' }}
+              >
+                {initials}
+              </div>
+              <div>
+                <p className="font-bold text-slate-900 text-base">{profileForm.name || displayName}</p>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 mt-1 capitalize">
+                  {displayLabel}
+                </span>
+              </div>
+            </div>
+
+            {/* Fields */}
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Full Name</label>
+                {profileEditMode ? (
+                  <input
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-900 font-medium">{profileForm.name || displayName}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Email</label>
+                {profileEditMode ? (
+                  <input
+                    type="email"
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, email: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-900 font-medium">{profileForm.email || 'Not set'}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Phone</label>
+                {profileEditMode ? (
+                  <input
+                    type="tel"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-900 font-medium">{profileForm.phone}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Role</label>
+                <p className="text-sm text-slate-900 font-medium capitalize">{role}</p>
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div className="px-6 pb-5 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+              {profileEditMode ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setProfileEditMode(false)}
+                    className="px-4 py-2 text-sm text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProfileEditMode(false)}
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+                  >
+                    <Save size={14} />
+                    Save Changes
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setProfileEditMode(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+                >
+                  <Edit2 size={14} />
+                  Edit Profile
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ===== MORE SHEET - mobile only ===== */}
       {moreOpen && (

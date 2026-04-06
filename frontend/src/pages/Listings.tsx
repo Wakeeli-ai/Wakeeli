@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createListing, deleteListing, getListings, updateListing } from '../api';
 import {
   Building2, Bed, Bath, Maximize, X, MapPin, Search, Loader2,
   LayoutGrid, List, ChevronLeft, ChevronRight, SlidersHorizontal,
-  Upload, Plus, Flame,
+  Upload, Plus, Flame, Mic, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { toast } from '../utils/toast';
 
@@ -2946,6 +2946,16 @@ const EMPTY_FORM = {
   bathrooms: 1,
   built_up_area: '',
   furnishing: 'Unfurnished',
+  description: '',
+  // Additional details
+  parking: '',
+  has_balcony: false,
+  floor_number: '',
+  building_age: '',
+  heating_type: '',
+  pet_friendly: false,
+  has_generator: false,
+  has_elevator: false,
 };
 
 function AddListingModal({
@@ -2957,6 +2967,119 @@ function AddListingModal({
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [showAdditional, setShowAdditional] = useState(false);
+
+  // Photo state
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [propertyPreviews, setPropertyPreviews] = useState<string[]>([]);
+
+  // Voice state
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('');
+  const recognitionRef = useRef<any>(null);
+
+  const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setCoverPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handlePropertyPhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) =>
+        setPropertyPreviews((prev) => [...prev, ev.target?.result as string]);
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const removePropertyPhoto = (index: number) => {
+    setPropertyPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const parseVoiceInput = (transcript: string) => {
+    const text = transcript.toLowerCase();
+    const updates: Partial<typeof EMPTY_FORM> = {};
+
+    const bedroomMatch = text.match(/(\d+)\s*(?:bedroom|bed|غرفة|ghorfe|ghorf)/);
+    if (bedroomMatch) updates.bedrooms = parseInt(bedroomMatch[1]);
+
+    const bathroomMatch = text.match(/(\d+)\s*(?:bathroom|bath|حمام|hamam)/);
+    if (bathroomMatch) updates.bathrooms = parseInt(bathroomMatch[1]);
+
+    const priceMatch = text.match(/(\d[\d,]*)\s*(?:dollar|usd|\$|دولار)/);
+    if (priceMatch) updates.price = priceMatch[1].replace(/,/g, '');
+
+    const areaMatch = text.match(/(\d+)\s*(?:sqm|m2|square meter|متر|meter)/);
+    if (areaMatch) updates.built_up_area = areaMatch[1];
+
+    const locations = [
+      'achrafieh', 'hamra', 'verdun', 'raouche', 'jounieh', 'kaslik',
+      'broumana', 'bsalim', 'mtayleb', 'rabieh', 'mansourieh', 'baabda',
+      'hazmieh', 'dbayeh', 'antelias', 'jal el dib', 'naccache', 'ghosta',
+      'beit meri', 'batroun', 'byblos', 'adma', 'zikrit', 'kornet chehwan',
+    ];
+    for (const loc of locations) {
+      if (text.includes(loc)) {
+        const title = loc.split(' ').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+        updates.city = title;
+        updates.area = title;
+        break;
+      }
+    }
+
+    if (text.includes('villa')) updates.property_type = 'Villa';
+    else if (text.includes('penthouse')) updates.property_type = 'Penthouse';
+    else if (text.includes('studio')) updates.property_type = 'Studio';
+    else if (text.includes('duplex')) updates.property_type = 'Duplex';
+    else if (text.includes('apartment') || text.includes('flat')) updates.property_type = 'Apartment';
+
+    if (text.match(/for rent|to rent|ajar|إيجار/)) updates.listing_type = 'rent';
+    else if (text.match(/for sale|to sale|for buy|بيع/)) updates.listing_type = 'buy';
+
+    if (Object.keys(updates).length === 0) {
+      updates.description = transcript;
+    }
+
+    setForm((prev) => ({ ...prev, ...updates }));
+    const filled = Object.keys(updates).join(', ');
+    setVoiceStatus(filled ? `Filled: ${filled}` : 'Nothing detected');
+  };
+
+  const startRecording = () => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      setVoiceStatus('Voice not supported in this browser');
+      return;
+    }
+    const recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      parseVoiceInput(transcript);
+      setIsRecording(false);
+    };
+    recognition.onerror = () => {
+      setIsRecording(false);
+      setVoiceStatus('Could not capture audio. Try again.');
+    };
+    recognition.onend = () => setIsRecording(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+    setVoiceStatus('Listening...');
+  };
+
+  const stopRecording = () => {
+    recognitionRef.current?.stop();
+    setIsRecording(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2980,6 +3103,74 @@ function AddListingModal({
             </button>
           </div>
           <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+
+            {/* Photo Upload */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Cover Photo</label>
+                {coverPreview ? (
+                  <div className="relative rounded-lg overflow-hidden">
+                    <img src={coverPreview} alt="Cover" className="w-full h-40 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setCoverPreview(null)}
+                      className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-0.5 hover:bg-black/70 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-slate-200 rounded-lg cursor-pointer hover:border-brand-400 transition-colors">
+                    <Upload size={20} className="text-slate-400 mb-1" />
+                    <span className="text-xs text-slate-500">Click to upload cover photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleCoverPhotoChange}
+                    />
+                  </label>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Property Photos</label>
+                <div className="border-2 border-dashed border-slate-200 rounded-lg p-3 hover:border-brand-400 transition-colors">
+                  {propertyPreviews.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2 mb-2">
+                      {propertyPreviews.map((src, i) => (
+                        <div key={i} className="relative aspect-square">
+                          <img
+                            src={src}
+                            alt={`Photo ${i + 1}`}
+                            className="w-full h-full object-cover rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePropertyPhoto(i)}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 cursor-pointer text-slate-500 hover:text-brand-600 transition-colors">
+                    <Upload size={15} />
+                    <span className="text-xs">Add photos</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handlePropertyPhotosChange}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Core Fields */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
               <input
@@ -3101,6 +3292,119 @@ function AddListingModal({
                 </select>
               </div>
             </div>
+
+            {/* Additional Details */}
+            <div className="border border-slate-200 rounded-lg overflow-hidden">
+              <button
+                type="button"
+                className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors"
+                onClick={() => setShowAdditional((v) => !v)}
+              >
+                <span>Additional Details</span>
+                {showAdditional ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              </button>
+              {showAdditional && (
+                <div className="px-4 py-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Parking Spaces</label>
+                      <select
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        value={form.parking}
+                        onChange={(e) => setForm({ ...form, parking: e.target.value })}
+                      >
+                        <option value="">None</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3+</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Floor Number</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        placeholder="e.g. 3"
+                        value={form.floor_number}
+                        onChange={(e) => setForm({ ...form, floor_number: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Building Age (yrs)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        placeholder="e.g. 5"
+                        value={form.building_age}
+                        onChange={(e) => setForm({ ...form, building_age: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Heating Type</label>
+                      <select
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        value={form.heating_type}
+                        onChange={(e) => setForm({ ...form, heating_type: e.target.value })}
+                      >
+                        <option value="">Not specified</option>
+                        <option value="Central">Central</option>
+                        <option value="Individual">Individual</option>
+                        <option value="Split AC">Split AC</option>
+                        <option value="Underfloor">Underfloor</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+                    {(
+                      [
+                        { key: 'has_balcony', label: 'Balcony' },
+                        { key: 'has_generator', label: 'Generator' },
+                        { key: 'has_elevator', label: 'Elevator' },
+                        { key: 'pet_friendly', label: 'Pet Friendly' },
+                      ] as { key: keyof typeof EMPTY_FORM; label: string }[]
+                    ).map(({ key, label }) => (
+                      <label
+                        key={key}
+                        className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none"
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                          checked={form[key] as boolean}
+                          onChange={(e) => setForm({ ...form, [key]: e.target.checked })}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Voice Fill */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isRecording
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {isRecording && (
+                  <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                )}
+                <Mic size={15} />
+                {isRecording ? 'Stop' : 'Voice Fill'}
+              </button>
+              {voiceStatus && (
+                <span className="text-xs text-slate-400">{voiceStatus}</span>
+              )}
+            </div>
+
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"

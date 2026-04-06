@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { toast } from '../utils/toast';
 import { Plus, MapPin, User, X, Calendar, Clock, Phone, ChevronDown } from 'lucide-react';
@@ -128,6 +129,47 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; bor
 type TourStatus = 'Scheduled' | 'Completed' | 'Cancelled' | 'No-show';
 type StatusFilter = 'All' | TourStatus;
 type Tour = (typeof INITIAL_TOURS)[0];
+type DateFilter = 'Today' | 'Yesterday' | 'This Week' | 'This Month';
+
+function parseTourDate(dateStr: string): Date | null {
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function getDateBounds(filter: DateFilter): { start: Date; end: Date } {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (filter === 'Today') {
+    const end = new Date(todayStart);
+    end.setDate(end.getDate() + 1);
+    return { start: todayStart, end };
+  }
+  if (filter === 'Yesterday') {
+    const start = new Date(todayStart);
+    start.setDate(start.getDate() - 1);
+    return { start, end: todayStart };
+  }
+  if (filter === 'This Week') {
+    const start = new Date(todayStart);
+    const day = start.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + diff);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    return { start, end };
+  }
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return { start, end };
+}
+
+function isInDateRange(dateStr: string, filter: DateFilter): boolean {
+  const d = parseTourDate(dateStr);
+  if (!d) return false;
+  const { start, end } = getDateBounds(filter);
+  return d >= start && d < end;
+}
 
 const EMPTY_FORM = {
   client: '',
@@ -358,7 +400,9 @@ function StatusDropdown({
 
 export default function Tours() {
   const { role } = useRole();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<StatusFilter>('All');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('This Week');
   const [tours, setTours] = useState<Tour[]>(INITIAL_TOURS);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const title = role === 'agent' ? 'Property Visits' : 'Property Tours';
@@ -379,16 +423,17 @@ export default function Tours() {
     toast.success('Tour removed.');
   };
 
-  const filtered = filter === 'All' ? tours : tours.filter((t) => t.status === filter);
+  const dateFiltered = tours.filter((t) => isInDateRange(t.date, dateFilter));
+  const filtered = filter === 'All' ? dateFiltered : dateFiltered.filter((t) => t.status === filter);
 
   const counts = {
-    Scheduled: tours.filter((t) => t.status === 'Scheduled').length,
-    Completed: tours.filter((t) => t.status === 'Completed').length,
-    Cancelled: tours.filter((t) => t.status === 'Cancelled').length,
-    'No-show': tours.filter((t) => t.status === 'No-show').length,
+    Scheduled: dateFiltered.filter((t) => t.status === 'Scheduled').length,
+    Completed: dateFiltered.filter((t) => t.status === 'Completed').length,
+    Cancelled: dateFiltered.filter((t) => t.status === 'Cancelled').length,
+    'No-show': dateFiltered.filter((t) => t.status === 'No-show').length,
   };
 
-  const todayTours = tours.filter((t) => t.date.includes('Apr 6'));
+  const todayTours = tours.filter((t) => isInDateRange(t.date, 'Today'));
 
   return (
     <div className="space-y-4">
@@ -406,6 +451,24 @@ export default function Tours() {
           <Plus size={16} />
           Schedule Tour
         </button>
+      </div>
+
+      {/* Date filter bar */}
+      <div className="flex items-center gap-1 px-4 sm:px-0 flex-wrap">
+        {(['Today', 'Yesterday', 'This Week', 'This Month'] as DateFilter[]).map((df) => (
+          <button
+            key={df}
+            type="button"
+            onClick={() => setDateFilter(df)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+              dateFilter === df
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            {df}
+          </button>
+        ))}
       </div>
 
       {/* Mobile: Today's Tours strip */}
@@ -516,7 +579,16 @@ export default function Tours() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-900 truncate">{tour.property}</p>
                     <p className="text-xs text-slate-400 truncate mt-0.5">{tour.address}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{tour.client} · {tour.agent}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/conversations?lead=${encodeURIComponent(tour.client)}`)}
+                        className="hover:text-brand-600 hover:underline transition-colors font-medium"
+                      >
+                        {tour.client}
+                      </button>
+                      {' · '}{tour.agent}
+                    </p>
                   </div>
                   {/* Status right */}
                   <div className="flex-shrink-0 mt-0.5">
@@ -569,7 +641,13 @@ export default function Tours() {
                             {tour.client.split(' ').slice(0, 2).map((n) => n[0]).join('')}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900 text-sm">{tour.client}</p>
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/conversations?lead=${encodeURIComponent(tour.client)}`)}
+                              className="font-semibold text-slate-900 text-sm hover:text-brand-600 hover:underline transition-colors text-left"
+                            >
+                              {tour.client}
+                            </button>
                             <p className="text-xs text-slate-400 mt-0.5">{tour.phone}</p>
                           </div>
                         </div>

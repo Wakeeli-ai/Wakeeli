@@ -4,8 +4,9 @@ import { useRole } from '../context/RoleContext';
 import { getConversations, getAnalyticsCosts } from '../api';
 import { toast } from '../utils/toast';
 import { Users, MessageSquare, Calendar, TrendingUp, MapPin, ArrowUpRight } from 'lucide-react';
+import LeadDetailPanel from '../components/LeadDetailPanel';
 
-// ─── Mock Conversations ────────────────────────────────────────────────────
+// Mock Conversations
 
 const MOCK_CONVERSATIONS = [
   { id: 101, user_phone: 'Rami Khoury', status: 'urgent', agent_id: null, created_at: '2026-03-31T06:00:00.000Z', updated_at: '2026-04-01T07:55:00.000Z' },
@@ -19,7 +20,7 @@ const MOCK_CONVERSATIONS = [
   { id: 109, user_phone: 'Fadi Gemayel', status: 'qualified', agent_id: null, created_at: '2026-03-31T11:00:00.000Z', updated_at: '2026-04-01T08:10:00.000Z' },
 ];
 
-// ─── Tours ─────────────────────────────────────────────────────────────────
+// Tours
 
 const TOURS = [
   { id: 1, property: '2BR Apartment in Achrafieh', time: '9:00 AM', address: 'Rue Sursock, Achrafieh', lead: 'Rami Khoury', agent: 'Joelle Rizk', status: 'Confirmed' },
@@ -36,14 +37,14 @@ const TOUR_STATUS_COLORS: Record<string, string> = {
   Cancelled: 'bg-red-100 text-red-700',
 };
 
-// ─── Recent Leads ──────────────────────────────────────────────────────────
+// Recent Leads (IDs match MOCK_LEADS in Leads.tsx for drawer reuse)
 
 const RECENT_LEADS = [
-  { name: 'Rami Khoury', initials: 'RK', avatarColor: '#2060e8', phone: '+961 70 123 456', source: 'WhatsApp', type: 'Buy', statusLabel: 'Qualified', statusCls: 'bg-amber-50 text-amber-700', budget: '$350,000', ago: '2h ago' },
-  { name: 'Nadia Haddad', initials: 'NH', avatarColor: '#7c3aed', phone: '+961 71 234 567', source: 'Instagram', type: 'Rent', statusLabel: 'New', statusCls: 'bg-emerald-50 text-emerald-700', budget: '$1,200/mo', ago: '5h ago' },
-  { name: 'Tony Gemayel', initials: 'TG', avatarColor: '#0891b2', phone: '+961 76 345 678', source: 'WhatsApp', type: 'Buy', statusLabel: 'Tour Booked', statusCls: 'bg-blue-50 text-blue-700', budget: '$500,000', ago: '1d ago' },
-  { name: 'Maya Nasrallah', initials: 'MN', avatarColor: '#be185d', phone: '+961 78 456 789', source: 'Website', type: 'Rent', statusLabel: 'Qualifying', statusCls: 'bg-amber-50 text-amber-700', budget: '$1,500/mo', ago: '1d ago' },
-  { name: 'Sami Aoun', initials: 'SA', avatarColor: '#c2410c', phone: '+961 03 567 890', source: 'WhatsApp', type: 'Buy', statusLabel: 'Handed Off', statusCls: 'bg-slate-100 text-slate-600', budget: '$250,000', ago: '1 week ago' },
+  { id: 1, name: 'Rami Khoury', initials: 'RK', avatarColor: '#2060e8', phone: '+961 70 123 456', source: 'WhatsApp', type: 'Buy', statusLabel: 'Qualified', statusCls: 'bg-amber-50 text-amber-700', budget: '$350,000', ago: '2h ago' },
+  { id: 2, name: 'Nadia Haddad', initials: 'NH', avatarColor: '#7c3aed', phone: '+961 71 234 567', source: 'Instagram', type: 'Rent', statusLabel: 'New', statusCls: 'bg-emerald-50 text-emerald-700', budget: '$1,200/mo', ago: '5h ago' },
+  { id: 3, name: 'Tony Gemayel', initials: 'TG', avatarColor: '#0891b2', phone: '+961 76 345 678', source: 'WhatsApp', type: 'Buy', statusLabel: 'Tour Booked', statusCls: 'bg-blue-50 text-blue-700', budget: '$500,000', ago: '1d ago' },
+  { id: 4, name: 'Maya Nasrallah', initials: 'MN', avatarColor: '#be185d', phone: '+961 78 456 789', source: 'Website', type: 'Rent', statusLabel: 'Qualifying', statusCls: 'bg-amber-50 text-amber-700', budget: '$1,500/mo', ago: '1d ago' },
+  { id: 5, name: 'Sami Aoun', initials: 'SA', avatarColor: '#c2410c', phone: '+961 03 567 890', source: 'WhatsApp', type: 'Buy', statusLabel: 'Handed Off', statusCls: 'bg-slate-100 text-slate-600', budget: '$250,000', ago: '1 week ago' },
 ];
 
 const SOURCE_BADGE: Record<string, string> = {
@@ -53,16 +54,46 @@ const SOURCE_BADGE: Record<string, string> = {
   Referral: 'bg-amber-50 text-amber-700',
 };
 
-// ─── Funnel ────────────────────────────────────────────────────────────────
+// Funnel
 
-const FUNNEL_DATA = [
-  { label: 'New Leads', count: 214, pct: 100, color: '#2060e8' },
-  { label: 'Qualified', count: 154, pct: 72, color: '#7c3aed' },
-  { label: 'Tours Booked', count: 94, pct: 44, color: '#f59e0b' },
-  { label: 'Deals Closed', count: 24, pct: 11, color: '#16a34a' },
-];
+type FunnelPeriod = 'Today' | 'This Week' | 'This Month' | 'This Quarter' | 'This Year';
 
-// ─── Agent Leaderboard ─────────────────────────────────────────────────────
+const FUNNEL_PERIODS: FunnelPeriod[] = ['Today', 'This Week', 'This Month', 'This Quarter', 'This Year'];
+
+const FUNNEL_DATA_BY_PERIOD: Record<FunnelPeriod, { label: string; count: number; pct: number; color: string }[]> = {
+  'Today': [
+    { label: 'New Leads', count: 12, pct: 100, color: '#2060e8' },
+    { label: 'Qualified', count: 8, pct: 67, color: '#7c3aed' },
+    { label: 'Tours Booked', count: 4, pct: 33, color: '#f59e0b' },
+    { label: 'Deals Closed', count: 1, pct: 8, color: '#16a34a' },
+  ],
+  'This Week': [
+    { label: 'New Leads', count: 67, pct: 100, color: '#2060e8' },
+    { label: 'Qualified', count: 48, pct: 72, color: '#7c3aed' },
+    { label: 'Tours Booked', count: 28, pct: 42, color: '#f59e0b' },
+    { label: 'Deals Closed', count: 7, pct: 10, color: '#16a34a' },
+  ],
+  'This Month': [
+    { label: 'New Leads', count: 214, pct: 100, color: '#2060e8' },
+    { label: 'Qualified', count: 154, pct: 72, color: '#7c3aed' },
+    { label: 'Tours Booked', count: 94, pct: 44, color: '#f59e0b' },
+    { label: 'Deals Closed', count: 24, pct: 11, color: '#16a34a' },
+  ],
+  'This Quarter': [
+    { label: 'New Leads', count: 587, pct: 100, color: '#2060e8' },
+    { label: 'Qualified', count: 421, pct: 72, color: '#7c3aed' },
+    { label: 'Tours Booked', count: 256, pct: 44, color: '#f59e0b' },
+    { label: 'Deals Closed', count: 68, pct: 12, color: '#16a34a' },
+  ],
+  'This Year': [
+    { label: 'New Leads', count: 1847, pct: 100, color: '#2060e8' },
+    { label: 'Qualified', count: 1340, pct: 73, color: '#7c3aed' },
+    { label: 'Tours Booked', count: 812, pct: 44, color: '#f59e0b' },
+    { label: 'Deals Closed', count: 201, pct: 11, color: '#16a34a' },
+  ],
+};
+
+// Agent Leaderboard
 
 const AGENT_LEADERBOARD = [
   { rank: 1, initials: 'JR', name: 'Joelle Rizk', deals: 14, conversion: '14.2%', delta: '+2.1%', color: '#2060e8' },
@@ -71,7 +102,7 @@ const AGENT_LEADERBOARD = [
   { rank: 4, initials: 'MN', name: 'Marc Nader', deals: 4, conversion: '7.3%', delta: null, color: '#c2410c' },
 ];
 
-// ─── Recent Activity ───────────────────────────────────────────────────────
+// Recent Activity
 
 const ACTIVITY = [
   { icon: MessageSquare, color: 'text-brand-600 bg-brand-50', text: 'Charbel Khoury started a WhatsApp conversation', time: '2m ago' },
@@ -81,7 +112,7 @@ const ACTIVITY = [
   { icon: TrendingUp, color: 'text-slate-600 bg-slate-50', text: 'Lara Daher signed rental contract in Achrafieh', time: '2h ago' },
 ];
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// Helpers
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -103,7 +134,29 @@ function rankColor(rank: number): string {
   return 'text-slate-300';
 }
 
-// ─── Component ─────────────────────────────────────────────────────────────
+// Funnel Period Selector (shared between mobile and desktop)
+
+function FunnelPeriodSelect({
+  value,
+  onChange,
+}: {
+  value: FunnelPeriod;
+  onChange: (p: FunnelPeriod) => void;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as FunnelPeriod)}
+      className="text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+    >
+      {FUNNEL_PERIODS.map((p) => (
+        <option key={p} value={p}>{p}</option>
+      ))}
+    </select>
+  );
+}
+
+// Component
 
 export default function Dashboard() {
   const { user } = useRole();
@@ -111,6 +164,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [kpi, setKpi] = useState<{ totalConversations: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'tours'>('overview');
+  const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
+  const [funnelPeriod, setFunnelPeriod] = useState<FunnelPeriod>('This Month');
 
   useEffect(() => {
     getConversations()
@@ -133,6 +188,7 @@ export default function Dashboard() {
 
   void loading;
 
+  const funnelData = FUNNEL_DATA_BY_PERIOD[funnelPeriod];
   const activeConvCount = conversations.filter((c) => c.status !== 'closed').length || 23;
   const totalLeads = kpi?.totalConversations || 1847;
   const toursToday = TOURS.filter((t) => t.status !== 'Cancelled').length;
@@ -181,7 +237,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-4 md:space-y-6">
 
-      {/* ===== PAGE HEADER ===== */}
+      {/* PAGE HEADER */}
       <div>
         <h1 className="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight">
           {getGreeting()}, {firstName}!
@@ -191,8 +247,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* ===== KPI GRID ===== */}
-      {/* Mobile: compact 2x2 grid | Desktop: 4 columns */}
+      {/* KPI GRID */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {kpiCards.map((kpi) => {
           const Icon = kpi.icon;
@@ -201,7 +256,6 @@ export default function Dashboard() {
               key={kpi.label}
               className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-5"
             >
-              {/* Mobile: icon + label inline | Desktop: icon above */}
               <div className="flex items-center gap-2 md:block">
                 <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl ${kpi.iconBg} flex items-center justify-center flex-shrink-0`}>
                   <Icon size={16} className={`md:w-5 md:h-5 ${kpi.iconColor}`} />
@@ -224,7 +278,7 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* ===== MOBILE TABS: Overview / Activity / Tours ===== */}
+      {/* MOBILE TABS */}
       <div className="md:hidden flex border-b border-slate-200 bg-white rounded-t-xl overflow-hidden -mb-4">
         {(['overview', 'activity', 'tours'] as const).map((tab) => (
           <button
@@ -242,7 +296,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* ===== MOBILE: Overview Tab ===== */}
+      {/* MOBILE: Overview Tab */}
       {activeTab === 'overview' && (
         <div className="md:hidden space-y-3 pt-4">
 
@@ -257,7 +311,8 @@ export default function Dashboard() {
             {RECENT_LEADS.slice(0, 5).map((lead) => (
               <div
                 key={lead.phone}
-                className="flex items-center gap-3 px-4 py-3 border-b border-slate-50 last:border-0"
+                className="flex items-center gap-3 px-4 py-3 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                onClick={() => setSelectedLeadId(lead.id)}
               >
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
@@ -288,10 +343,10 @@ export default function Dashboard() {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
               <h2 className="text-sm font-bold text-slate-900">Conversion Funnel</h2>
-              <span className="text-xs text-slate-400">This month</span>
+              <FunnelPeriodSelect value={funnelPeriod} onChange={setFunnelPeriod} />
             </div>
             <div className="p-4 space-y-2.5">
-              {FUNNEL_DATA.map((item) => (
+              {funnelData.map((item) => (
                 <div key={item.label} className="flex items-center gap-2">
                   <span className="text-[11px] font-semibold text-slate-500 w-20 flex-shrink-0 leading-tight">
                     {item.label}
@@ -331,7 +386,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ===== MOBILE: Activity Tab ===== */}
+      {/* MOBILE: Activity Tab */}
       {activeTab === 'activity' && (
         <div className="md:hidden pt-4">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -356,7 +411,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ===== MOBILE: Tours Tab ===== */}
+      {/* MOBILE: Tours Tab */}
       {activeTab === 'tours' && (
         <div className="md:hidden pt-4 space-y-3">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -419,7 +474,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ===== DESKTOP LAYOUT (hidden on mobile) ===== */}
+      {/* DESKTOP LAYOUT */}
       <div className="hidden md:block space-y-5">
 
         {/* Recent Leads + Funnel/Quick Actions */}
@@ -447,7 +502,11 @@ export default function Dashboard() {
                 </thead>
                 <tbody>
                   {RECENT_LEADS.map((lead) => (
-                    <tr key={lead.phone} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                    <tr
+                      key={lead.phone}
+                      className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer"
+                      onClick={() => setSelectedLeadId(lead.id)}
+                    >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: lead.avatarColor }}>
@@ -489,10 +548,10 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                 <h2 className="text-sm font-bold text-slate-900">Conversion Funnel</h2>
-                <span className="text-xs text-slate-400">This month</span>
+                <FunnelPeriodSelect value={funnelPeriod} onChange={setFunnelPeriod} />
               </div>
               <div className="p-5 space-y-3">
-                {FUNNEL_DATA.map((item) => (
+                {funnelData.map((item) => (
                   <div key={item.label} className="flex items-center gap-3">
                     <span className="text-xs font-semibold text-slate-500 w-24 flex-shrink-0 leading-tight">{item.label}</span>
                     <div className="flex-1 h-6 bg-slate-100 rounded-md overflow-hidden">
@@ -596,6 +655,15 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Lead Detail Drawer */}
+      {selectedLeadId !== null && (
+        <LeadDetailPanel
+          conversationId={selectedLeadId}
+          onClose={() => setSelectedLeadId(null)}
+          onUpdate={() => {}}
+        />
+      )}
 
     </div>
   );

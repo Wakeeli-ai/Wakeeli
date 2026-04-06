@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   getConversations,
   getConversation,
@@ -19,6 +20,7 @@ import {
   Bot,
   Search,
   Send,
+  Activity,
 } from 'lucide-react';
 
 type Message = {
@@ -26,6 +28,12 @@ type Message = {
   role: string;
   content: string;
   timestamp: string;
+};
+
+type StepEvent = {
+  id: string;
+  timestamp: string;
+  label: string;
 };
 
 type Conversation = {
@@ -109,7 +117,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     updated_at: '2026-04-01T07:55:00.000Z',
     messages: [
       { id: 1001, role: 'user', content: 'Hi, saw your listing 3a Achrafieh, 2BR near Sursoq. Still available?', timestamp: '2026-04-01T07:30:00.000Z' },
-      { id: 1002, role: 'assistant', content: 'Hey Charbel! Yes still available. 120m2, $1,200/mo, 4th floor. Want to book a viewing?', timestamp: '2026-04-01T07:31:00.000Z' },
+      { id: 1002, role: 'assistant', content: 'Hey Charbel! Yes still available.|||120m2, $1,200/mo, 4th floor with covered parking.|||Want to book a viewing?', timestamp: '2026-04-01T07:31:00.000Z' },
       { id: 1003, role: 'user', content: 'fi parking w generator? 3ande 2 kids so parking lazem', timestamp: '2026-04-01T07:33:00.000Z' },
       { id: 1004, role: 'assistant', content: 'Yes to both. Covered parking included and the building has a full generator, 24/7 coverage.', timestamp: '2026-04-01T07:34:00.000Z' },
       { id: 1005, role: 'user', content: 'keef el se3er? negotiable shi? budget 3ande $1,000 max', timestamp: '2026-04-01T07:50:00.000Z' },
@@ -220,7 +228,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     updated_at: '2026-04-01T08:10:00.000Z',
     messages: [
       { id: 1039, role: 'user', content: 'Marhaba, I have been looking at sea view apartments in Jounieh for a while. Serious buyer, budget up to $400k. Shu 3andkon?', timestamp: '2026-03-30T11:00:00.000Z' },
-      { id: 1040, role: 'assistant', content: 'Marhaba Tarek! Best right now: 180m2 on the 8th floor in Jounieh, panoramic sea and mountain view, $380,000. 2021 building, 2 parking, rooftop access.', timestamp: '2026-03-30T11:02:00.000Z' },
+      { id: 1040, role: 'assistant', content: 'Marhaba Tarek! Best right now.|||180m2 on the 8th floor in Jounieh, panoramic sea and mountain view, $380,000.|||2021 building, 2 parking, rooftop access.', timestamp: '2026-03-30T11:02:00.000Z' },
       { id: 1041, role: 'user', content: 'Very promising. Keef el building? Shu 3amaro w how many floors?', timestamp: '2026-03-30T11:15:00.000Z' },
       { id: 1042, role: 'assistant', content: 'Completed 2021, 12 floors total. 24/7 security and concierge. High-end finishes, kitchen appliances included. Owner invested heavily in the fit-out.', timestamp: '2026-03-30T11:16:00.000Z' },
       { id: 1043, role: 'user', content: 'I want to move fast on this. Can we visit tomorrow or the day after?', timestamp: '2026-04-01T08:00:00.000Z' },
@@ -284,6 +292,52 @@ const MOCK_CONVERSATIONS: Conversation[] = [
   },
 ];
 
+// Mock conversation step events keyed by conversation id
+const CONV_STEP_EVENTS: Record<number, StepEvent[]> = {
+  101: [
+    { id: 'se-101-1', timestamp: '2026-04-01T07:32:00.000Z', label: 'Moving to Qualification stage' },
+    { id: 'se-101-2', timestamp: '2026-04-01T07:51:30.000Z', label: 'Lead flagged as Urgent' },
+    { id: 'se-101-3', timestamp: '2026-04-01T07:55:30.000Z', label: 'Tour booked · Saturday 10 AM' },
+  ],
+  102: [
+    { id: 'se-102-1', timestamp: '2026-04-01T06:32:00.000Z', label: 'Moving to Qualification stage' },
+    { id: 'se-102-2', timestamp: '2026-04-01T07:45:30.000Z', label: 'Tour booked · Saturday 11 AM' },
+  ],
+  103: [
+    { id: 'se-103-1', timestamp: '2026-03-31T10:03:00.000Z', label: 'Moving to Qualification stage' },
+    { id: 'se-103-2', timestamp: '2026-04-01T07:16:00.000Z', label: 'Lead assigned to Maya Nasr' },
+    { id: 'se-103-3', timestamp: '2026-04-01T07:19:00.000Z', label: 'Lead reassigned to Joelle Rizk' },
+    { id: 'se-103-4', timestamp: '2026-04-01T07:19:30.000Z', label: 'Moving to Handoff stage' },
+  ],
+  104: [
+    { id: 'se-104-1', timestamp: '2026-03-31T09:02:00.000Z', label: 'Moving to Qualification stage' },
+    { id: 'se-104-2', timestamp: '2026-03-31T09:30:30.000Z', label: 'Tour requested · Wednesday or Thursday' },
+  ],
+  105: [
+    { id: 'se-105-1', timestamp: '2026-04-01T05:02:00.000Z', label: 'Moving to Qualification stage' },
+    { id: 'se-105-2', timestamp: '2026-04-01T06:51:00.000Z', label: 'Tour booked · Saturday 10 AM' },
+  ],
+  106: [
+    { id: 'se-106-1', timestamp: '2026-04-01T08:03:00.000Z', label: 'Moving to Qualification stage' },
+  ],
+  107: [
+    { id: 'se-107-1', timestamp: '2026-03-30T11:03:00.000Z', label: 'Moving to Qualification stage' },
+    { id: 'se-107-2', timestamp: '2026-04-01T08:11:00.000Z', label: 'Tour booked · Tomorrow 3 PM' },
+  ],
+  108: [
+    { id: 'se-108-1', timestamp: '2026-04-01T09:02:00.000Z', label: 'Moving to Qualification stage' },
+  ],
+  109: [
+    { id: 'se-109-1', timestamp: '2026-03-31T11:03:00.000Z', label: 'Moving to Qualification stage' },
+    { id: 'se-109-2', timestamp: '2026-04-01T08:11:00.000Z', label: 'Tour booked · Tomorrow 11 AM' },
+  ],
+  110: [
+    { id: 'se-110-1', timestamp: '2026-03-20T10:02:00.000Z', label: 'Moving to Qualification stage' },
+    { id: 'se-110-2', timestamp: '2026-03-25T15:01:00.000Z', label: 'Lead assigned to Joelle Rizk' },
+    { id: 'se-110-3', timestamp: '2026-03-25T15:02:00.000Z', label: 'Conversation closed' },
+  ],
+};
+
 function getBadge(status: string) {
   return STATUS_BADGE[status] ?? { label: status, cls: 'bg-slate-100 text-slate-600' };
 }
@@ -317,6 +371,7 @@ const TAG_KEYS = ['area', 'bedrooms', 'type', 'duration', 'property_type', 'view
 
 export default function Conversations() {
   useRole();
+  const location = useLocation();
   const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [detail, setDetail] = useState<Conversation | null>(null);
@@ -331,6 +386,7 @@ export default function Conversations() {
   const [messageInput, setMessageInput] = useState('');
   const [overrideAI, setOverrideAI] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+  const [showStepEvents, setShowStepEvents] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -374,6 +430,21 @@ export default function Conversations() {
     const interval = setInterval(loadList, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const leadName = params.get('lead');
+    if (!leadName) return;
+    const match =
+      conversations.find((c) => c.user_name?.toLowerCase() === leadName.toLowerCase()) ??
+      conversations.find((c) =>
+        c.user_name?.toLowerCase().includes(leadName.split(' ')[0].toLowerCase())
+      );
+    if (match) {
+      setSelected(match);
+      setMobileView('chat');
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (!selected) { setDetail(null); return; }
@@ -652,6 +723,20 @@ export default function Conversations() {
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Step events toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setShowStepEvents((v) => !v)}
+                    title={showStepEvents ? 'Hide conversation steps' : 'Show conversation steps'}
+                    className={`p-1.5 rounded-lg border transition-colors ${
+                      showStepEvents
+                        ? 'border-brand-200 bg-brand-50 text-brand-600'
+                        : 'border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4" />
+                  </button>
+
                   {/* Assign agent dropdown */}
                   <div className="relative" ref={dropdownRef}>
                     <button
@@ -714,26 +799,88 @@ export default function Conversations() {
                   <div className="flex-1 h-px bg-slate-200" />
                 </div>
 
-                {(detail.messages ?? []).map((m) => {
-                  const isUser = m.role === 'user';
-                  return (
-                    <div key={m.id} className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}>
-                      <div
-                        className={`max-w-[70%] rounded-2xl px-3.5 py-2.5 ${
-                          isUser
-                            ? 'bg-white border border-slate-200 text-slate-700 rounded-bl-[4px]'
-                            : 'bg-brand-600 text-white rounded-br-[4px]'
-                        }`}
-                      >
-                        <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{m.content}</p>
-                        <p className={`text-[10px] mt-1 ${isUser ? 'text-slate-400' : 'text-white/55'}`}>
-                          {formatMsgTime(m.timestamp)}
-                          {!isUser && <span className="opacity-60"> · AI</span>}
-                        </p>
-                      </div>
-                    </div>
+                {(() => {
+                  type TimelineItem =
+                    | { kind: 'message'; data: Message }
+                    | { kind: 'event'; data: StepEvent };
+
+                  const stepItems: TimelineItem[] = showStepEvents
+                    ? (CONV_STEP_EVENTS[detail.id] ?? []).map((e) => ({
+                        kind: 'event' as const,
+                        data: e,
+                      }))
+                    : [];
+
+                  const timeline: TimelineItem[] = [
+                    ...(detail.messages ?? []).map((m) => ({
+                      kind: 'message' as const,
+                      data: m,
+                    })),
+                    ...stepItems,
+                  ].sort(
+                    (a, b) =>
+                      new Date(a.data.timestamp).getTime() -
+                      new Date(b.data.timestamp).getTime(),
                   );
-                })}
+
+                  return timeline.map((item) => {
+                    if (item.kind === 'event') {
+                      return (
+                        <div key={item.data.id} className="flex items-center gap-3 my-0.5">
+                          <div className="flex-1 h-px bg-slate-100" />
+                          <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap px-1">
+                            {item.data.label}
+                          </span>
+                          <div className="flex-1 h-px bg-slate-100" />
+                        </div>
+                      );
+                    }
+
+                    const m = item.data;
+                    const isUser = m.role === 'user';
+                    const parts =
+                      !isUser && m.content.includes('|||')
+                        ? m.content
+                            .split('|||')
+                            .map((p) => p.trim())
+                            .filter(Boolean)
+                        : [m.content];
+
+                    return (
+                      <div
+                        key={m.id}
+                        className={`flex flex-col gap-1 ${isUser ? 'items-start' : 'items-end'}`}
+                      >
+                        {parts.map((part, idx) => (
+                          <div
+                            key={idx}
+                            className={`max-w-[70%] rounded-2xl px-3.5 py-2.5 ${
+                              isUser
+                                ? 'bg-white border border-slate-200 text-slate-700 rounded-bl-[4px]'
+                                : 'bg-brand-600 text-white rounded-br-[4px]'
+                            }`}
+                          >
+                            <p className="text-[13px] leading-relaxed whitespace-pre-wrap">
+                              {part}
+                            </p>
+                            {idx === parts.length - 1 && (
+                              <p
+                                className={`text-[10px] mt-1 ${
+                                  isUser ? 'text-slate-400' : 'text-white/55'
+                                }`}
+                              >
+                                {formatMsgTime(m.timestamp)}
+                                {!isUser && (
+                                  <span className="opacity-60"> · AI</span>
+                                )}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  });
+                })()}
 
                 {/* AI typing indicator */}
                 {isAiActive(detail) && (

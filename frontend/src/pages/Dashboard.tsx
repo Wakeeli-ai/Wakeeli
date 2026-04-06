@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { getConversations } from '../api';
+import { getConversations, getAnalyticsCosts } from '../api';
+import { toast } from '../utils/toast';
 import {
   Users,
   MessageSquare,
@@ -279,6 +280,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [selectedConvo, setSelectedConvo] = useState<any | null>(MOCK_CONVERSATIONS[0]);
+  const [kpi, setKpi] = useState<{ totalConversations: number; activeConversations: number } | null>(null);
 
   useEffect(() => {
     getConversations()
@@ -289,10 +291,26 @@ export default function Dashboard() {
         setSelectedConvo((prev: any) => prev ?? list[0]);
       })
       .catch(() => {
+        toast.error('Failed to load conversations.');
         setConversations(MOCK_CONVERSATIONS);
         setSelectedConvo(MOCK_CONVERSATIONS[0]);
       })
       .finally(() => setLoading(false));
+
+    getAnalyticsCosts(30)
+      .then((r) => {
+        const summary = r.data?.summary;
+        if (summary) {
+          setKpi({
+            totalConversations: summary.total_conversations,
+            activeConversations: summary.total_conversations,
+          });
+        }
+      })
+      .catch(() => {
+        // Analytics costs are optional on dashboard, fail silently
+        console.warn('[Dashboard] Analytics unavailable.');
+      });
   }, []);
 
   const filtered = filterConversations(conversations, activeTab);
@@ -313,7 +331,9 @@ export default function Dashboard() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Total Leads</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">847</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">
+                {kpi ? kpi.totalConversations : conversations.length || 847}
+              </p>
               <p className="text-xs text-emerald-600 mt-1">+23 this week</p>
             </div>
             <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
@@ -326,7 +346,9 @@ export default function Dashboard() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Active Conversations</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">23</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">
+                {conversations.filter((c) => c.status !== 'closed').length || 23}
+              </p>
               <p className="text-xs text-emerald-600 mt-1">+5 since yesterday</p>
             </div>
             <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
@@ -442,7 +464,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex min-h-[320px]">
-            <div className="w-80 flex-shrink-0 border-r border-slate-100 max-h-[420px] overflow-y-auto">
+            <div className="w-full sm:w-80 flex-shrink-0 border-r border-slate-100 max-h-[420px] overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="w-6 h-6 text-brand-600 animate-spin" />
@@ -486,7 +508,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            <div className="flex-1 bg-slate-50/50 p-5 overflow-y-auto max-h-[420px]">
+            <div className="hidden sm:block flex-1 bg-slate-50/50 p-5 overflow-y-auto max-h-[420px]">
               {selectedConvo && (selectedConvo.messages ?? []).length > 0 ? (
                 <div className="space-y-3">
                   <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">

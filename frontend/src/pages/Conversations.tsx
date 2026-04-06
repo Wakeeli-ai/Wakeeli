@@ -8,6 +8,7 @@ import {
 } from '../api';
 import type { Agent } from '../api';
 import { useRole } from '../context/RoleContext';
+import { toast } from '../utils/toast';
 import {
   MessageSquare,
   Loader2,
@@ -15,6 +16,7 @@ import {
   Info,
   X,
   ChevronDown,
+  ChevronLeft,
   Bot,
 } from 'lucide-react';
 
@@ -52,7 +54,7 @@ const AVATAR_COLORS = [
 ];
 
 function avatarColor(id: number): string {
-  return AVATAR_COLORS[(id - 101) % AVATAR_COLORS.length];
+  return AVATAR_COLORS[Math.abs(id) % AVATAR_COLORS.length];
 }
 
 function initials(name: string): string {
@@ -367,8 +369,11 @@ export default function Conversations() {
     try {
       await assignAgentToConversation(selected.id, agentId);
       setShowAgentDropdown(false);
+      toast.success('Agent assigned.');
       await loadList();
-    } catch { /* ignore */ }
+    } catch {
+      toast.error('Failed to assign agent.');
+    }
     finally { setAssigningAgent(false); }
   };
 
@@ -377,8 +382,11 @@ export default function Conversations() {
     setEndingChat(true);
     try {
       await updateConversationStatus(selected.id, 'closed');
+      toast.success('Conversation closed.');
       await loadList();
-    } catch { /* ignore */ }
+    } catch {
+      toast.error('Failed to close conversation.');
+    }
     finally { setEndingChat(false); }
   };
 

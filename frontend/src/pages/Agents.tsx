@@ -496,7 +496,7 @@ export default function Agents() {
         }
       })
       .catch(() => {
-        console.warn('[Agents] Failed to load from API, using mock data');
+        toast.error('Failed to load agents.');
         setAgents(MOCK_AGENTS);
       })
       .finally(() => setLoading(false));

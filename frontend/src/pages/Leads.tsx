@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { Download, LayoutGrid, X } from 'lucide-react';
+import { Download, LayoutGrid, X, Loader2 } from 'lucide-react';
 import LeadDetailPanel from '../components/LeadDetailPanel';
+import { getConversations } from '../api';
+import { toast } from '../utils/toast';
 
 type Lead = {
   id: number;
@@ -247,14 +249,71 @@ const STATUS_LABEL: Record<string, string> = {
 
 const PAGE_SIZE = 10;
 
+function mapConversationToLead(conv: any, idx: number): Lead {
+  const req = conv.user_requirements || {};
+  const name = req.name || conv.user_name || conv.user_phone || `Lead ${idx + 1}`;
+  const statusMap: Record<string, Lead['status']> = {
+    new: 'new',
+    qualified: 'qualified',
+    handed_off: 'handed_to_agent',
+    closed: 'handed_to_agent',
+    urgent: 'qualifying',
+  };
+  const budgetVal = req.budget_max || req.budget_min;
+  const budgetStr = budgetVal
+    ? req.listing_type === 'rent'
+      ? `$${budgetVal.toLocaleString()}/mo`
+      : `$${budgetVal.toLocaleString()}`
+    : 'N/A';
+
+  const updatedAt = conv.updated_at || conv.created_at || '';
+  let lastActivity = '';
+  if (updatedAt) {
+    const diff = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 1000);
+    if (diff < 3600) lastActivity = `${Math.floor(diff / 60)} min ago`;
+    else if (diff < 86400) lastActivity = `${Math.floor(diff / 3600)}h ago`;
+    else lastActivity = `${Math.floor(diff / 86400)}d ago`;
+  }
+
+  return {
+    id: conv.id,
+    name,
+    phone: conv.user_phone || '',
+    source: 'WhatsApp',
+    type: req.listing_type === 'buy' ? 'buy' : 'rent',
+    status: statusMap[conv.status] || 'new',
+    agent: conv.agent?.name || null,
+    lastActivity: lastActivity || 'Unknown',
+    activityText: conv.status === 'handed_off' ? 'Handed to agent' : 'AI active',
+    notes: req.location ? `Looking in ${req.location}` : '',
+    budget: budgetStr,
+  };
+}
+
 export default function Leads() {
   const { role } = useRole();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
 
+  const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ source: '', type: '', status: '', agent: '' });
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    getConversations()
+      .then((res) => {
+        const data: any[] = Array.isArray(res.data) ? res.data : [];
+        if (data.length > 0) {
+          setLeads(data.map(mapConversationToLead));
+        }
+      })
+      .catch(() => {
+        toast.error('Failed to load leads.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const isAgent = role === 'agent';
   const title = isAgent ? 'My Leads' : 'Leads';
@@ -262,7 +321,7 @@ export default function Leads() {
     ? `Search results for "${searchQuery}"`
     : 'Manage and track all your property leads';
 
-  const filtered = MOCK_LEADS.filter((lead) => {
+  const filtered = leads.filter((lead) => {
     if (
       searchQuery &&
       !lead.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -396,7 +455,13 @@ export default function Leads() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paginated.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={isAgent ? 7 : 8} className="px-6 py-12 text-center text-slate-400">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-600" />
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td
                     colSpan={isAgent ? 7 : 8}

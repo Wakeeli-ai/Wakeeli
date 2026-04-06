@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRole } from '../context/RoleContext';
-import { Plus, MapPin, User } from 'lucide-react';
+import { Plus, MapPin, User, Loader2 } from 'lucide-react';
 
 const TOURS = [
   {
@@ -126,14 +126,22 @@ type StatusFilter = 'All' | 'Scheduled' | 'Completed' | 'Cancelled';
 export default function Tours() {
   const { role } = useRole();
   const [filter, setFilter] = useState<StatusFilter>('All');
+  const [tours, setTours] = useState(TOURS);
+  const [loading, setLoading] = useState(true);
   const title = role === 'agent' ? 'Property Visits' : 'Property Tours';
 
-  const filtered = filter === 'All' ? TOURS : TOURS.filter((t) => t.status === filter);
+  useEffect(() => {
+    // No tours endpoint in backend yet - use mock data
+    setTours(TOURS);
+    setLoading(false);
+  }, []);
+
+  const filtered = filter === 'All' ? tours : tours.filter((t) => t.status === filter);
 
   const counts = {
-    Scheduled: TOURS.filter((t) => t.status === 'Scheduled').length,
-    Completed: TOURS.filter((t) => t.status === 'Completed').length,
-    Cancelled: TOURS.filter((t) => t.status === 'Cancelled').length,
+    Scheduled: tours.filter((t) => t.status === 'Scheduled').length,
+    Completed: tours.filter((t) => t.status === 'Completed').length,
+    Cancelled: tours.filter((t) => t.status === 'Cancelled').length,
   };
 
   return (
@@ -200,7 +208,19 @@ export default function Tours() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((tour) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-12 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-600" />
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-12 text-center text-slate-400 text-sm">
+                    No tours found.
+                  </td>
+                </tr>
+              ) : filtered.map((tour) => (
                 <tr key={tour.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">

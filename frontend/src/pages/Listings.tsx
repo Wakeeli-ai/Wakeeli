@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { createListing, deleteListing } from '../api';
+import { createListing, deleteListing, getListings } from '../api';
 import {
   Building2, Bed, Bath, Maximize, X, MapPin, Search, Loader2,
 } from 'lucide-react';
+import { toast } from '../utils/toast';
 
 // Types
 
@@ -2666,6 +2667,64 @@ const MOCK_LISTINGS: Listing[] = [
   }
 ];
 
+// Unsplash image pool for listings loaded from the API (no image_url in backend)
+const UNSPLASH_POOL = [
+  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=400&h=300&fit=crop',
+];
+
+// Map a raw backend listing object to the frontend Listing type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeListing(raw: any): Listing {
+  const numId = Number(raw.id) || 0;
+  const imageUrl = raw.image_url || UNSPLASH_POOL[Math.abs(numId) % UNSPLASH_POOL.length];
+
+  // Backend has is_available (bool), frontend uses status string
+  const status = raw.is_available === false ? 'sold' : 'available';
+
+  // parking is a string in the backend ("1", "2", "Covered", "None")
+  let parking: number | null = null;
+  if (raw.parking && raw.parking !== 'None') {
+    const p = parseInt(raw.parking, 10);
+    parking = Number.isFinite(p) ? p : null;
+  }
+
+  return {
+    id: String(raw.id),
+    title: raw.title || '',
+    listing_type: raw.listing_type as 'buy' | 'rent',
+    property_type: raw.property_type || '',
+    city: raw.city || '',
+    area: raw.area || raw.city || '',
+    bedrooms: raw.bedrooms ?? 0,
+    bathrooms: raw.bathrooms ?? 0,
+    built_up_area: raw.built_up_area ?? 0,
+    sale_price: raw.sale_price ?? null,
+    rent_price: raw.rent_price ?? null,
+    furnishing: raw.furnishing || '',
+    description: raw.description || '',
+    view: raw.view || '',
+    image_url: imageUrl,
+    status,
+    parking,
+    elevator: raw.elevator ?? false,
+    generator: raw.generator ?? false,
+    terrace_area: raw.terrace_area ?? null,
+    maids_room: raw.maids_room ?? false,
+    balconies: raw.balconies ?? null,
+    electricity_24_7: raw.electricity_24_7 ?? false,
+    notes: raw.notes || '',
+  };
+}
+
 const formatPrice = (value: number | null | undefined): string => {
   if (value === null || value === undefined) return 'N/A';
   return value.toLocaleString();
@@ -3073,8 +3132,19 @@ export default function Listings() {
 
   const loadListings = async () => {
     setLoading(true);
-    setListings(MOCK_LISTINGS);
-    setLoading(false);
+    try {
+      const res = await getListings();
+      const raw: any[] = res.data || [];
+      if (raw.length > 0) {
+        setListings(raw.map(normalizeListing));
+      } else {
+        setListings(MOCK_LISTINGS);
+      }
+    } catch {
+      setListings(MOCK_LISTINGS);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -3082,9 +3152,11 @@ export default function Listings() {
     try {
       await deleteListing(Number(id));
       setSelectedListing(null);
-      loadListings();
+      toast.success('Listing deleted.');
+      await loadListings();
     } catch (err) {
-      console.error(err);
+      console.warn('[Listings] Delete failed:', err);
+      toast.error('Failed to delete listing.');
     }
   };
 
@@ -3103,6 +3175,7 @@ export default function Listings() {
       sale_price: data.listing_type === 'buy' ? parsed : null,
       rent_price: data.listing_type === 'rent' ? parsed : null,
     });
+    toast.success('Listing added.');
     setShowAddModal(false);
     loadListings();
   };

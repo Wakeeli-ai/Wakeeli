@@ -768,7 +768,7 @@ Right: "Small" = small sqm. Search for 4-bed under the given budget, any sqm. No
 
 | Service | Value |
 |---------|-------|
-| Anthropic API Key | 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 |
+| Anthropic API Key | Set in Railway env vars |
 | Railway Token | 3300dd51-7868-4573-b01f-e408dc7f06c0 |
 | Railway Project ID | 7222dddb-5a04-4da3-b891-1040b230b87b |
 | Railway Backend Service ID | d3efcb97-b091-420b-b09d-d723e0015871 |

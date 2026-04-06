@@ -592,9 +592,23 @@
       sessionId = data.session_id;
       hideTyping();
 
-      // Small stagger for natural feel
-      await sleep(120);
-      appendBubble('bot', data.response);
+      // Render each message part as a separate bubble with a stagger delay
+      // so the conversation feels natural (identical to how WhatsApp delivers
+      // multi-part replies in the real agent pipeline).
+      const parts = Array.isArray(data.messages) ? data.messages : [data.response || ''];
+      for (let i = 0; i < parts.length; i++) {
+        if (i > 0) {
+          // Show typing indicator between parts
+          showTyping();
+          await sleep(420 + Math.min(parts[i].length * 12, 800));
+          hideTyping();
+        } else {
+          await sleep(120);
+        }
+        if (parts[i] && parts[i].trim()) {
+          appendBubble('bot', parts[i].trim());
+        }
+      }
       setStatus('online');
     } catch (err) {
       hideTyping();

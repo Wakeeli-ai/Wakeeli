@@ -1024,8 +1024,29 @@ def extract_entities(message, history, conversation_id=None):
         }
 
 
+
+# Pattern to detect booking interest signals used in handoff-mode override.
+# Matches phrases that indicate the lead is ready to visit or wants to confirm.
+_BOOKING_INTEREST_PATTERN = re.compile(
+    r"\b(option\s*\d|number\s*\d|the\s*(first|second|third|last|one|second|that)\s*(one)?|"
+    r"i\s*(like|love|want|prefer|'?d\s+like|'?d\s+take|'?ll\s+take)\s*(that|this|it|option|number|\d)|"
+    r"(that|this)\s+one\s+looks?\s*(good|great|nice|perfect|interesting)|"
+    r"(sounds?|looks?)\s+(good|great|perfect|nice|interesting)|"
+    r"yes\s*(please)?[.!]?\s*$|yeah\s*(sure)?[.!]?\s*$|sure[.!]?\s*$|"
+    r"(i'?m\s+)?(interested|keen|down)\b|"
+    r"when\s+can\s+(i|we)\s+(visit|see|view|come)|"
+    r"(can\s+i|i\s+want\s+to)\s+(visit|see|view|schedule|book)|"
+    r"(book|schedule)\s+(a\s+)?(visit|viewing|tour))\b",
+    re.IGNORECASE
+)
+
+
 def process_user_message(db: Session, conversation_id: int, user_message: str, **kwargs) -> list[str]:
     history = []
+
+    # Optional demo_mode: "auto" (default, AI books) or "handoff" (AI routes to agent
+    # once a qualified lead shows booking interest instead of handling the booking itself)
+    demo_mode = kwargs.get("demo_mode", "auto")
 
     # Get or create the per-conversation session
     session = get_session(conversation_id)
@@ -1121,6 +1142,17 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
                 and not session.property_info.get("budget_max")
                 and session.budget_ask_count >= 2):
             session.pending_route_message = "Let me connect you with one of our agents who can help you with that."
+            action = "route_to_agent"
+
+        # Handoff-mode override: in "handoff" mode, once listings have been shown and
+        # the lead signals booking interest, route to a human agent instead of letting
+        # the AI attempt to schedule the visit itself.
+        if (demo_mode == "handoff"
+                and action == "process_property_request"
+                and session.listings_shown
+                and _BOOKING_INTEREST_PATTERN.search(user_message)
+                and not should_route):
+            session.pending_route_message = "Let me connect you with one of our agents who handles that area. They will reach out shortly."
             action = "route_to_agent"
 
         # Generate reply based on the action

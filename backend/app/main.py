@@ -111,10 +111,19 @@ def serve_superadmin_spa(path: str):
     if os.path.isfile(file_path):
         return FileResponse(file_path)
 
-    # Fall back to index.html for all React Router paths
+    # Fall back to index.html for all React Router paths.
+    # Always send no-cache so browsers never serve a stale main-frontend HTML
+    # that was cached before the superadmin route was deployed.
     index_path = os.path.join(superadmin_dist, "index.html")
     if os.path.isfile(index_path):
-        return FileResponse(index_path)
+        return FileResponse(
+            index_path,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            },
+        )
 
     return JSONResponse({"error": "Super-admin not found"}, status_code=404)
 
@@ -141,6 +150,12 @@ def read_root():
 async def serve_spa(full_path: str):
     # Let API paths return 404 normally
     if full_path.startswith("api/") or full_path == "api":
+        return JSONResponse({"error": "Not found"}, status_code=404)
+
+    # Never let the main-frontend catch-all intercept superadmin paths.
+    # The dedicated /superadmin/{path:path} route above handles these, but
+    # this guard is a hard safety net in case route ordering ever shifts.
+    if full_path == "superadmin" or full_path.startswith("superadmin/"):
         return JSONResponse({"error": "Not found"}, status_code=404)
 
     frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")

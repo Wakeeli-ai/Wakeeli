@@ -36,7 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API Routes (registered first - highest priority)
+# API Routes (registered first, highest priority)
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 app.include_router(listings.router, prefix="/api/listings", tags=["Listings"])
@@ -87,7 +87,39 @@ def reset_listings():
     return {"status": "ok", "message": "Listings table reset."}
 
 
-# Frontend static assets (Vite build - JS/CSS bundles live in /assets)
+# Super-admin static assets (Vite build assets directory)
+_superadmin_dist = os.path.join(os.path.dirname(__file__), "..", "superadmin_dist")
+_superadmin_assets = os.path.join(_superadmin_dist, "assets")
+if os.path.isdir(_superadmin_assets):
+    app.mount("/superadmin/assets", StaticFiles(directory=_superadmin_assets), name="superadmin_assets")
+
+
+@app.get("/superadmin")
+def superadmin_root():
+    """Redirect bare /superadmin to /superadmin/ so the SPA loads correctly."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/superadmin/")
+
+
+@app.get("/superadmin/{path:path}")
+def serve_superadmin_spa(path: str):
+    """Serve the super-admin React SPA for all /superadmin/* routes."""
+    superadmin_dist = os.path.join(os.path.dirname(__file__), "..", "superadmin_dist")
+
+    # Serve real files (images, icons, etc.) if they exist directly in superadmin_dist
+    file_path = os.path.join(superadmin_dist, path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    # Fall back to index.html for all React Router paths
+    index_path = os.path.join(superadmin_dist, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+
+    return JSONResponse({"error": "Super-admin not found"}, status_code=404)
+
+
+# Frontend static assets (Vite build, JS/CSS bundles live in /assets)
 _frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
 _frontend_assets = os.path.join(_frontend_dist, "assets")
 if os.path.isdir(_frontend_assets):
@@ -107,7 +139,7 @@ def read_root():
 # Serves index.html for any non-API, non-static path (React Router support)
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # Let API paths return 404 normally - don't hijack them
+    # Let API paths return 404 normally
     if full_path.startswith("api/") or full_path == "api":
         return JSONResponse({"error": "Not found"}, status_code=404)
 

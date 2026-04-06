@@ -14,7 +14,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/superadmin">
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route

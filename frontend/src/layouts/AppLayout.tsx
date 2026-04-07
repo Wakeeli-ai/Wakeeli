@@ -20,6 +20,7 @@ import {
   Menu,
   Edit2,
   Save,
+  Camera,
 } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
 
@@ -151,8 +152,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileEditMode, setProfileEditMode] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '+961 3 123 456' });
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -227,6 +230,35 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     } else {
       navigate('/leads');
     }
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 200;
+        let { width, height } = img;
+        if (width > height) {
+          if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+        } else {
+          if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          setProfilePhoto(canvas.toDataURL('image/jpeg', 0.85));
+        }
+      };
+      img.src = ev.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -354,10 +386,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.06)' }}
           >
             <div
-              className="flex items-center justify-center font-bold text-white flex-shrink-0 rounded-full"
-              style={{ width: 30, height: 30, background: '#2060e8', fontSize: 11 }}
+              className="flex items-center justify-center font-bold text-white flex-shrink-0 rounded-full overflow-hidden"
+              style={{ width: 30, height: 30, background: profilePhoto ? 'transparent' : '#2060e8', fontSize: 11 }}
             >
-              {initials}
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+              ) : initials}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-white font-semibold truncate" style={{ fontSize: 12 }}>
@@ -490,10 +524,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               className="flex items-center"
             >
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                style={{ background: '#ede9fe', color: '#7c3aed' }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 overflow-hidden"
+                style={{ background: profilePhoto ? 'transparent' : '#ede9fe', color: '#7c3aed' }}
               >
-                {initials}
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                ) : initials}
               </div>
             </button>
 
@@ -654,10 +690,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                   <p className="text-xs text-slate-500">{displayLabel}</p>
                 </div>
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
-                  style={{ background: '#ede9fe', color: '#7c3aed' }}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 overflow-hidden"
+                  style={{ background: profilePhoto ? 'transparent' : '#ede9fe', color: '#7c3aed' }}
                 >
-                  {initials}
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : initials}
                 </div>
               </button>
 
@@ -778,11 +816,34 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* Avatar + name */}
             <div className="px-6 py-5 flex items-center gap-4 bg-slate-50 border-b border-slate-100">
-              <div
-                className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold text-white flex-shrink-0"
-                style={{ background: '#2060e8' }}
-              >
-                {initials}
+              <div className="relative flex-shrink-0">
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white overflow-hidden"
+                  style={{ background: profilePhoto ? 'transparent' : '#2060e8' }}
+                >
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : initials}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className={`absolute bottom-0 right-0 flex items-center justify-center rounded-full border-2 border-white shadow transition-colors ${
+                    profileEditMode
+                      ? 'w-8 h-8 bg-brand-600 hover:bg-brand-700 text-white'
+                      : 'w-6 h-6 bg-slate-500 hover:bg-slate-600 text-white'
+                  }`}
+                  title="Upload photo"
+                >
+                  <Camera size={profileEditMode ? 14 : 10} />
+                </button>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                />
               </div>
               <div>
                 <p className="font-bold text-slate-900 text-base">{profileForm.name || displayName}</p>
@@ -927,10 +988,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             {/* User section */}
             <div className="mx-4 mb-4 bg-slate-50 rounded-xl border border-slate-100 p-3 flex items-center gap-3">
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0"
-                style={{ background: '#2060e8', fontSize: 13 }}
+                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 overflow-hidden"
+                style={{ background: profilePhoto ? 'transparent' : '#2060e8', fontSize: 13 }}
               >
-                {initials}
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                ) : initials}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-slate-900 text-sm truncate">{displayName}</div>

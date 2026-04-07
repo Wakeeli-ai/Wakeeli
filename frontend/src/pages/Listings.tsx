@@ -2779,10 +2779,10 @@ function ListingDrawer({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
+      <div className="bg-black/30 z-40" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={onClose} />
 
       {/* Drawer panel */}
-      <div className="fixed right-0 top-0 h-full w-[500px] max-w-full bg-white shadow-xl z-50 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300">
+      <div className="bg-white shadow-xl z-50 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ position: 'fixed', top: 0, right: 0, bottom: 0, height: '100vh', width: '500px', maxWidth: '100vw' }}>
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-4">
@@ -2947,15 +2947,7 @@ const EMPTY_FORM = {
   built_up_area: '',
   furnishing: 'Unfurnished',
   description: '',
-  // Additional details
-  parking: '',
-  has_balcony: false,
-  floor_number: '',
-  building_age: '',
-  heating_type: '',
-  pet_friendly: false,
-  has_generator: false,
-  has_elevator: false,
+  additional_details: '',
 };
 
 function AddListingModal({
@@ -2978,23 +2970,46 @@ function AddListingModal({
   const [voiceStatus, setVoiceStatus] = useState('');
   const recognitionRef = useRef<any>(null);
 
+  const compressImage = (file: File, callback: (dataUrl: string) => void) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 300;
+      let w = img.width;
+      let h = img.height;
+      if (w > h) {
+        if (w > maxSize) { h = Math.round(h * maxSize / w); w = maxSize; }
+      } else {
+        if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.8));
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  };
+
   const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setCoverPreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    compressImage(file, (dataUrl) => setCoverPreview(dataUrl));
   };
 
   const handlePropertyPhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) =>
-        setPropertyPreviews((prev) => [...prev, ev.target?.result as string]);
-      reader.readAsDataURL(file);
-    });
     e.target.value = '';
+    const processNext = (index: number) => {
+      if (index >= files.length) return;
+      compressImage(files[index], (dataUrl) => {
+        setPropertyPreviews((prev) => [...prev, dataUrl]);
+        setTimeout(() => processNext(index + 1), 0);
+      });
+    };
+    processNext(0);
   };
 
   const removePropertyPhoto = (index: number) => {
@@ -3058,6 +3073,7 @@ function AddListingModal({
     }
     const recognition = new SR();
     recognition.lang = 'en-US';
+    recognition.continuous = false;
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.onresult = (event: any) => {
@@ -3093,10 +3109,10 @@ function AddListingModal({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+      <div className="bg-black/40 z-40" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ height: '100vh', width: '520px', maxWidth: '100vw' }}>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10 flex-shrink-0">
             <h3 className="text-base font-semibold text-slate-900">Add Listing</h3>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
               <X size={18} />
@@ -3304,102 +3320,57 @@ function AddListingModal({
                 {showAdditional ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
               </button>
               {showAdditional && (
-                <div className="px-4 py-3 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Parking Spaces</label>
-                      <select
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                        value={form.parking}
-                        onChange={(e) => setForm({ ...form, parking: e.target.value })}
-                      >
-                        <option value="">None</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3+</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Floor Number</label>
-                      <input
-                        type="number"
-                        min={0}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        placeholder="e.g. 3"
-                        value={form.floor_number}
-                        onChange={(e) => setForm({ ...form, floor_number: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Building Age (yrs)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        placeholder="e.g. 5"
-                        value={form.building_age}
-                        onChange={(e) => setForm({ ...form, building_age: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Heating Type</label>
-                      <select
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                        value={form.heating_type}
-                        onChange={(e) => setForm({ ...form, heating_type: e.target.value })}
-                      >
-                        <option value="">Not specified</option>
-                        <option value="Central">Central</option>
-                        <option value="Individual">Individual</option>
-                        <option value="Split AC">Split AC</option>
-                        <option value="Underfloor">Underfloor</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-                    {(
-                      [
-                        { key: 'has_balcony', label: 'Balcony' },
-                        { key: 'has_generator', label: 'Generator' },
-                        { key: 'has_elevator', label: 'Elevator' },
-                        { key: 'pet_friendly', label: 'Pet Friendly' },
-                      ] as { key: keyof typeof EMPTY_FORM; label: string }[]
-                    ).map(({ key, label }) => (
-                      <label
-                        key={key}
-                        className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer select-none"
-                      >
-                        <input
-                          type="checkbox"
-                          className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                          checked={form[key] as boolean}
-                          onChange={(e) => setForm({ ...form, [key]: e.target.checked })}
-                        />
-                        {label}
-                      </label>
-                    ))}
-                  </div>
+                <div className="px-4 py-3">
+                  <textarea
+                    rows={4}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                    placeholder="Add any additional details about the property (parking, floor, amenities, etc.)"
+                    value={form.additional_details}
+                    onChange={(e) => setForm({ ...form, additional_details: e.target.value })}
+                  />
                 </div>
               )}
             </div>
 
             {/* Voice Fill */}
+            <style>{`@keyframes waveBar{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}`}</style>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={isRecording ? stopRecording : startRecording}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isRecording
-                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {isRecording && (
-                  <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                )}
-                <Mic size={15} />
-                {isRecording ? 'Stop' : 'Voice Fill'}
-              </button>
+              {isRecording ? (
+                <div className="flex items-center gap-3 px-3 py-2 bg-red-50 rounded-lg border border-red-200">
+                  <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+                  <div className="flex items-center gap-0.5" style={{ height: '20px' }}>
+                    {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                      <div
+                        key={i}
+                        style={{
+                          animation: `waveBar 0.7s ease-in-out ${i * 0.1}s infinite`,
+                          transformOrigin: 'center',
+                          height: '18px',
+                          width: '4px',
+                        }}
+                        className="bg-red-500 rounded-full"
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={stopRecording}
+                    className="flex items-center justify-center w-7 h-7 bg-red-600 rounded-full hover:bg-red-700 transition-colors flex-shrink-0"
+                    title="Stop recording"
+                  >
+                    <div className="w-3 h-3 bg-white rounded-sm" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                >
+                  <Mic size={15} />
+                  Voice Fill
+                </button>
+              )}
               {voiceStatus && (
                 <span className="text-xs text-slate-400">{voiceStatus}</span>
               )}
@@ -3479,10 +3450,10 @@ function EditListingModal({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-[60]" onClick={onClose} />
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+      <div className="bg-black/40 z-[60]" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={onClose} />
+      <div className="fixed inset-0 z-[70] flex justify-end">
+        <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ height: '100vh', width: '520px', maxWidth: '100vw' }}>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10 flex-shrink-0">
             <h3 className="text-base font-semibold text-slate-900">Edit Listing</h3>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
               <X size={18} />

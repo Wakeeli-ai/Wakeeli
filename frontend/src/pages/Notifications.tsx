@@ -189,7 +189,7 @@ export default function Notifications() {
           <button
             type="button"
             onClick={markAllRead}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 min-h-[40px] text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors"
           >
             <CheckCheck size={13} />
             Mark all read
@@ -210,7 +210,7 @@ export default function Notifications() {
               key={f.key}
               type="button"
               onClick={() => setFilter(f.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[40px] rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                 isActive
                   ? 'bg-brand-600 text-white'
                   : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'

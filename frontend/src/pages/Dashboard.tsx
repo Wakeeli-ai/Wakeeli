@@ -147,7 +147,7 @@ function FunnelPeriodSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as FunnelPeriod)}
-      className="text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+      className="text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-2 py-1 min-h-[44px] md:min-h-0 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
     >
       {FUNNEL_PERIODS.map((p) => (
         <option key={p} value={p}>{p}</option>

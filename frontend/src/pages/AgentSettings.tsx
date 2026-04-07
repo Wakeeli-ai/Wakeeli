@@ -144,7 +144,7 @@ export default function AgentSettings() {
                 key={opt.value}
                 type="button"
                 onClick={() => setAvailability(opt.value)}
-                className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg border text-sm font-semibold transition-all"
+                className="flex items-center gap-2.5 px-4 py-2.5 min-h-[44px] rounded-lg border text-sm font-semibold transition-all"
                 style={
                   isSelected
                     ? { background: opt.bg, color: opt.text, borderColor: opt.border }
@@ -238,7 +238,7 @@ export default function AgentSettings() {
               key={lang.value}
               type="button"
               onClick={() => setLanguage(lang.value)}
-              className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-colors ${
+              className={`px-4 py-2 min-h-[44px] rounded-lg border text-sm font-semibold transition-colors ${
                 language === lang.value
                   ? 'bg-brand-600 text-white border-brand-600'
                   : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -256,7 +256,7 @@ export default function AgentSettings() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-60 shadow-sm"
+          className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 min-h-[44px] bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-60 shadow-sm"
         >
           {saving ? (
             <>

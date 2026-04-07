@@ -537,7 +537,7 @@ export default function Conversations() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7.5rem)] md:h-[calc(100vh-7rem)] min-h-[480px]">
+    <div className="flex flex-col h-[calc(100vh-9.5rem)] md:h-[calc(100vh-7rem)] min-h-[480px]">
       {error && (
         <div className="mb-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm flex-shrink-0">
           {error}
@@ -728,7 +728,7 @@ export default function Conversations() {
                     type="button"
                     onClick={() => setShowStepEvents((v) => !v)}
                     title={showStepEvents ? 'Hide conversation steps' : 'Show conversation steps'}
-                    className={`p-1.5 rounded-lg border transition-colors ${
+                    className={`p-2 rounded-lg border transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
                       showStepEvents
                         ? 'border-brand-200 bg-brand-50 text-brand-600'
                         : 'border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
@@ -743,16 +743,16 @@ export default function Conversations() {
                       type="button"
                       onClick={handleAssignAgentOpen}
                       disabled={assigningAgent}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                      className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 min-h-[36px] text-xs font-semibold bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
                     >
                       {assigningAgent
                         ? <Loader2 className="w-3 h-3 animate-spin" />
                         : <UserPlus className="w-3 h-3" />}
-                      Assign Agent
+                      <span className="hidden sm:inline">Assign Agent</span>
                       <ChevronDown className="w-3 h-3" />
                     </button>
                     {showAgentDropdown && (
-                      <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-20 py-1 overflow-hidden">
+                      <div className="absolute right-0 top-full mt-1.5 w-48 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-slate-200 z-20 py-1 overflow-hidden">
                         {agents.length === 0 ? (
                           <p className="px-3 py-2 text-xs text-slate-400">No agents available</p>
                         ) : (
@@ -761,7 +761,7 @@ export default function Conversations() {
                               key={a.id}
                               type="button"
                               onClick={() => handleAssignAgent(a.id)}
-                              className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                              className="w-full text-left px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors min-h-[44px] flex items-center"
                             >
                               {a.name}
                             </button>
@@ -776,12 +776,12 @@ export default function Conversations() {
                     type="button"
                     onClick={handleEndChat}
                     disabled={endingChat || detail.status === 'closed'}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-600 rounded-lg hover:bg-red-100 disabled:opacity-40 transition-colors"
+                    className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 min-h-[36px] text-xs font-semibold bg-red-50 text-red-600 rounded-lg hover:bg-red-100 disabled:opacity-40 transition-colors"
                   >
                     {endingChat
                       ? <Loader2 className="w-3 h-3 animate-spin" />
                       : <X className="w-3 h-3" />}
-                    End Chat
+                    <span className="hidden sm:inline">End Chat</span>
                   </button>
                 </div>
               </div>
@@ -854,7 +854,7 @@ export default function Conversations() {
                         {parts.map((part, idx) => (
                           <div
                             key={idx}
-                            className={`max-w-[70%] rounded-2xl px-3.5 py-2.5 ${
+                            className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-3.5 py-2.5 ${
                               isUser
                                 ? 'bg-white border border-slate-200 text-slate-700 rounded-bl-[4px]'
                                 : 'bg-brand-600 text-white rounded-br-[4px]'

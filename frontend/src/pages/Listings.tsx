@@ -2804,7 +2804,7 @@ function ListingDrawer({
               </span>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 mt-1 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0">
             <X size={20} />
           </button>
         </div>
@@ -3134,7 +3134,7 @@ function AddListingModal({
         <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ height: '100vh', width: '100%' }}>
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10 flex-shrink-0">
             <h3 className="text-base font-semibold text-slate-900">Add Listing</h3>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
               <X size={18} />
             </button>
           </div>
@@ -3162,6 +3162,7 @@ function AddListingModal({
                     <input
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       className="hidden"
                       onChange={handleCoverPhotoChange}
                     />
@@ -3197,6 +3198,7 @@ function AddListingModal({
                     <input
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       multiple
                       className="hidden"
                       onChange={handlePropertyPhotosChange}
@@ -3356,7 +3358,7 @@ function AddListingModal({
             <style>{`@keyframes waveBar{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}`}</style>
             <div className="flex items-center gap-3">
               {isRecording ? (
-                <div className="flex items-center gap-3 px-3 py-2 bg-red-50 rounded-lg border border-red-200">
+                <div className="flex items-center gap-3 px-3 py-2 min-h-[44px] bg-red-50 rounded-lg border border-red-200">
                   <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
                   <div className="flex items-center gap-0.5" style={{ height: '20px' }}>
                     {[0, 1, 2, 3, 4, 5, 6].map((i) => (
@@ -3375,7 +3377,7 @@ function AddListingModal({
                   <button
                     type="button"
                     onClick={stopRecording}
-                    className="flex items-center justify-center w-7 h-7 bg-red-600 rounded-full hover:bg-red-700 transition-colors flex-shrink-0"
+                    className="flex items-center justify-center w-9 h-9 bg-red-600 rounded-full hover:bg-red-700 transition-colors flex-shrink-0"
                     title="Stop recording"
                   >
                     <div className="w-3 h-3 bg-white rounded-sm" />
@@ -3385,7 +3387,7 @@ function AddListingModal({
                 <button
                   type="button"
                   onClick={startRecording}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                 >
                   <Mic size={15} />
                   Voice Fill
@@ -3400,14 +3402,14 @@ function AddListingModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                className="px-4 py-2.5 min-h-[44px] text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60"
+                className="px-4 py-2.5 min-h-[44px] text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60"
               >
                 {saving ? 'Saving...' : 'Save Listing'}
               </button>
@@ -3476,7 +3478,7 @@ function EditListingModal({
         <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ height: '100vh', width: '100%' }}>
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10 flex-shrink-0">
             <h3 className="text-base font-semibold text-slate-900">Edit Listing</h3>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
               <X size={18} />
             </button>
           </div>
@@ -3595,14 +3597,14 @@ function EditListingModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                className="px-4 py-2.5 min-h-[44px] text-sm text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60"
+                className="px-4 py-2.5 min-h-[44px] text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>

@@ -475,6 +475,29 @@ export default function Leads() {
         </div>
       </div>
 
+      {/* Mobile search bar */}
+      <div className="sm:hidden px-4">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={localSearch}
+            onChange={(e) => { setLocalSearch(e.target.value); setPage(1); }}
+            placeholder="Search by name or phone..."
+            className="w-full pl-8 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white shadow-sm"
+          />
+          {localSearch && (
+            <button
+              type="button"
+              onClick={() => { setLocalSearch(''); setPage(1); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 sm:px-0">
         <div>
@@ -869,7 +892,7 @@ export default function Leads() {
               </div>
               <button
                 onClick={closeNewLeadDrawer}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
               >
                 <X size={18} />
               </button>

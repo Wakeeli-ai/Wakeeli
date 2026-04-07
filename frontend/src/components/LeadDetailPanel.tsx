@@ -163,7 +163,7 @@ export default function LeadDetailPanel({ conversationId, onClose, onUpdate }: L
               </div>
               <button
                 onClick={handleClose}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
               >
                 <X size={18} />
               </button>
@@ -318,7 +318,7 @@ export default function LeadDetailPanel({ conversationId, onClose, onUpdate }: L
                           type="button"
                           disabled={!selectedAgent || assignLoading}
                           onClick={handleAssign}
-                          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          className="px-4 py-2 min-h-[44px] bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                           {assignLoading ? 'Assigning...' : 'Assign'}
                         </button>

@@ -170,7 +170,7 @@ export default function AgentAnalytics() {
             <button
               key={opt.key}
               onClick={() => setPeriod(opt.key)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+              className={`px-3 py-1.5 min-h-[36px] rounded-md text-xs font-semibold transition-colors ${
                 period === opt.key
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'

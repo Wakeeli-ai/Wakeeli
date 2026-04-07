@@ -976,9 +976,7 @@ def extract_entities(message, history, conversation_id=None):
     messages.append({"role": "user", "content": message})
 
     try:
-        # Use Sonnet for long complex messages so all fields are reliably extracted
-        word_count = len(message.split())
-        extraction_model = "claude-sonnet-4-6" if word_count > 30 else "claude-haiku-4-5"
+        extraction_model = "claude-sonnet-4-6"
 
         # Cache the large static intent_detection_prompt
         system_blocks = [

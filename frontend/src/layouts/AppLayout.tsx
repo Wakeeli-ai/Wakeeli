@@ -126,7 +126,7 @@ const agentBottomTabItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/conversations', icon: MessageSquare, label: 'Inbox' },
   { to: '/listings', icon: Building2, label: 'Listings' },
-  { to: '/leads', icon: Users, label: 'My Leads' },
+  { to: '/tours', icon: Calendar, label: 'My Visits' },
 ];
 
 // "More" sheet items (admin only)
@@ -139,7 +139,7 @@ const adminMoreItems = [
 
 // "More" sheet items (agent)
 const agentMoreItems = [
-  { to: '/tours', icon: Calendar, label: 'My Visits' },
+  { to: '/leads', icon: Users, label: 'My Leads' },
   { to: '/agent-analytics', icon: BarChart3, label: 'My Analytics' },
   { to: '/agent-settings', icon: Settings, label: 'Settings' },
 ];

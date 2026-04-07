@@ -684,9 +684,10 @@ One question. Nothing else. Do not bundle with other questions.
 
                 else:
                     # Build priority-ordered list of missing core fields.
-                    # Furnished is never asked proactively and never blocks listing presentation.
                     # Budget: ask for a rough range the first time it is missing.
                     # After one ask with no response, skip budget and search with what we have.
+                    # Furnished: ask once naturally in the bundle. Never blocks search.
+                    # After one ask with no response, skip furnished entirely.
                     _has_budget = (
                         bool(property_info.get("budget_min")) or bool(property_info.get("budget_max"))
                     )
@@ -700,7 +701,11 @@ One question. Nothing else. Do not bundle with other questions.
                     ])
                     _enough_to_search = bool(property_info.get("listing_type")) and _search_score >= 2
 
+                    _has_furnishing = bool(property_info.get("furnishing"))
+                    _furnished_skip = not _has_furnishing and session.furnished_ask_count >= 1
+
                     _all_missing = []
+                    asking_for_furnished = False
                     if not _enough_to_search:
                         if not property_info.get("location"):
                             _all_missing.append("preferred location")
@@ -709,14 +714,22 @@ One question. Nothing else. Do not bundle with other questions.
                             _all_missing.append("budget range")
                         if not property_info.get("bedrooms"):
                             _all_missing.append("number of bedrooms")
+                        # Ask for furnished once naturally, bundled with other fields.
+                        # Never counts toward search score.
+                        asking_for_furnished = not _has_furnishing and not _furnished_skip
+                        if asking_for_furnished:
+                            _all_missing.append("furnished or unfurnished")
                     else:
                         asking_for_budget = False
 
-                    missing_fields = _all_missing[:2]
+                    missing_fields = _all_missing[:3]
 
                     # Increment budget_ask_count each time budget is included in a question.
                     if asking_for_budget and "budget range" in missing_fields:
                         session.budget_ask_count += 1
+                    # Increment furnished_ask_count each time furnished is included in a question.
+                    if asking_for_furnished and "furnished or unfurnished" in missing_fields:
+                        session.furnished_ask_count += 1
                     # Flag for the first dedicated budget ask so the LLM uses rough-range phrasing.
                     _first_budget_ask = (
                         asking_for_budget
@@ -756,7 +769,7 @@ Already greeted. Do NOT repeat "Hello, thanks for reaching out!" or any greeting
 Message 1: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
 Message 2: "{name_phrase}"
 
-Example: "Sure, to help you find the best options, what's your budget range and how many bedrooms?" ||| "{name_phrase}"
+Example: "Sure, to help you find the best options, what's your budget range, how many bedrooms, and furnished or unfurnished?" ||| "{name_phrase}"
 
 NEVER include a greeting in Message 1. NEVER write one big paragraph.
 """
@@ -822,7 +835,7 @@ Message 1: "Hello, thanks for reaching out!" — use this exact phrase or a natu
 Message 2: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
 Message 3: "What's your full name btw?"
 
-Example: "Hello, thanks for reaching out!" ||| "Sure, to help you find the best options, what's your budget range and how many bedrooms?" ||| "What's your full name btw?"
+Example: "Hello, thanks for reaching out!" ||| "Sure, to help you find the best options, what's your budget range, how many bedrooms, and furnished or unfurnished?" ||| "What's your full name btw?"
 
 WRONG examples (NEVER do this):
 - "Marhaba! Looking for a place in Zalka, nice area." — NO, don't echo the user
@@ -897,15 +910,6 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             "Keep it warm and conversational.\n\n"
             + message
         )
-
-    # Furnished safety: never proactively ask about furnished or unfurnished status.
-    # Extract it if the user volunteers it, but never ask for it.
-    message = (
-        "CRITICAL: Do NOT ask about furnished or unfurnished status. "
-        "Never include it in your questions. "
-        "Only reference it if the user already mentioned their preference.\n\n"
-        + message
-    )
 
     # Safety net: if the name was just provided this turn, inject a hard stop
     # so the LLM cannot re-ask for the name in this same reply.

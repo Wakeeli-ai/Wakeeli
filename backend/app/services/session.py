@@ -27,6 +27,7 @@ class SessionState:
         self.name_asked = False
         self.name_ask_count = 0
         self.budget_ask_count = 0
+        self.furnished_ask_count = 0
         self.show_alternatives = False
         self.lbp_converted = {}
         # Set to True for one turn when the name was just extracted this turn
@@ -64,6 +65,7 @@ class SessionState:
             "name_ask_count": self.name_ask_count,
             "name_just_set": self.name_just_set,
             "budget_ask_count": self.budget_ask_count,
+            "furnished_ask_count": self.furnished_ask_count,
             "show_alternatives": self.show_alternatives,
             "user_info": self.user_info,
             "property_info": self.property_info

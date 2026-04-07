@@ -113,11 +113,14 @@ class SessionState:
             return
 
         # ---------------------------
-        # 4. ENOUGH INFO TO SEARCH (location + budget required)
+        # 4. ENOUGH INFO TO SEARCH
+        # Requires listing_type + at least 2 of: location, budget, bedrooms.
+        # Furnished is never required to trigger listing presentation.
         # ---------------------------
         has_budget = budget_min or budget_max
+        _search_score = sum([bool(location), bool(has_budget), bool(bedrooms)])
 
-        if location and listing_type and has_budget:
+        if listing_type and _search_score >= 2:
             if not name:
                 self.stage = 5
             else:

@@ -9,13 +9,12 @@ from app.services.routing import find_best_agent, assign_agent
 from app.models import Conversation, Message, Event, Listing
 from app.services.prompt import (
     intent_detection_prompt,
-    get_reply_system_prompt,
     get_static_system_prompt,
     get_dynamic_action_prompt,
-    Normal_conversation_prompt,
 )
 from app.services.session import SessionState, STAGES
 from app.services.token_tracker import log_usage, check_token_budget
+from app.services.validator import validate_response, log_violations
 from pprint import pprint
 
 client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
@@ -271,6 +270,10 @@ Important behavior rules:
 """
 
     elif action == "handoff_or_finish":
+        # OFF_TOPIC fix: redirect to real estate without creating a handoff event
+        if session.classification == "OFF_TOPIC":
+            return ["I can only help with real estate inquiries. Are you looking to buy or rent a property in Lebanon?"]
+
         requirements = property_info
         if conversation is not None:
             conversation.user_requirements = requirements
@@ -283,9 +286,10 @@ Important behavior rules:
         else:
             tool_output = "No available agent found, but requirements logged."
 
-        event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": agent.id if agent else None})
-        db.add(event)
-        db.commit()
+        if conversation is not None:
+            event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": agent.id if agent else None})
+            db.add(event)
+            db.commit()
 
         name = state.get("user_info", {}).get("name", "")
         message = f"""
@@ -687,11 +691,10 @@ One question. Nothing else. Do not bundle with other questions.
 
                     missing_fields = _all_missing[:2]
 
-                    # Only increment budget_ask_count when we are actually about to send
-                    # a message that asks for budget. Prevents double-counting on turns
-                    # where the user provided a different field (e.g. location) but budget
-                    # is still missing.
-                    if asking_for_budget and "budget range" in missing_fields:
+                    # Only increment budget_ask_count when budget range is the SOLE field
+                    # being asked. Bundling it with location or another field does not
+                    # count as a dedicated budget ask, so do not increment then.
+                    if asking_for_budget and missing_fields == ["budget range"]:
                         session.budget_ask_count += 1
 
                     if missing_fields and already_greeted and not has_name:
@@ -1116,6 +1119,20 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             v is not None and v is not False
             for v in extracted_prop.values()
         )
+        # Name gate disambiguation: if the only extracted property field is a
+        # location that already matches what is stored in the session, the user
+        # may be stating their name (e.g. someone named 'Hamra' when 'Hamra' is
+        # already saved as their preferred location). In that case treat the
+        # message as a potential name by clearing the blocking flag.
+        if has_extracted_property_info:
+            _ext_loc = extracted_prop.get("location")
+            _stored_loc = session.property_info.get("location")
+            _non_null = {k: v for k, v in extracted_prop.items() if v is not None and v is not False}
+            if (set(_non_null.keys()) == {"location"}
+                    and _ext_loc
+                    and _stored_loc
+                    and _ext_loc.lower().strip() == _stored_loc.lower().strip()):
+                has_extracted_property_info = False
         if (session.name_asked
                 and not session.user_info.get("name")
                 and not extracted.get("user_info", {}).get("name")
@@ -1162,6 +1179,22 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
 
         # Generate reply based on the action
         reply_parts = generate_reply(action, user_message, db, conversation, conversation_id, session)
+
+        # Run live rule validator after every bot response (non-blocking)
+        try:
+            _validation_text = " ".join(reply_parts)
+            _violations = validate_response(
+                session_state=session.getter(),
+                bot_response=_validation_text,
+                user_message=user_message,
+                classification=session.classification or "",
+                history=history,
+                prev_property_info=getattr(session, "_prev_property_info", None),
+                db=db,
+            )
+            log_violations(_violations, conversation_id, user_message, _validation_text)
+        except Exception as _val_err:
+            print(f"[validator] unexpected error during validation: {_val_err}")
 
         # Save full reply as one message in DB (joined for history context)
         full_reply = " ||| ".join(reply_parts)

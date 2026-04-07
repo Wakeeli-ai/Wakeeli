@@ -147,6 +147,9 @@
 
     .btn-header:hover { background: rgba(255,255,255,0.22); }
 
+    .btn-header.download { opacity: 0.7; }
+    .btn-header.download:hover { opacity: 1; background: rgba(255,255,255,0.22); }
+
     /* Mode switch bar */
     .mode-switch {
       background: var(--navy-dark);
@@ -374,6 +377,7 @@
     </div>
     <div class="header-actions">
       <span class="mode-badge" id="mode-badge">auto</span>
+      <button class="btn-header download" id="download-btn" onclick="downloadChat()" title="Download chat transcript">&#8595; Chat</button>
       <button class="btn-header" onclick="resetChat()">Reset</button>
     </div>
   </div>
@@ -419,6 +423,7 @@
   let currentMode = path.includes('handoff') ? 'handoff' : 'auto';
   let sessionId = null;
   let isLoading = false;
+  let chatLog = [];
 
   function initMode() {
     const badge = document.getElementById('mode-badge');
@@ -496,6 +501,7 @@
 
   function appendBubble(role, text) {
     hideEmptyState();
+    chatLog.push({ role, text, time: getTime() });
     const messages = document.getElementById('messages');
 
     const wrap = document.createElement('div');
@@ -625,9 +631,30 @@
     return new Promise(r => setTimeout(r, ms));
   }
 
+  function downloadChat() {
+    if (chatLog.length === 0) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const filename = 'wakeeli-demo-chat-' + today + '.txt';
+    const lines = chatLog.map(function(entry) {
+      const sender = entry.role === 'user' ? 'Lead' : 'Agent';
+      return '[' + entry.time + '] ' + sender + ': ' + entry.text;
+    });
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   function resetChat() {
     sessionId = null;
     isLoading = false;
+    chatLog = [];
 
     const messages = document.getElementById('messages');
     messages.innerHTML = '<div class="empty-state" id="empty-state"><div class="icon">🏠</div><strong>Send a message to start</strong></div>';

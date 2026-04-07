@@ -141,6 +141,7 @@ Information Extraction Rules:
 - For Lebanese Arabic: "ista2jar" = rent, "ishtari" = buy, "shi" = something, "wein" = where.
 - If the user says "small" but specifies 3 or more bedrooms, interpret "small" as referring to square meters (smaller total area), not fewer bedrooms. Do not flag this as contradictory. Search with the stated bedroom count.
 - MULTIPLE BEDROOM TYPES: If the user specifies multiple property types such as "studio or 1-bedroom" or "1-bedroom or 2-bedroom", extract bedrooms as a list. For "studio", use 0 bedrooms. Set bedrooms to the list [0, 1] for "studio or 1-bedroom". The system will search for all of them. Never return null just because multiple types were mentioned.
+- budget_flexible: Set to true if the user explicitly states their budget is open, flexible, no limit, not a concern, or any equivalent. Examples that must set budget_flexible=true: "budget is open", "no limit", "no budget limit", "doesn't matter", "whatever works", "money is not an issue", "flexible budget", "open budget", "price is not a concern", "no restriction on budget". When budget_flexible is true, leave budget_min and budget_max as null. This counts as valid budget info — do NOT ask for budget again.
 
 Examples:
 
@@ -158,6 +159,12 @@ Return: classification=A2, location=Hamra, budget_max=1200, listing_type=rent
 
 User: "Looking to rent something in Hamra, 2 beds, furnished, around $800-1200"
 Return: classification=B, location=Hamra, bedrooms=2, furnishing=furnished, budget_min=800, budget_max=1200, listing_type=rent
+
+User: "budget is open" or "no limit" or "money is not an issue" or "whatever works" or "doesn't matter"
+Return: budget_flexible=true, budget_min=null, budget_max=null
+
+User: "I want to rent in Achrafieh, 2 bedrooms, budget is flexible"
+Return: classification=B, location=Achrafieh, bedrooms=2, listing_type=rent, budget_flexible=true
 
 --------------------------------
 
@@ -188,6 +195,7 @@ You MUST return ONLY valid JSON using this exact schema:
     "location": string | null,
     "budget_min": number | null,
     "budget_max": number | null,
+    "budget_flexible": boolean | null,
     "bedrooms": number | null,
     "bathrooms": number | null,
     "property_type": string | null,

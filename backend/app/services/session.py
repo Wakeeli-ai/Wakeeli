@@ -43,6 +43,7 @@ class SessionState:
             "location": None,
             "budget_min": None,
             "budget_max": None,
+            "budget_flexible": None,
             "bedrooms": None,
             "bathrooms": None,
             "property_type": None,
@@ -117,7 +118,7 @@ class SessionState:
         # Requires listing_type + at least 2 of: location, budget, bedrooms.
         # Furnished is never required to trigger listing presentation.
         # ---------------------------
-        has_budget = budget_min or budget_max
+        has_budget = budget_min or budget_max or property_info.get("budget_flexible")
         _search_score = sum([bool(location), bool(has_budget), bool(bedrooms)])
 
         if listing_type and _search_score >= 2:

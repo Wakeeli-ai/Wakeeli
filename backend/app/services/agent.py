@@ -392,7 +392,7 @@ Offer to search for similar properties based on their preferences.
 """
 
             else:
-                has_budget = budget_min or budget_max
+                has_budget = budget_min or budget_max or property_info.get("budget_flexible")
 
                 if session.listings_shown:
                     # Correction detection: if the user sent updated criteria that differ
@@ -682,6 +682,7 @@ One question. Nothing else. Do not bundle with other questions.
                     # the next turn can go straight to showing listings.
                     _has_budget = (
                         bool(property_info.get("budget_min")) or bool(property_info.get("budget_max"))
+                        or bool(property_info.get("budget_flexible"))
                     )
                     _search_score = sum([
                         bool(property_info.get("location")),
@@ -725,8 +726,8 @@ One question. Nothing else. Do not bundle with other questions.
                                 examples = get_area_examples(loc_canonical, 'district')
                                 area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
 
-                        if session.name_ask_count >= 2:
-                            # Already asked for name twice. Proceed without asking again.
+                        if session.name_ask_count >= 2 or _search_score < 1:
+                            # Already asked for name twice, or not enough qualifying info yet (need at least 1 of location/budget/bedrooms before asking name).
                             message = f"""
 Ask only for these missing details in one short message: {missing_str}.{area_note}
 Do NOT include a greeting. Do NOT re-ask for anything already known.
@@ -783,8 +784,8 @@ Keep it casual and brief.
                                 examples = get_area_examples(loc_canonical, 'district')
                                 area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
 
-                        if session.name_ask_count >= 2:
-                            # Already asked for name twice. Skip name ask.
+                        if session.name_ask_count >= 2 or _search_score < 1:
+                            # Already asked for name twice, or not enough qualifying info yet (need at least 1 of location/budget/bedrooms before asking name).
                             session.greeted = True
                             message = f"""
 Entry B: listing type is known. First contact. Send exactly 2 messages using ||| as separator:
@@ -1185,6 +1186,7 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         if (action == "more_info_needed"
                 and not session.property_info.get("budget_min")
                 and not session.property_info.get("budget_max")
+                and not session.property_info.get("budget_flexible")
                 and session.budget_ask_count >= 2):
             session.pending_route_message = "Let me connect you with one of our agents who can help you with that."
             action = "route_to_agent"

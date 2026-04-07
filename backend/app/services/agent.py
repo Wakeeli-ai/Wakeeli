@@ -910,14 +910,6 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             + message
         )
 
-    # Enforce 2-question limit in all languages before sending to the LLM.
-    message = (
-        "CRITICAL: Maximum 2 questions per message. "
-        "This applies in ALL languages including Arabic and French. "
-        "Never ask more than 2 questions in a single response.\n\n"
-        + message
-    )
-
     static_prompt = get_static_system_prompt()
     dynamic_prompt = get_dynamic_action_prompt(message)
     session_state_text = f"\nCurrent session state: {state}"
@@ -950,12 +942,6 @@ Greet the user naturally and ask how you can help them find a property in Lebano
         log_usage("claude-sonnet-4-6", response.usage, call_label="generate_reply", conversation_id=conversation_id)
         raw_reply = response.content[0].text
         raw_reply = _strip_internal_reasoning(raw_reply)
-
-        # Safety net: if the response contains more than 2 question marks,
-        # truncate at the second one. Enforces the 2-question limit for all languages.
-        _qmarks = [i for i, c in enumerate(raw_reply) if c == '?']
-        if len(_qmarks) > 2:
-            raw_reply = raw_reply[:_qmarks[1] + 1].strip()
     except Exception as e:
         print(f"generate_reply: LLM call failed (action={action}): {e}")
         return ["Bear with me for a second, something went wrong. Please try again."]

@@ -24,6 +24,11 @@ def search_listings(db: Session, filters: dict):
         if location_lower in REGION_MAP:
             neighborhoods = REGION_MAP[location_lower]
             region_conditions = []
+            # Always include the raw location term itself so listings stored
+            # with e.g. city="Beirut" are matched even when the REGION_MAP
+            # only expands to specific neighborhood names like "Achrafieh".
+            region_conditions.append(Listing.city.ilike(f"%{filters['location']}%"))
+            region_conditions.append(Listing.area.ilike(f"%{filters['location']}%"))
             for neighborhood in neighborhoods:
                 region_conditions.append(Listing.city.ilike(f"%{neighborhood}%"))
                 region_conditions.append(Listing.area.ilike(f"%{neighborhood}%"))

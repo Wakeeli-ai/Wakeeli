@@ -3065,13 +3065,25 @@ function AddListingModal({
     setVoiceStatus(filled ? `Filled: ${filled}` : 'Nothing detected');
   };
 
-  const startRecording = () => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      setVoiceStatus('Voice not supported in this browser');
+  const startRecording = async () => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceStatus('Voice input is not supported on this browser');
       return;
     }
-    const recognition = new SR();
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err: any) {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setVoiceStatus('Microphone access denied. Please allow it in your browser settings.');
+      } else if (err.name === 'NotFoundError') {
+        setVoiceStatus('No microphone found on this device.');
+      } else {
+        setVoiceStatus('Voice input failed. Try using Chrome for best compatibility.');
+      }
+      return;
+    }
+    const recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
     recognition.continuous = false;
     recognition.interimResults = false;
@@ -3081,9 +3093,15 @@ function AddListingModal({
       parseVoiceInput(transcript);
       setIsRecording(false);
     };
-    recognition.onerror = () => {
+    recognition.onerror = (event: any) => {
       setIsRecording(false);
-      setVoiceStatus('Could not capture audio. Try again.');
+      if (event.error === 'not-allowed') {
+        setVoiceStatus('Microphone access denied. Please allow it in your browser settings.');
+      } else if (event.error === 'no-speech' || event.error === 'audio-capture') {
+        setVoiceStatus('No microphone found on this device.');
+      } else {
+        setVoiceStatus('Voice input failed. Try using Chrome for best compatibility.');
+      }
     };
     recognition.onend = () => setIsRecording(false);
     recognitionRef.current = recognition;

@@ -168,6 +168,10 @@ def update_memory(session: SessionState, extracted, user_message: str = ""):
                 if user_said_lbp:
                     session.lbp_converted[key] = usd_val
     session.update_agent_state(extracted)
+    # Vague budget (budget_flexible) never counts as valid budget info.
+    # Clear it after every update so the bot always asks for a rough range
+    # on the first attempt instead of treating "flexible" as a real value.
+    session.property_info["budget_flexible"] = None
 
 
 def decide_next_action(session: SessionState):
@@ -214,6 +218,7 @@ def _generate_reply_inner(action, user_message, db, conversation, conversation_i
     # relying on the LLM to reproduce the formatted listing text.
     # This attribute is set below in process_property_request when listings are found.
     _direct_parts: list[str] | None = None
+    _first_budget_ask: bool = False
 
     message = ""
     # Capture greeted status BEFORE any action block modifies it.
@@ -392,7 +397,10 @@ Offer to search for similar properties based on their preferences.
 """
 
             else:
-                has_budget = budget_min or budget_max or property_info.get("budget_flexible")
+                has_budget = budget_min or budget_max
+                # Skip budget requirement after one unanswered ask.
+                _budget_skip_ppr = not has_budget and session.budget_ask_count >= 1
+                has_budget_for_search = has_budget or _budget_skip_ppr
 
                 if session.listings_shown:
                     # Correction detection: if the user sent updated criteria that differ
@@ -504,7 +512,7 @@ Respond naturally based on what the user just said. Possible scenarios:
 
 User message to respond to: {user_message}
 """
-                elif sum([bool(location), bool(has_budget), bool(bedrooms)]) >= 2:
+                elif sum([bool(location), bool(has_budget_for_search), bool(bedrooms)]) >= 2:
                     results = search_listings(db, property_info)
 
                     if results:
@@ -676,17 +684,18 @@ One question. Nothing else. Do not bundle with other questions.
 
                 else:
                     # Build priority-ordered list of missing core fields.
-                    # Furnished is optional and never blocks listing presentation.
-                    # If we already have enough to search (listing_type + 2 of
-                    # location/budget/bedrooms), skip asking for more fields so
-                    # the next turn can go straight to showing listings.
+                    # Furnished is never asked proactively and never blocks listing presentation.
+                    # Budget: ask for a rough range the first time it is missing.
+                    # After one ask with no response, skip budget and search with what we have.
                     _has_budget = (
                         bool(property_info.get("budget_min")) or bool(property_info.get("budget_max"))
-                        or bool(property_info.get("budget_flexible"))
                     )
+                    # After one dedicated budget ask, skip it and proceed without.
+                    _budget_skip = not _has_budget and session.budget_ask_count >= 1
+                    _has_budget_for_search = _has_budget or _budget_skip
                     _search_score = sum([
                         bool(property_info.get("location")),
-                        _has_budget,
+                        _has_budget_for_search,
                         bool(property_info.get("bedrooms")),
                     ])
                     _enough_to_search = bool(property_info.get("listing_type")) and _search_score >= 2
@@ -695,7 +704,7 @@ One question. Nothing else. Do not bundle with other questions.
                     if not _enough_to_search:
                         if not property_info.get("location"):
                             _all_missing.append("preferred location")
-                        asking_for_budget = not _has_budget
+                        asking_for_budget = not _has_budget and not _budget_skip
                         if asking_for_budget:
                             _all_missing.append("budget range")
                         if not property_info.get("bedrooms"):
@@ -705,11 +714,15 @@ One question. Nothing else. Do not bundle with other questions.
 
                     missing_fields = _all_missing[:2]
 
-                    # Only increment budget_ask_count when budget range is the SOLE field
-                    # being asked. Bundling it with location or another field does not
-                    # count as a dedicated budget ask, so do not increment then.
-                    if asking_for_budget and missing_fields == ["budget range"]:
+                    # Increment budget_ask_count each time budget is included in a question.
+                    if asking_for_budget and "budget range" in missing_fields:
                         session.budget_ask_count += 1
+                    # Flag for the first dedicated budget ask so the LLM uses rough-range phrasing.
+                    _first_budget_ask = (
+                        asking_for_budget
+                        and "budget range" in missing_fields
+                        and session.budget_ask_count == 1
+                    )
 
                     if missing_fields and already_greeted and not has_name:
                         # Already greeted. Send bundled question + name ask. No greeting.
@@ -743,7 +756,7 @@ Already greeted. Do NOT repeat "Hello, thanks for reaching out!" or any greeting
 Message 1: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
 Message 2: "{name_phrase}"
 
-Example: "Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "{name_phrase}"
+Example: "Sure, to help you find the best options, what's your budget range and how many bedrooms?" ||| "{name_phrase}"
 
 NEVER include a greeting in Message 1. NEVER write one big paragraph.
 """
@@ -809,7 +822,7 @@ Message 1: "Hello, thanks for reaching out!" — use this exact phrase or a natu
 Message 2: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
 Message 3: "What's your full name btw?"
 
-Example: "Hello, thanks for reaching out!" ||| "Sure, to help you find the best options, what's your budget range, how many bedrooms, and would you prefer furnished or unfurnished?" ||| "What's your full name btw?"
+Example: "Hello, thanks for reaching out!" ||| "Sure, to help you find the best options, what's your budget range and how many bedrooms?" ||| "What's your full name btw?"
 
 WRONG examples (NEVER do this):
 - "Marhaba! Looking for a place in Zalka, nice area." — NO, don't echo the user
@@ -873,6 +886,26 @@ All info collected. Tell the user you are searching for options.
             message = """
 Greet the user naturally and ask how you can help them find a property in Lebanon.
 """
+
+    # Budget rough-range hint: first time asking for budget, instruct the LLM
+    # to phrase it naturally as a rough range, not a cold clinical question.
+    if _first_budget_ask:
+        message = (
+            "BUDGET NOTE: This is the FIRST time asking for a budget. "
+            "Phrase it as a natural rough-range ask, not a cold 'what is your budget range?' "
+            "Example phrasing: 'Even a rough range helps, like $1,000-2,000/month?' "
+            "Keep it warm and conversational.\n\n"
+            + message
+        )
+
+    # Furnished safety: never proactively ask about furnished or unfurnished status.
+    # Extract it if the user volunteers it, but never ask for it.
+    message = (
+        "CRITICAL: Do NOT ask about furnished or unfurnished status. "
+        "Never include it in your questions. "
+        "Only reference it if the user already mentioned their preference.\n\n"
+        + message
+    )
 
     # Safety net: if the name was just provided this turn, inject a hard stop
     # so the LLM cannot re-ask for the name in this same reply.
@@ -1166,15 +1199,6 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         should_route, route_message = _check_routing_conditions(session, user_message)
         if should_route:
             session.pending_route_message = route_message
-            action = "route_to_agent"
-
-        # Budget refusal: if budget was asked 2+ times and still not provided, route to agent
-        if (action == "more_info_needed"
-                and not session.property_info.get("budget_min")
-                and not session.property_info.get("budget_max")
-                and not session.property_info.get("budget_flexible")
-                and session.budget_ask_count >= 2):
-            session.pending_route_message = "Let me connect you with one of our agents who can help you with that."
             action = "route_to_agent"
 
         # Handoff-mode override: in "handoff" mode, once listings have been shown and

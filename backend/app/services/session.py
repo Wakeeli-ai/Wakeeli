@@ -118,8 +118,10 @@ class SessionState:
         # Requires listing_type + at least 2 of: location, budget, bedrooms.
         # Furnished is never required to trigger listing presentation.
         # ---------------------------
-        has_budget = budget_min or budget_max or property_info.get("budget_flexible")
-        _search_score = sum([bool(location), bool(has_budget), bool(bedrooms)])
+        has_budget = bool(budget_min) or bool(budget_max)
+        # After one unanswered budget ask, skip budget and allow search to proceed.
+        _budget_skip = not has_budget and self.budget_ask_count >= 1
+        _search_score = sum([bool(location), has_budget or _budget_skip, bool(bedrooms)])
 
         if listing_type and _search_score >= 2:
             if not name:

@@ -669,24 +669,29 @@ One question. Nothing else. Do not bundle with other questions.
 """
 
                 else:
-                    missing_fields = []
+                    # Build priority-ordered list of all missing fields.
+                    # Priority: location, budget, bedrooms, furnished.
+                    # Cap at 2 per message to avoid overwhelming the lead.
+                    _all_missing = []
                     if not property_info.get("location"):
-                        missing_fields.append("preferred location")
-                    if not property_info.get("bedrooms"):
-                        missing_fields.append("number of bedrooms")
+                        _all_missing.append("preferred location")
                     asking_for_budget = (
                         not property_info.get("budget_min") and not property_info.get("budget_max")
                     )
                     if asking_for_budget:
-                        missing_fields.append("budget range")
+                        _all_missing.append("budget range")
+                    if not property_info.get("bedrooms"):
+                        _all_missing.append("number of bedrooms")
                     if not property_info.get("furnishing"):
-                        missing_fields.append("furnished or unfurnished")
+                        _all_missing.append("furnished or unfurnished")
+
+                    missing_fields = _all_missing[:2]
 
                     # Only increment budget_ask_count when we are actually about to send
                     # a message that asks for budget. Prevents double-counting on turns
                     # where the user provided a different field (e.g. location) but budget
                     # is still missing.
-                    if asking_for_budget and missing_fields:
+                    if asking_for_budget and "budget range" in missing_fields:
                         session.budget_ask_count += 1
 
                     if missing_fields and already_greeted and not has_name:

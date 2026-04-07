@@ -129,13 +129,12 @@ If the user sends what appears to be a screenshot or image description of a prop
 
 
 Information Extraction Rules:
-- listing_type: infer from context whether the user wants to rent or buy. Set to "rent" or "buy" exactly.
-  - "rent", "renting", "to rent", "for rent", "ista2jar", "looking to rent" = "rent"
-  - "buy", "buying", "to buy", "purchase", "for sale", "sale", "ishtari", "looking to buy" = "buy"
+- listing_type: ONLY set this if the user EXPLICITLY states their intent. The word apartment does NOT imply rent. The word villa does NOT imply buy. Only explicit statements count.
+  - Return "rent" ONLY if the user explicitly says: rent, renting, for rent, to rent, looking to rent, ista2jar, or similar direct statements of rental intent
+  - Return "buy" ONLY if the user explicitly says: buy, buying, purchase, to buy, looking to buy, for sale, ishtari, or similar direct statements of purchase intent
   - A single word reply of "rent" or "buy" after being asked the question = use that value directly
-  - Monthly budget (e.g. $800/month, $1500) = strong signal for "rent"
-  - Budget in hundreds of thousands (e.g. $200,000, $350K) = strong signal for "buy"
-  - If truly ambiguous and no signal exists, return null
+  - If the user says "looking for an apartment", "looking for a property", "I need a place", or any general inquiry without explicitly stating rent or buy, return null
+  - If truly ambiguous or no explicit signal exists, return null
 - timeline: infer from context. "within the next month", "ASAP", "next year", etc.
 - Currency conversion: CRITICAL — If the user provides a budget in LBP (Lebanese Pounds), you MUST convert to USD. Rate: 89,500 LBP = 1 USD. Always store budget_min and budget_max in USD. If any budget number is over 50,000 it is almost certainly LBP — divide by 89,500 and round to the nearest dollar. Examples: 100,000,000 LBP = 1117 USD | 200,000,000 LBP = 2235 USD | 500,000,000 LBP = 5587 USD. Never store a raw LBP value.
 - Extract ALL available fields from the message, even if they appear mid-sentence.

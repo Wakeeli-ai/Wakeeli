@@ -113,12 +113,20 @@ const agentNav: NavItem[] = [
   { to: '/agent-settings', icon: Settings, label: 'Settings' },
 ];
 
-// Bottom 4 tab items (mobile)
+// Bottom 4 tab items - admin (mobile)
 const bottomTabItems = [
   { to: '/', icon: LayoutDashboard, label: 'Home' },
   { to: '/conversations', icon: MessageSquare, label: 'Inbox' },
   { to: '/listings', icon: Building2, label: 'Listings' },
   { to: '/leads', icon: Users, label: 'Leads' },
+];
+
+// Bottom 4 tab items - agent (mobile)
+const agentBottomTabItems = [
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/conversations', icon: MessageSquare, label: 'Inbox' },
+  { to: '/listings', icon: Building2, label: 'Listings' },
+  { to: '/leads', icon: Users, label: 'My Leads' },
 ];
 
 // "More" sheet items (admin only)
@@ -131,7 +139,7 @@ const adminMoreItems = [
 
 // "More" sheet items (agent)
 const agentMoreItems = [
-  { to: '/tours', icon: Calendar, label: 'My Tours' },
+  { to: '/tours', icon: Calendar, label: 'My Visits' },
   { to: '/agent-analytics', icon: BarChart3, label: 'My Analytics' },
   { to: '/agent-settings', icon: Settings, label: 'Settings' },
 ];
@@ -143,6 +151,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { role, user, logout } = useRole();
   const navItems = role === 'admin' ? adminNav : agentNav;
   const moreItems = role === 'admin' ? adminMoreItems : agentMoreItems;
+  const activeBottomTabItems = role === 'agent' ? agentBottomTabItems : bottomTabItems;
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -764,7 +773,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         style={{ height: 60 }}
       >
         <div className="flex h-full">
-          {bottomTabItems.map((tab) => {
+          {activeBottomTabItems.map((tab) => {
             const isActive = location.pathname === tab.to;
             const Icon = tab.icon;
             return (

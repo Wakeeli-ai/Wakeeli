@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -160,6 +161,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -204,7 +206,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+      const insideDesktop = userMenuRef.current && userMenuRef.current.contains(e.target as Node);
+      const insideMobile = mobileUserMenuRef.current && mobileUserMenuRef.current.contains(e.target as Node);
+      if (!insideDesktop && !insideMobile) {
         setUserMenuOpen(false);
       }
     };
@@ -526,7 +530,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Avatar */}
-          <div className="relative" ref={userMenuRef}>
+          <div className="relative" ref={mobileUserMenuRef}>
             <button
               type="button"
               onClick={() => { setUserMenuOpen((v) => !v); setNotifOpen(false); }}
@@ -802,13 +806,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* ===== PROFILE MODAL ===== */}
-      {profileOpen && (
+      {profileOpen && createPortal(
         <div
-          className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-[200] flex items-end sm:items-center justify-center sm:p-4"
           onClick={() => { setProfileOpen(false); setProfileEditMode(false); }}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
+            className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden max-h-[92vh] sm:max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal header */}
@@ -951,7 +955,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ===== MORE SHEET - mobile only ===== */}
@@ -1018,6 +1023,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="font-semibold text-slate-900 text-sm truncate">{displayName}</div>
                 <div className="text-xs text-slate-500 truncate">{displayLabel}</div>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  setProfileEditMode(false);
+                  setProfileOpen(true);
+                }}
+                className="p-2 text-brand-600 rounded-lg"
+                title="My Profile"
+              >
+                <User size={18} />
+              </button>
               <button
                 type="button"
                 onClick={() => { setMoreOpen(false); handleLogout(); }}

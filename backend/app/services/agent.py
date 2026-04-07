@@ -270,29 +270,32 @@ Important behavior rules:
 """
 
     elif action == "handoff_or_finish":
-        # OFF_TOPIC fix: redirect to real estate without creating a handoff event
         if session.classification == "OFF_TOPIC":
-            return ["I can only help with real estate inquiries. Are you looking to buy or rent a property in Lebanon?"]
-
-        requirements = property_info
-        if conversation is not None:
-            conversation.user_requirements = requirements
-
-        agent = find_best_agent(db, requirements)
-        if agent:
-            if conversation is not None:
-                assign_agent(db, conversation.id, agent.id)
-            tool_output = f"Handed off to agent {agent.name}."
+            message = (
+                "The lead said something off-topic. Politely redirect them back to real estate. "
+                "Say something like: 'I appreciate the chat but I can only help with real estate! "
+                "Are you looking to buy or rent a property in Lebanon?'"
+            )
         else:
-            tool_output = "No available agent found, but requirements logged."
+            requirements = property_info
+            if conversation is not None:
+                conversation.user_requirements = requirements
 
-        if conversation is not None:
-            event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": agent.id if agent else None})
-            db.add(event)
-            db.commit()
+            agent = find_best_agent(db, requirements)
+            if agent:
+                if conversation is not None:
+                    assign_agent(db, conversation.id, agent.id)
+                tool_output = f"Handed off to agent {agent.name}."
+            else:
+                tool_output = "No available agent found, but requirements logged."
 
-        name = state.get("user_info", {}).get("name", "")
-        message = f"""
+            if conversation is not None:
+                event = Event(event_type="handoff", payload={"conversation_id": conversation_id, "agent_id": agent.id if agent else None})
+                db.add(event)
+                db.commit()
+
+            name = state.get("user_info", {}).get("name", "")
+            message = f"""
 Important behavior rules:
 
 - Inform the user: {tool_output}

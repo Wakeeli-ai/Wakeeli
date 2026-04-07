@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { X, Phone, Calendar, MessageSquare, ChevronRight } from 'lucide-react';
 import { getConversation, getAgents, assignAgentToConversation } from '../api';
@@ -123,11 +124,12 @@ export default function LeadDetailPanel({ conversationId, onClose, onUpdate }: L
   const statusLabel = conversation ? (STATUS_LABEL[conversation.status] || conversation.status) : '';
   const statusClass = conversation ? (STATUS_BADGE[conversation.status] || 'bg-slate-100 text-slate-600') : '';
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}
+        className={`bg-black/30 transition-opacity duration-300 ${
           isVisible ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={handleClose}
@@ -135,7 +137,8 @@ export default function LeadDetailPanel({ conversationId, onClose, onUpdate }: L
 
       {/* Drawer */}
       <div
-        className={`fixed inset-y-0 right-0 w-[500px] bg-white shadow-xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+        style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '500px', maxWidth: '100vw', zIndex: 10000 }}
+        className={`bg-white shadow-xl flex flex-col transition-transform duration-300 ease-out ${
           isVisible ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -341,6 +344,7 @@ export default function LeadDetailPanel({ conversationId, onClose, onUpdate }: L
           </>
         )}
       </div>
-    </>
+    </>,
+    document.body
   );
 }

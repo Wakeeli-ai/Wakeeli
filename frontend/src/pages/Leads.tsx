@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { Download, X, Loader2, Phone, MessageCircle, UserPlus, Search, Plus } from 'lucide-react';
@@ -846,18 +847,18 @@ export default function Leads() {
       )}
 
       {/* New Lead Drawer */}
-      {showNewLeadDrawer && (
+      {showNewLeadDrawer && createPortal(
         <>
           {/* Overlay - fixed full screen */}
           <div
             onClick={closeNewLeadDrawer}
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50 }}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}
             className={`bg-black/30 transition-opacity duration-300 ${newLeadDrawerVisible ? 'opacity-100' : 'opacity-0'}`}
           />
 
           {/* Drawer panel */}
           <div
-            style={{ position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 51, width: '460px' }}
+            style={{ position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 10000, width: '460px', maxWidth: '100vw' }}
             className={`bg-white shadow-xl flex flex-col transition-transform duration-300 ease-out ${newLeadDrawerVisible ? 'translate-x-0' : 'translate-x-full'}`}
           >
             {/* Drawer header */}
@@ -985,7 +986,8 @@ export default function Leads() {
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

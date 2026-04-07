@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { createListing, deleteListing, getListings, updateListing } from '../api';
 import {
   Building2, Bed, Bath, Maximize, X, MapPin, Search, Loader2,
@@ -2776,13 +2777,13 @@ function ListingDrawer({
   if (listing.balconies) amenities.push(`Balconies x${listing.balconies}`);
   if (listing.terrace_area) amenities.push(`Terrace ${listing.terrace_area} m\u00b2`);
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
-      <div className="bg-black/30 z-40" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={onClose} />
+      <div className="bg-black/30" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', zIndex: 9999 }} onClick={onClose} />
 
       {/* Drawer panel */}
-      <div className="bg-white shadow-xl z-50 flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ position: 'fixed', top: 0, right: 0, bottom: 0, height: '100vh', width: '500px', maxWidth: '100vw' }}>
+      <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ position: 'fixed', top: 0, right: 0, bottom: 0, height: '100vh', width: '500px', maxWidth: '100vw', zIndex: 10000 }}>
         {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-4">
@@ -2929,7 +2930,8 @@ function ListingDrawer({
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -3125,11 +3127,11 @@ function AddListingModal({
     }
   };
 
-  return (
+  return createPortal(
     <>
-      <div className="bg-black/40 z-40" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={onClose} />
-      <div className="fixed inset-0 z-50 flex justify-end">
-        <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ height: '100vh', width: '520px', maxWidth: '100vw' }}>
+      <div className="bg-black/40" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', zIndex: 9999 }} onClick={onClose} />
+      <div style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: '520px', maxWidth: '100vw', zIndex: 10000 }}>
+        <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ height: '100vh', width: '100%' }}>
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10 flex-shrink-0">
             <h3 className="text-base font-semibold text-slate-900">Add Listing</h3>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -3413,7 +3415,8 @@ function AddListingModal({
           </form>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -3466,11 +3469,11 @@ function EditListingModal({
     }
   };
 
-  return (
+  return createPortal(
     <>
-      <div className="bg-black/40 z-[60]" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' }} onClick={onClose} />
-      <div className="fixed inset-0 z-[70] flex justify-end">
-        <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ height: '100vh', width: '520px', maxWidth: '100vw' }}>
+      <div className="bg-black/40" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', zIndex: 9999 }} onClick={onClose} />
+      <div style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: '520px', maxWidth: '100vw', zIndex: 10000 }}>
+        <div className="bg-white shadow-xl flex flex-col overflow-y-auto animate-in slide-in-from-right duration-300" style={{ height: '100vh', width: '100%' }}>
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10 flex-shrink-0">
             <h3 className="text-base font-semibold text-slate-900">Edit Listing</h3>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -3607,7 +3610,8 @@ function EditListingModal({
           </form>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 

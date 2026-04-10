@@ -1,0 +1,14 @@
+SCENARIO 15: Handoff mode: interest triggers agent handoff not booking
+Generated: 2026-04-10 17:38:54
+Mode: handoff
+
+[17:36:02] Lead: rent 2 bedroom Achrafieh 1000
+[17:36:02] Agent: And your name?
+
+[17:36:08] Lead: I love the second option, I want to visit
+[17:36:08] Agent: Which day works best for you this week?
+
+RESULT: FAIL
+NOTES:
+  - Turn 2: auto-booked tour in handoff mode (should hand off to agent instead)
+  - Turn 2: no agent handoff in handoff mode after interest expressed

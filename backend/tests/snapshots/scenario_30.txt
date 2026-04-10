@@ -1,0 +1,24 @@
+SCENARIO 30: Address question after tour interest
+========================================
+
+USER: hi
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: rent in Achrafieh, 1500, 2 bedrooms
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: Marc
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: the first one
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: whats the address
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+---
+CHECKS:
+  [FAIL] Says agent will share address: Bot did not say agent will share address
+  [PASS] Does not say 'address shared when you confirm': Bot did not use that phrase
+
+OVERALL: FAIL

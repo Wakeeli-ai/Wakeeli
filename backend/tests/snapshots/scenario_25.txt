@@ -1,0 +1,14 @@
+SCENARIO 25: Lead asks if this is a bot
+========================================
+
+USER: hi
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: are you a bot or a real person
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+---
+CHECKS:
+  [FAIL] Fallback to agent: Bot did not fall back to agent
+
+OVERALL: FAIL

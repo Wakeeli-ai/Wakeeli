@@ -1,0 +1,27 @@
+SCENARIO 21: Short responses
+========================================
+
+USER: hi
+BOT: Hello! How can I help you?
+
+USER: rent
+BOT: Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+
+USER: yes Beirut
+BOT: And your name?
+
+USER: ok 1500
+BOT: On it!
+
+USER: 2
+BOT: On it, let me find you some 2-bedroom apartments for rent in Beirut under $1,500/month.
+
+USER: no preference
+BOT: On it, let me find you some 2-bedroom apartments for rent in Beirut under $1,500/month.
+
+---
+CHECKS:
+  [FAIL] No crashes/errors: Some responses had errors
+  [PASS] All replies have content: All responses non-empty
+
+OVERALL: FAIL

@@ -1,0 +1,18 @@
+SCENARIO 24: Lead asks about area specifics
+========================================
+
+USER: hi
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: rent in Achrafieh, 1500, 2 bedrooms
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: is Achrafieh safe at night
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+---
+CHECKS:
+  [FAIL] Refers to agent for area question: Bot did not refer to agent
+  [PASS] Does not answer unknown area facts: Bot did not claim to know area safety
+
+OVERALL: FAIL

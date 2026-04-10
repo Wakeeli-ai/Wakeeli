@@ -1,0 +1,18 @@
+SCENARIO 27: Nothing found no 'nothing found' language
+========================================
+
+USER: hi
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: buy in Tripoli, 50000, 5 bedrooms
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+USER: Ali
+BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+
+---
+CHECKS:
+  [PASS] No 'nothing found' language: Bot did not say nothing found
+  [FAIL] Connects to agent: Bot did not connect to agent
+
+OVERALL: FAIL

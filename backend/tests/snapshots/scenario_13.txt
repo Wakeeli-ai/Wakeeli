@@ -1,0 +1,9 @@
+SCENARIO 13: Specific neighborhood 'Achrafieh' -> direct listing match
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:35:50] Lead: rent 2 bedroom in Achrafieh for 1000 dollars
+[17:35:50] Agent: Hello, thanks for reaching out! Sure, to help you find the best options, furnished or unfurnished? And your full name btw?
+
+RESULT: PASS
+NOTES: All checks passed

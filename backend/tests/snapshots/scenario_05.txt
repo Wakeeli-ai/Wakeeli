@@ -1,0 +1,23 @@
+SCENARIO 05: Budget vague first time
+Session ID: 64b8b4ce-051f-4488-92ea-2ceb48000699
+Timestamp: 2026-04-10T17:44:04.655625
+Target: https://wakeeli-ai.up.railway.app/api/demo/chat
+
+[Lead]: hi
+[Agent]: Hello! How can I help you?
+
+[Lead]: rent
+[Agent]: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+
+[Lead]: Beirut, 2 bedrooms
+[Agent]: And your name?
+
+[Lead]: budget is flexible
+[Agent]: Got it! Even a rough range helps, like $1,000–2,000/month?
+
+RESULT: PASS (verify manually)
+
+CHECKS (manual review required):
+  - should ask for a rough range after vague budget
+
+ISSUES: none detected automatically

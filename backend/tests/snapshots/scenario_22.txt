@@ -1,0 +1,37 @@
+SCENARIO 22: Studio apartment
+========================================
+
+USER: hi
+BOT: Hello! How can I help you?
+
+USER: rent a studio in Hamra, 800 a month
+BOT: And your name?
+
+USER: Lea
+BOT: I don't have an exact match, but here are some close options.
+
+
+Option 2 is probably the closest to what you had in mind ||| 1. Test
+   Achrafiejh, 1 bed, 4 bath, Unfurnished, $35,000/month
+
+2. Spacious 3BR - Antelias
+   Antelias, 3 bed, 3 bath, Furnished, $1,800/month
+   Spacious furnished apartment in a well-managed Antelias building. 3 bedrooms, 3 bathrooms, modern ki...
+
+3. 2BR Apartment - Antelias
+   Antelias, 2 bed, 2 bath, Partly Furnished, $1,200/month
+   145 sqm partly furnished apartment. 2 bedrooms, 2 bathrooms, fitted kitchen and comfortable salon.
+
+4. Mountain View 2BR - Zekrit
+   Zekrit, 2 bed, 1 bath, Furnished, $600/month
+   Furnished apartment with panoramic mountain views. Salon, dining area, 1 master bedroom, 1 bedroom a...
+
+5. Furnished 3BR Terrace - Antelias
+   Antelias, 3 bed, 4 bath, Fully Furnished, $3,500/month
+   Fully furnished apartment in Demco Tower with a 60 sqm terrace. 2 master bedrooms, fully equipped ki... ||| What do you think?
+
+---
+CHECKS:
+  [FAIL] Studio recognized: Bot did not recognize studio
+
+OVERALL: FAIL

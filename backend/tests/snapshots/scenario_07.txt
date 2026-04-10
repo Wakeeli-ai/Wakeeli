@@ -1,0 +1,20 @@
+SCENARIO 07: Furnished asked for rent
+Session ID: d0d1cf7b-c7b9-47a5-997b-eaf5ad57f1ef
+Timestamp: 2026-04-10T17:45:03.705412
+Target: https://wakeeli-ai.up.railway.app/api/demo/chat
+
+[Lead]: hi
+[Agent]: Hello! How can I help you?
+
+[Lead]: rent
+[Agent]: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+
+[Lead]: Jounieh, 1500 a month, 2 bedrooms
+[Agent]: And your name?
+
+RESULT: PASS (verify manually)
+
+CHECKS (manual review required):
+  - furnished question should appear at some point
+
+ISSUES: none detected automatically

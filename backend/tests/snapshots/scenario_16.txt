@@ -1,0 +1,12 @@
+SCENARIO 16: Auto mode: interest triggers tour booking not handoff
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:36:13] Lead: rent 2 bedroom Achrafieh 1000
+[17:36:13] Agent: And your name?
+
+[17:36:18] Lead: I love the second option, I want to visit
+[17:36:18] Agent: What day works for you this week?
+
+RESULT: PASS
+NOTES: All checks passed

@@ -1,0 +1,10 @@
+SCENARIO 12: Lead says 'Beirut' -> search Beirut + neighborhoods
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:35:45] Lead: I want to rent 2 bedrooms in Beirut for 1000 dollars
+[17:35:45] Agent: Hello, thanks for reaching out! Sure, to help you find the best options, do you have a specific area in Beirut in mind? Like Hamra, Achrafieh, or Verdun? What's your full name btw?
+
+RESULT: FAIL
+NOTES:
+  - Turn 1: 3 question marks (max 2)

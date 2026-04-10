@@ -1,0 +1,9 @@
+SCENARIO 18: Budget given in LBP -> handles gracefully
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:36:34] Lead: rent apartment in Achrafieh, my budget is 100 million Lebanese pounds
+[17:36:34] Agent: That's about $1,117/month. And your name?
+
+RESULT: PASS
+NOTES: All checks passed

@@ -1,0 +1,18 @@
+SCENARIO 11: Ignores name ask twice -> bot moves on
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:35:23] Lead: rent 2 bedroom Achrafieh 1000
+[17:35:23] Agent: And your name?
+
+[17:35:29] Lead: interested in option 1, when can I visit?
+[17:35:29] Agent: Sure, we can book a visit this week. Does Wednesday morning work for you?
+
+[17:35:34] Lead: tomorrow works for me
+[17:35:34] Agent: On it! Let me find you some 2-bedroom options in Achrafieh under $1,000/month.
+
+[17:35:40] Lead: afternoon is fine
+[17:35:40] Agent: On it! Let me pull up some options for you in Achrafieh.
+
+RESULT: PASS
+NOTES: All checks passed

@@ -1,0 +1,14 @@
+SCENARIO 19: Ask about specific listing detail after seeing options
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:36:40] Lead: rent 1 bedroom in Achrafieh for 800 dollars
+[17:36:40] Agent: Hello, thanks for reaching out! Sure, to help you find the best options, furnished or unfurnished? What's your full name btw?
+
+[17:36:45] Lead: does the first one have a balcony? what floor is it on?
+[17:36:45] Agent: The agent will be able to help you with that.
+
+Want to book a visit so you can check it out in person?
+
+RESULT: PASS
+NOTES: All checks passed

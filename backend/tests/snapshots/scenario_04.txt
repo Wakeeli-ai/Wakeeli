@@ -1,0 +1,15 @@
+SCENARIO 04: All info in one message
+Session ID: 6b69340c-ff7d-436c-b256-91acf13572d1
+Timestamp: 2026-04-10T17:43:41.680914
+Target: https://wakeeli-ai.up.railway.app/api/demo/chat
+
+[Lead]: I want to rent a 2 bedroom apartment in Achrafieh for 1000 dollars a month
+[Agent]: And your name?
+
+RESULT: PASS (verify manually)
+
+CHECKS (manual review required):
+  - should skip to name ask + listings
+  - should not re-ask known info (location/budget/bedrooms)
+
+ISSUES: none detected automatically

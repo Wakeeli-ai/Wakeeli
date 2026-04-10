@@ -1,0 +1,10 @@
+SCENARIO 14: Zero exact matches -> alternatives not immediate handoff
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:35:54] Lead: rent 5 bedroom apartment in Achrafieh for 200 dollars per month
+[17:35:54] Agent: And your name?
+
+RESULT: FAIL
+NOTES:
+  - Turn 1: no alternatives offered when no exact match found

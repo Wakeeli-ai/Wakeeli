@@ -1,0 +1,21 @@
+SCENARIO 10: Name handling
+Session ID: 77b68688-8c3a-4345-a053-16002b4e0019
+Timestamp: 2026-04-10T17:46:00.077915
+Target: https://wakeeli-ai.up.railway.app/api/demo/chat
+
+[Lead]: hi
+[Agent]: Hello! How can I help you?
+
+[Lead]: buy
+[Agent]: Sure, to help you find the best options, where are you looking to buy, what's your rough budget range, and how many bedrooms? ||| What's your full name btw?
+
+[Lead]: Beirut
+[Agent]: And your name?
+
+RESULT: PASS (verify manually)
+
+CHECKS (manual review required):
+  - name should be bundled as second message with qualifying questions
+  - not asked as a standalone first question
+
+ISSUES: none detected automatically

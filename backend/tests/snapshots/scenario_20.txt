@@ -1,0 +1,12 @@
+SCENARIO 20: Rejects all listings -> offer more or connect to agent
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:36:50] Lead: rent 2 bedroom Achrafieh 1000
+[17:36:50] Agent: And your name?
+
+[17:36:56] Lead: none of these work for me, I don't like any of them
+[17:36:56] Agent: I have other options in different areas or price ranges. Want me to take a look?
+
+RESULT: PASS
+NOTES: All checks passed

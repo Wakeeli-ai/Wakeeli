@@ -1,0 +1,15 @@
+SCENARIO 17: Lead changes mind: rent -> buy
+Generated: 2026-04-10 17:38:54
+Mode: auto
+
+[17:36:23] Lead: I want to rent 2 bedrooms in Hamra for 1200 dollars
+[17:36:23] Agent: Hello, thanks for reaching out! Sure, to help you find the best options, furnished or unfurnished? What's your full name btw?
+
+[17:36:29] Lead: actually I changed my mind, I want to buy instead
+[17:36:29] Agent: Sure! Here are some 2-bedroom options for sale in Hamra under $1,200:
+
+
+What's your name btw?
+
+RESULT: PASS
+NOTES: All checks passed

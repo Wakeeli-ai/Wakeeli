@@ -1,0 +1,26 @@
+SCENARIO 02: Basic rent flow
+Session ID: 368f19f0-53c2-4285-a0eb-48f4094b96fb
+Timestamp: 2026-04-10T17:43:26.899118
+Target: https://wakeeli-ai.up.railway.app/api/demo/chat
+
+[Lead]: hello
+[Agent]: Hello! How can I help you?
+
+[Lead]: rent
+[Agent]: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+
+[Lead]: Hamra
+[Agent]: And your name?
+
+[Lead]: 1500 a month, 2 bedrooms
+[Agent]: On it!
+
+RESULT: PASS (verify manually)
+
+CHECKS (manual review required):
+  - greeting present
+  - buy/rent asked
+  - furnished asked (rent only)
+  - listings shown
+
+ISSUES: none detected automatically

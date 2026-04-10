@@ -1,0 +1,37 @@
+WAKEELI SNAPSHOT TEST SUMMARY -- SCENARIOS 1 TO 10
+Run at: 2026-04-10T17:46:02.078605
+Target: https://wakeeli-ai.up.railway.app/api/demo/chat
+============================================================
+
+Scenario 01: Basic buy flow
+  Status: PASS (verify manually)
+
+Scenario 02: Basic rent flow
+  Status: PASS (verify manually)
+
+Scenario 03: No buy/rent specified
+  Status: PASS (verify manually)
+
+Scenario 04: All info in one message
+  Status: PASS (verify manually)
+
+Scenario 05: Budget vague first time
+  Status: PASS (verify manually)
+
+Scenario 06: Budget vague second time
+  Status: PASS (verify manually)
+
+Scenario 07: Furnished asked for rent
+  Status: PASS (verify manually)
+
+Scenario 08: Buy flow no furnished
+  Status: PASS (verify manually)
+
+Scenario 09: Off-topic message
+  Status: PASS (verify manually)
+
+Scenario 10: Name handling
+  Status: PASS (verify manually)
+
+Automated check results: 10 passed, 0 failed
+Note: PASS means no automated errors detected. Manual review of AI response quality required.

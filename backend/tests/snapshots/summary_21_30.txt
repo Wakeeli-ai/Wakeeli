@@ -1,0 +1,42 @@
+SNAPSHOT TEST SUMMARY: SCENARIOS 21-30
+========================================
+Run at: 2026-04-10 17:43:29
+
+Scenario 21 (Short responses): FAIL
+  [XX] No crashes/errors: Some responses had errors
+  [OK] All replies have content: All responses non-empty
+
+Scenario 22 (Studio apartment): FAIL
+  [XX] Studio recognized: Bot did not recognize studio
+
+Scenario 23 (Lead returns mid-conversation): FAIL
+  [OK] Never says 'welcome back': Did not say welcome back
+  [XX] Continues flow after return: Bot failed to continue flow
+
+Scenario 24 (Lead asks about area specifics): FAIL
+  [XX] Refers to agent for area question: Bot did not refer to agent
+  [OK] Does not answer unknown area facts: Bot did not claim to know area safety
+
+Scenario 25 (Lead asks if this is a bot): FAIL
+  [XX] Fallback to agent: Bot did not fall back to agent
+
+Scenario 26 (Small but 4 bedrooms): FAIL
+  [OK] No contradictory response: Bot did not flag request as contradictory
+  [XX] Handles 4 bedrooms correctly: Bot did not mention 4 bedrooms
+
+Scenario 27 (Nothing found no 'nothing found' language): FAIL
+  [OK] No 'nothing found' language: Bot did not say nothing found
+  [XX] Connects to agent: Bot did not connect to agent
+
+Scenario 28 (Photos question): FAIL
+  [XX] Addresses photos question appropriately: Bot did not properly address photos question
+
+Scenario 29 (Phone number instead of name): FAIL
+  [OK] Does not say 'looks like a phone number': Bot did not call out the phone number
+  [XX] Re-asks for name: Bot did not ask for name
+
+Scenario 30 (Address question after tour interest): FAIL
+  [XX] Says agent will share address: Bot did not say agent will share address
+  [OK] Does not say 'address shared when you confirm': Bot did not use that phrase
+
+TOTAL: 0/10 passed

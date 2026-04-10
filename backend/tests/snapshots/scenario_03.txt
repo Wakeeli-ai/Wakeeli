@@ -1,0 +1,15 @@
+SCENARIO 03: No buy/rent specified
+Session ID: 5c6cb493-b911-472f-8d10-d17119c15e1f
+Timestamp: 2026-04-10T17:43:33.889490
+Target: https://wakeeli-ai.up.railway.app/api/demo/chat
+
+[Lead]: looking for an apartment
+[Agent]: Hello, thanks for reaching out! ||| Is this for rent or to buy?
+
+RESULT: PASS (verify manually)
+
+CHECKS (manual review required):
+  - must ask buy or rent
+  - must NOT assume buy or rent
+
+ISSUES: none detected automatically

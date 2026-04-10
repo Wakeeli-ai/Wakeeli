@@ -470,7 +470,7 @@ Use ||| to separate your parts.
                                 msg = f"""
 CORRECTION FLOW: No exact match for updated criteria. Alternative listings are already included in the response by the system.
 Your job is only to generate:
-1. An opener telling the user these are slightly above their budget. Say: 'These are a bit above your range but they are the closest available right now.' Send that sentence only.
+1. An opener. Say: 'I don't have an exact match, but here are some close options.' Send that sentence only.
 2. Send 'What do you think?' as a closing.
 Do NOT reproduce the listing text. Use ||| to separate your parts.
 """
@@ -574,8 +574,8 @@ Use ||| to separate your parts.
                             # BUG 1 fix: directly include alternatives in reply parts
                             if alt_count == 1:
                                 alt_opening_instruction = (
-                                    "Tell the user this listing is slightly above their budget. "
-                                    "Say: 'This one is a bit above your range but it is the closest available right now.' "
+                                    "Tell the user you don't have an exact match but here is the closest available. "
+                                    "Say: 'I don't have an exact match, but here is the closest option I found.' "
                                     "Send that sentence only as the opener."
                                 )
                                 alt_recommendation_instruction = (
@@ -584,8 +584,8 @@ Use ||| to separate your parts.
                                 )
                             else:
                                 alt_opening_instruction = (
-                                    "Tell the user these are slightly above their budget. "
-                                    "Say: 'These are a bit above your range but they are the closest available right now.' "
+                                    "Tell the user you don't have an exact match but here are the closest available. "
+                                    "Say: 'I don't have an exact match, but here are some close options.' "
                                     "Send that sentence only as the opener."
                                 )
                                 alt_recommendation_instruction = (

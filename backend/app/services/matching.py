@@ -15,9 +15,7 @@ def search_listings(db: Session, filters: dict):
     query = db.query(Listing).filter(Listing.is_available == True)
 
     if filters.get("listing_type"):
-        # Intent detection returns "buy" but the DB stores "sale" for purchase listings
-        db_listing_type = "sale" if filters["listing_type"] == "buy" else filters["listing_type"]
-        query = query.filter(Listing.listing_type == db_listing_type)
+        query = query.filter(Listing.listing_type == filters["listing_type"])
 
     if filters.get("location"):
         location_lower = filters['location'].lower()
@@ -92,17 +90,36 @@ def search_listings(db: Session, filters: dict):
 
 
 def recommend_alternatives(db: Session, requirements: dict):
-    # If specific search fails, relax constraints.
-    # Remove bedrooms, furnishing, AND budget so we show the closest options regardless of price.
-    # The user can decide if they want to stretch their budget.
-    relaxed_filters = {
-        "listing_type": requirements.get("listing_type"),
-        "location": requirements.get("location"),
-    }
-    # Filter out None values
-    relaxed_filters = {k: v for k, v in relaxed_filters.items() if v is not None}
+    # If specific search fails, relax constraints progressively.
+    listing_type = requirements.get("listing_type")
+    location = requirements.get("location")
+    bedrooms = requirements.get("bedrooms")
 
-    return search_listings(db, relaxed_filters)
+    # Strategy 1: same location + listing_type, drop budget and bedrooms
+    if location:
+        filters1 = {"location": location}
+        if listing_type:
+            filters1["listing_type"] = listing_type
+        results = search_listings(db, filters1)
+        if results:
+            return results
+
+    # Strategy 2: same listing_type + bedrooms, drop location and budget
+    if bedrooms is not None and bedrooms != [] and bedrooms != "":
+        filters2 = {"bedrooms": bedrooms}
+        if listing_type:
+            filters2["listing_type"] = listing_type
+        results = search_listings(db, filters2)
+        if results:
+            return results
+
+    # Strategy 3: just listing_type as last resort
+    if listing_type:
+        results = search_listings(db, {"listing_type": listing_type})
+        if results:
+            return results
+
+    return []
 
 
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import {
   GitBranch, HelpCircle, Home, PhoneForwarded, Globe, Building2, Target,
-  Search, Save, Check, Plus, X, ChevronUp, ChevronDown, AlertCircle,
+  Search, Save, Check, Plus, X, ChevronUp, ChevronDown, AlertCircle, MessageSquare,
 } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -476,6 +476,156 @@ function OrderControl({ value, onChange, options }: {
   )
 }
 
+// ─── AI Preview Bubble ─────────────────────────────────────────────────────────
+
+function PreviewBubble({ text }: { text: string }) {
+  return (
+    <div className="mt-2 bg-slate-50 rounded-lg px-3 py-2 text-sm text-slate-500 italic flex items-start gap-2">
+      <MessageSquare size={14} className="mt-0.5 shrink-0 text-slate-400" />
+      <span>{text}</span>
+    </div>
+  )
+}
+
+function getPreviewText(key: string, value: SettingValue): string | null {
+  switch (key) {
+    case 'zero_match_behavior':
+      if (value === 'show_alternatives') return 'Here are some close options in nearby areas that might interest you.'
+      if (value === 'escalate_to_agent') return 'Let me connect you with one of our agents who can help find exactly what you need.'
+      if (value === 'apologize_and_ask_again') return 'I could not find an exact match. Can we adjust what you are looking for?'
+      return null
+
+    case 'bot_identity_response':
+      if (typeof value === 'string' && value.trim()) return value.trim()
+      return null
+
+    case 'returning_lead_behavior':
+      if (value === 'resume') return 'Welcome back! Last time we were looking at 3-bedroom apartments in Metn. Shall we continue?'
+      if (value === 'fresh_start') return 'Hi! Looking for a property in Lebanon? I am here to help!'
+      if (value === 'check_in') return 'Welcome back! Where were we?'
+      return null
+
+    case 'off_topic_handling':
+      if (value === 'redirect') return 'I specialize in helping you find properties. Are you looking to buy or rent?'
+      if (value === 'answer_briefly') return 'Got it! Now, back to finding you the perfect home...'
+      if (value === 'ignore') return 'How many bedrooms are you looking for?'
+      return null
+
+    case 'greeting_behavior':
+      if (value === 'formal') return 'Good day, and welcome. I am here to help you find the right property in Lebanon.'
+      if (value === 'casual') return 'Hey! Looking for a place? I can help you find it fast.'
+      if (value === 'name_based') return 'Hi Sarah! Great to have you here. Ready to find your perfect home?'
+      return null
+
+    case 'off_hours_behavior':
+      if (value === 'collect_lead') return 'Thanks for reaching out! Our team will get back to you first thing tomorrow.'
+      if (value === 'reply_later') return 'Our agents are offline right now. They will reply to you in the morning.'
+      if (value === 'forward_number') return 'For urgent requests, you can reach us directly at our emergency line.'
+      return null
+
+    case 'budget_ask_count': {
+      const n = value as number
+      if (n === 1) return '"What is your budget?" > no response > moves on.'
+      if (n === 2) return '"What is your budget?" > "Can you give me a rough range?" > moves on.'
+      if (n >= 3) return `"What is your budget?" > "Can you give me a rough range?" > "Any ballpark works!" > moves on.`
+      return null
+    }
+
+    case 'furnished_ask_count': {
+      const n = value as number
+      if (n === 1) return '"Are you looking for a furnished or unfurnished apartment?" > moves on.'
+      if (n === 2) return '"Furnished or unfurnished?" > "Any preference at all?" > moves on.'
+      if (n >= 3) return '"Furnished or unfurnished?" > "Any preference at all?" > "Either is fine, just let me know!" > moves on.'
+      return null
+    }
+
+    case 'name_collection_timing':
+      if (value === 'start') return 'Before we start, what is your name?'
+      if (value === 'after_interest') return '[After showing interest] By the way, what is your name so I can help you better?'
+      if (value === 'before_handoff') return '[Before agent handoff] May I get your name so the agent can reach out?'
+      return null
+
+    case 'handoff_message':
+      if (typeof value === 'string' && value.trim()) return value.trim()
+      return null
+
+    case 'tour_booking_method':
+      if (value === 'whatsapp') return 'Let me connect you with an agent to schedule a visit.'
+      if (value === 'google_calendar') return 'I can book a visit for you. What day works best?'
+      if (value === 'manual') return 'Our team will reach out to arrange a visit time that works for you.'
+      return null
+
+    case 'address_sharing_policy':
+      if (value === 'full') return 'The agent will share the exact address with you.'
+      if (value === 'area_only') return 'This property is located in Achrafieh, Beirut.'
+      if (value === 'on_request') return 'The address will be shared once you confirm the visit.'
+      return null
+
+    case 'photo_response_wording':
+      if (typeof value === 'string' && value.trim()) return value.trim()
+      return null
+
+    case 'currency_display':
+      if (value === 'usd') return '$250,000'
+      if (value === 'lbp') return '22,375,000,000 LBP'
+      if (value === 'both') return '$250,000 (22.4B LBP)'
+      return null
+
+    case 'price_display_format':
+      if (value === 'exact') return '$250,000'
+      if (value === 'range') return '$220,000 - $280,000'
+      if (value === 'on_request') return 'Price available on request.'
+      return null
+
+    case 'listing_sort_order':
+      if (value === 'relevance') return 'Best match listings shown first based on your criteria.'
+      if (value === 'price_asc') return 'Listings shown from lowest to highest price.'
+      if (value === 'price_desc') return 'Listings shown from highest to lowest price.'
+      if (value === 'newest') return 'Most recently added listings shown first.'
+      return null
+
+    case 'tone_style':
+      if (value === 'professional') return 'I have identified two properties matching your criteria in Achrafieh.'
+      if (value === 'casual') return 'Found 2 spots in Achrafieh that match what you are looking for.'
+      if (value === 'friendly') return 'Hey! Got 2 great options in Achrafieh for you.'
+      return null
+
+    case 'formality_level':
+      if (value === 'formal') return 'We would be pleased to arrange a viewing at your earliest convenience.'
+      if (value === 'semi_formal') return 'I can set up a viewing for you. What day works best?'
+      if (value === 'casual') return 'Want to check it out? Pick a day and we will sort it!'
+      return null
+
+    case 'competitor_mention_handling':
+      if (value === 'redirect') return 'We have similar options that might work even better for you.'
+      if (value === 'acknowledge') return 'They are a great agency. We also have some options you might like.'
+      if (value === 'ignore') return 'How many bedrooms are you looking for?'
+      return null
+
+    case 'price_negotiation_handling':
+      if (value === 'defer_to_agent') return 'For pricing discussions, let me connect you with our team.'
+      if (value === 'indicate_fixed') return 'The listed price is set by the owner.'
+      if (value === 'flexible') return 'There may be some flexibility on price. Let me check with the owner.'
+      return null
+
+    case 'company_tagline':
+      if (typeof value === 'string' && value.trim()) return `Hi! I am Wakeeli Assistant. ${value.trim()}`
+      return null
+
+    case 'bot_display_name':
+      if (typeof value === 'string' && value.trim()) return `Hi! I am ${value.trim()}, your real estate assistant. How can I help you today?`
+      return null
+
+    case 'follow_up_delay_hours': {
+      const hrs = value as number
+      return `After ${hrs} hrs of no response: "Hi! Just checking in. Still interested in properties in Achrafieh?"`
+    }
+
+    default:
+      return null
+  }
+}
+
 // ─── Setting Row ───────────────────────────────────────────────────────────────
 
 function SettingRow({ def, value, onChange, parentDisabled }: {
@@ -486,6 +636,7 @@ function SettingRow({ def, value, onChange, parentDisabled }: {
 }) {
   const isBoolean = def.type === 'boolean'
   const dimmed = parentDisabled
+  const preview = getPreviewText(def.key, value)
 
   if (isBoolean) {
     return (
@@ -528,8 +679,18 @@ function SettingRow({ def, value, onChange, parentDisabled }: {
       {def.type === 'order' && (
         <OrderControl value={value as string[]} onChange={v => onChange(def.key, v)} options={def.options ?? []} />
       )}
+      {preview && <PreviewBubble text={preview} />}
     </div>
   )
+}
+
+// ─── Scroll Helpers ────────────────────────────────────────────────────────────
+
+function getScrollParent(node: HTMLElement | null): HTMLElement | null {
+  if (!node) return null
+  const { overflow, overflowY, overflowX } = getComputedStyle(node)
+  if (/auto|scroll/.test(overflow + overflowY + overflowX)) return node
+  return getScrollParent(node.parentElement)
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -543,6 +704,8 @@ export default function ChatbotSettings({ companyId: _companyId, companyName, se
   const [saved, setSaved] = useState(false)
 
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const isScrollingRef = useRef(false)
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const isDirty = useMemo(() => {
     return Object.keys(initial).some(key => {
@@ -569,25 +732,46 @@ export default function ChatbotSettings({ companyId: _companyId, companyName, se
   }
 
   const scrollToCategory = (id: string) => {
+    // Block scroll spy while programmatic scroll runs
+    isScrollingRef.current = true
     setActiveCategory(id)
     sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current)
+    scrollTimerRef.current = setTimeout(() => { isScrollingRef.current = false }, 850)
   }
 
-  // Track active section via scroll
+  // Scroll spy: find the real scrollable container and track active category
   useEffect(() => {
     if (searchQuery) return
-    const observers: IntersectionObserver[] = []
-    CATEGORIES.forEach(cat => {
-      const el = sectionRefs.current[cat.id]
-      if (!el) return
-      const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveCategory(cat.id) },
-        { threshold: 0.25, rootMargin: '-80px 0px -60% 0px' }
-      )
-      obs.observe(el)
-      observers.push(obs)
-    })
-    return () => observers.forEach(o => o.disconnect())
+
+    // Locate the actual overflow container (the <main> element in AppLayout)
+    const firstEl = Object.values(sectionRefs.current).find(Boolean) as HTMLElement | null
+    const container = getScrollParent(firstEl?.parentElement ?? null)
+
+    const update = () => {
+      if (isScrollingRef.current) return
+      // Use top 25% of the container viewport as the trigger line
+      const containerTop = container ? container.getBoundingClientRect().top : 0
+      const threshold = containerTop + window.innerHeight * 0.25
+      let active = CATEGORIES[0].id
+      for (const cat of CATEGORIES) {
+        const el = sectionRefs.current[cat.id]
+        if (!el) continue
+        const { top } = el.getBoundingClientRect()
+        if (top <= threshold) active = cat.id
+      }
+      setActiveCategory(active)
+    }
+
+    const target: HTMLElement | Window = container ?? window
+    target.addEventListener('scroll', update, { passive: true })
+    // Sync once immediately in case user is mid-page on mount
+    update()
+
+    return () => {
+      target.removeEventListener('scroll', update)
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current)
+    }
   }, [searchQuery])
 
   // Filter categories/settings by search query
@@ -660,7 +844,7 @@ export default function ChatbotSettings({ companyId: _companyId, companyName, se
                     !hasMatch
                       ? 'opacity-30 cursor-not-allowed'
                       : activeCategory === cat.id && !searchQuery
-                      ? 'bg-brand-50 text-brand-700'
+                      ? 'bg-brand-50 text-brand-700 font-semibold'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >

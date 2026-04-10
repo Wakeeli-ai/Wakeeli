@@ -716,7 +716,12 @@ One question. Nothing else. Do not bundle with other questions.
                             _all_missing.append("number of bedrooms")
                         # Ask for furnished once naturally, bundled with other fields.
                         # Never counts toward search score.
-                        asking_for_furnished = not _has_furnishing and not _furnished_skip
+                        # Only relevant for rent; never ask for buy listings.
+                        asking_for_furnished = (
+                            not _has_furnishing
+                            and not _furnished_skip
+                            and property_info.get("listing_type") == "rent"
+                        )
                         if asking_for_furnished:
                             _all_missing.append("furnished or unfurnished")
                     else:
@@ -752,8 +757,8 @@ One question. Nothing else. Do not bundle with other questions.
                                 examples = get_area_examples(loc_canonical, 'district')
                                 area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
 
-                        if session.name_ask_count >= 2 or _search_score < 1:
-                            # Already asked for name twice, or not enough qualifying info yet (need at least 1 of location/budget/bedrooms before asking name).
+                        if session.name_ask_count >= 2:
+                            # Asked for name twice already. Drop it and ask only missing fields.
                             message = f"""
 Ask only for these missing details in one short message: {missing_str}.{area_note}
 Do NOT include a greeting. Do NOT re-ask for anything already known.
@@ -810,8 +815,8 @@ Keep it casual and brief.
                                 examples = get_area_examples(loc_canonical, 'district')
                                 area_note = f" Also ask if they have a specific town in {location_val.title()} in mind, like {examples}."
 
-                        if session.name_ask_count >= 2 or _search_score < 1:
-                            # Already asked for name twice, or not enough qualifying info yet (need at least 1 of location/budget/bedrooms before asking name).
+                        if session.name_ask_count >= 2:
+                            # Asked for name twice already. Drop it and send greeting + qualifying only.
                             session.greeted = True
                             message = f"""
 Entry B: listing type is known. First contact. Send exactly 2 messages using ||| as separator:
@@ -1215,6 +1220,16 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
                 and not should_route):
             session.pending_route_message = "Let me connect you with one of our agents who handles that area. They will reach out shortly."
             action = "route_to_agent"
+
+        # Handoff mode: listings must be shown before any agent handoff.
+        # If the session reaches handoff_or_finish but listings have not been presented
+        # yet, redirect to process_property_request so the lead sees options first.
+        # The handoff fires only after the lead has seen listings and signalled interest.
+        if (demo_mode == "handoff"
+                and action == "handoff_or_finish"
+                and not session.listings_shown
+                and not should_route):
+            action = "process_property_request"
 
         # Generate reply based on the action
         reply_parts = generate_reply(action, user_message, db, conversation, conversation_id, session)

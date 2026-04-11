@@ -157,6 +157,29 @@ _LBP_INDICATOR_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# FIX 1: Name injection check - detect if reply already contains a name question
+_NAME_IN_REPLY = re.compile(
+    r"(your (full )?name|what.?s your name|and your name|"
+    r"who (am i|are you) speaking|call you|ismi|shu ismak|shu ismik)",
+    re.IGNORECASE
+)
+
+# FIX 2: Furnished injection check - detect if reply already asks about furnishing
+_FURNISHED_IN_REPLY = re.compile(
+    r"(furnished|unfurnished|furnishing)",
+    re.IGNORECASE
+)
+
+# FIX 3: Vague budget detection - catch phrases the LLM extractor may miss
+_VAGUE_BUDGET_PATTERN = re.compile(
+    r"(flexible|not a problem|no problem|no issue|no limit|no budget|"
+    r"doesn.?t matter|money is not|not a concern|whatever works|"
+    r"any budget|any price|no restriction|open budget|price.{0,10}matter|"
+    r"not an issue)",
+    re.IGNORECASE
+)
+
+
 
 def update_memory(session: SessionState, extracted, user_message: str = ""):
     pprint(extracted)
@@ -181,6 +204,24 @@ def update_memory(session: SessionState, extracted, user_message: str = ""):
     # Vague budget (budget_flexible) never counts as valid budget info.
     # Clear it after every update so the bot always asks for a rough range
     # on the first attempt instead of treating "flexible" as a real value.
+    # FIX 3: Detect vague budget from extractor AND from raw user message.
+    # When vague answer is received, advance budget_ask_count so we ask for a
+    # concrete range once, then skip entirely on a second vague answer.
+    _extracted_flexible = bool(prop_info.get("budget_flexible"))
+    _regex_vague = bool(_VAGUE_BUDGET_PATTERN.search(user_message)) if user_message else False
+    _budget_vague = _extracted_flexible or _regex_vague
+    _no_real_budget = (
+        not session.property_info.get("budget_min")
+        and not session.property_info.get("budget_max")
+    )
+    if _budget_vague and _no_real_budget:
+        if session.budget_ask_count == 0:
+            # First vague answer: treat as if we already asked once.
+            # Next turn the bot will ask for a rough range.
+            session.budget_ask_count = 1
+        elif session.budget_ask_count == 1:
+            # Second vague answer: skip budget entirely on next turn.
+            session.budget_ask_count = 2
     session.property_info["budget_flexible"] = None
 
 
@@ -419,8 +460,8 @@ Offer to search for similar properties based on their preferences.
 
             else:
                 has_budget = budget_min or budget_max
-                # Skip budget requirement after one unanswered ask.
-                _budget_skip_ppr = not has_budget and session.budget_ask_count >= 1
+                # Skip budget requirement after two unanswered asks (or one vague + one ask).
+                _budget_skip_ppr = not has_budget and session.budget_ask_count >= 2
                 has_budget_for_search = has_budget or _budget_skip_ppr
 
                 if session.listings_shown:
@@ -798,8 +839,8 @@ One question. Nothing else. Do not bundle with other questions.
                     _has_budget = (
                         bool(property_info.get("budget_min")) or bool(property_info.get("budget_max"))
                     )
-                    # After one dedicated budget ask, skip it and proceed without.
-                    _budget_skip = not _has_budget and session.budget_ask_count >= 1
+                    # After two asks (or one vague answer + one ask), skip budget and proceed without.
+                    _budget_skip = not _has_budget and session.budget_ask_count >= 2
                     _has_budget_for_search = _has_budget or _budget_skip
                     _search_score = sum([
                         bool(property_info.get("location")),
@@ -1351,6 +1392,9 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         _best_reply_parts: list[str] = []
         _best_violation_count = float("inf")
         _last_enforcement: dict = {}
+        # Snapshot name_ask_count before retry loop so we can detect if it
+        # was incremented this turn (even across retries) for name injection.
+        _name_ask_count_pre = session.name_ask_count
 
         for _attempt in range(_MAX_RETRIES + 1):
             _retry_ctx = None
@@ -1387,6 +1431,42 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
                 break
 
         reply_parts = _best_reply_parts or []
+
+        # FIX 1: HARDCODED NAME INJECTION
+        # If name is unknown and qualifying questions went out, but the LLM dropped
+        # the name question, inject it here in code. Never rely on the LLM for this.
+        _reply_joined = " ".join(reply_parts)
+        _name_missing = not session.user_info.get("name")
+        _name_count_increased = session.name_ask_count > _name_ask_count_pre
+        _name_not_in_reply = not _NAME_IN_REPLY.search(_reply_joined)
+        _name_count_reasonable = session.name_ask_count <= 2
+        if (
+            action in ("more_info_needed", "collect_property_info")
+            and _name_missing
+            and _name_count_increased
+            and _name_count_reasonable
+            and _name_not_in_reply
+            and reply_parts
+        ):
+            reply_parts.append("And what is your name?")
+
+        # FIX 2: HARDCODED FURNISHED INJECTION
+        # If listing_type is rent, furnished is unknown, and it was never asked,
+        # and the reply didn't include a furnished question, inject it in code.
+        _furnished_missing = not session.property_info.get("furnishing")
+        _furnished_never_asked = session.furnished_ask_count == 0
+        _furnished_not_in_reply = not _FURNISHED_IN_REPLY.search(_reply_joined)
+        _is_rent = session.property_info.get("listing_type") == "rent"
+        if (
+            action == "more_info_needed"
+            and _is_rent
+            and _furnished_missing
+            and _furnished_never_asked
+            and _furnished_not_in_reply
+            and reply_parts
+        ):
+            reply_parts.append("Furnished or unfurnished?")
+            session.furnished_ask_count = 1
 
         # Run observation-only rule validator on the final reply
         try:

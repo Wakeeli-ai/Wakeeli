@@ -15,7 +15,7 @@ from app.services.prompt import (
 )
 from app.services.session import SessionState, STAGES
 from app.services.token_tracker import log_usage, check_token_budget
-from app.services.validator import validate_response, log_violations
+from app.services.validator import validate_response, log_violations, enforce_rules, log_enforcement
 from pprint import pprint
 
 client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
@@ -217,15 +217,15 @@ def _format_listing(r, index: int) -> str:
     return "\n".join(lines)
 
 
-def generate_reply(action, user_message, db, conversation, conversation_id, session: SessionState) -> list[str]:
+def generate_reply(action, user_message, db, conversation, conversation_id, session: SessionState, retry_context: str = None) -> list[str]:
     try:
-        return _generate_reply_inner(action, user_message, db, conversation, conversation_id, session)
+        return _generate_reply_inner(action, user_message, db, conversation, conversation_id, session, retry_context=retry_context)
     except Exception as e:
         print(f"generate_reply: unhandled error (action={action}): {e}")
         return ["Give me one moment, something went wrong on my end. Please try again."]
 
 
-def _generate_reply_inner(action, user_message, db, conversation, conversation_id, session: SessionState) -> list[str]:
+def _generate_reply_inner(action, user_message, db, conversation, conversation_id, session: SessionState, retry_context: str = None) -> list[str]:
     state = session.getter()
     property_info = state.get("property_info", {})
 
@@ -1060,6 +1060,10 @@ Greet the user naturally and ask how you can help them find a property in Lebano
     # Build system as a list of content blocks so the large static framework
     # is eligible for Anthropic prompt caching. The dynamic action instruction
     # and session state change every turn and are NOT cached.
+    _dynamic_text = dynamic_prompt + session_state_text
+    if retry_context:
+        _dynamic_text = retry_context + "\n\n" + _dynamic_text
+
     system_blocks = [
         {
             "type": "text",
@@ -1068,7 +1072,7 @@ Greet the user naturally and ask how you can help them find a property in Lebano
         },
         {
             "type": "text",
-            "text": dynamic_prompt + session_state_text,
+            "text": _dynamic_text,
         },
     ]
 
@@ -1342,10 +1346,49 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
                 and not should_route):
             action = "process_property_request"
 
-        # Generate reply based on the action
-        reply_parts = generate_reply(action, user_message, db, conversation, conversation_id, session)
+        # Generate reply with active enforcement gate (max 2 regeneration attempts)
+        _MAX_RETRIES = 2
+        _best_reply_parts: list[str] = []
+        _best_violation_count = float("inf")
+        _last_enforcement: dict = {}
 
-        # Run live rule validator after every bot response (non-blocking)
+        for _attempt in range(_MAX_RETRIES + 1):
+            _retry_ctx = None
+            if _attempt > 0 and _last_enforcement.get("violations"):
+                _vlist = ", ".join(_last_enforcement["violations"])
+                _dlist = "; ".join(_last_enforcement.get("details", []))
+                _retry_ctx = (
+                    f"ENFORCEMENT RETRY {_attempt}: Your previous response violated "
+                    f"these rules: {_vlist}. Details: {_dlist}. "
+                    f"Regenerate the response without these violations."
+                )
+
+            _attempt_parts = generate_reply(
+                action, user_message, db, conversation, conversation_id, session,
+                retry_context=_retry_ctx,
+            )
+            _attempt_text = " ".join(_attempt_parts)
+            _enforcement = enforce_rules(_attempt_text)
+
+            try:
+                log_enforcement(
+                    _enforcement, conversation_id, user_message, _attempt_text, _attempt + 1
+                )
+            except Exception:
+                pass
+
+            _last_enforcement = _enforcement
+            _vcount = len(_enforcement["violations"])
+            if _vcount < _best_violation_count:
+                _best_violation_count = _vcount
+                _best_reply_parts = _attempt_parts
+
+            if _enforcement["passed"]:
+                break
+
+        reply_parts = _best_reply_parts or []
+
+        # Run observation-only rule validator on the final reply
         try:
             _validation_text = " ".join(reply_parts)
             _violations = validate_response(

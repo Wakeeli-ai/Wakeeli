@@ -1,5 +1,6 @@
 import json
 import re
+import time
 import anthropic
 from sqlalchemy.orm import Session
 from app.config import settings
@@ -52,6 +53,15 @@ _FAR_TIMELINE_PATTERNS = re.compile(
 _JUST_BROWSING_PATTERNS = re.compile(
     r"(just browsing|not sure when|not sure yet|not looking (yet|now|anytime soon)|"
     r"no rush|no hurry|not urgent)",
+    re.IGNORECASE
+)
+
+# Bare affirmative that confirms a search offer ("Want me to take a look?").
+# Matches only when the entire message is a short yes-word with no day/time.
+# Used to distinguish "yes, show me listings" from "yes, that time works for booking".
+_SEARCH_AFFIRM_PATTERN = re.compile(
+    r'^\s*(sure|yes|yeah|yep|ok|okay|go ahead|why not|please|alright|sounds good|'
+    r'do it|let me see|show me|go on)\s*[.!?]?\s*$',
     re.IGNORECASE
 )
 
@@ -187,7 +197,12 @@ def _format_listing(r, index: int) -> str:
     price_str = f"${price:,.0f}/month" if price_label == "rent" else f"${price:,.0f}"
     area_str = r.area or r.city or "Unknown area"
     furnishing_str = r.furnishing or "unfurnished"
-    bedrooms_str = f"{r.bedrooms} bed" if r.bedrooms else "? bed"
+    if r.bedrooms == 0:
+        bedrooms_str = "studio"
+    elif r.bedrooms:
+        bedrooms_str = f"{r.bedrooms} bed"
+    else:
+        bedrooms_str = "? bed"
     bathrooms_str = f"{r.bathrooms} bath" if r.bathrooms else ""
     bed_bath = f"{bedrooms_str}, {bathrooms_str}" if bathrooms_str else bedrooms_str
 
@@ -333,6 +348,12 @@ Example:
             budget_max = property_info.get("budget_max")
             bedrooms = property_info.get("bedrooms")
             furnishing = property_info.get("furnishing")
+            _prop_type = (property_info.get("property_type") or "").lower()
+            _is_studio = (_prop_type == "studio") or (bedrooms == 0)
+            _lt = (property_info.get("listing_type") or "").lower()
+            _lt_label = " for rent" if _lt == "rent" else " for sale" if _lt == "buy" else ""
+            _beds_label = f"{bedrooms}-bedroom " if bedrooms and bedrooms > 0 else ""
+            _ptype_label = _prop_type if (_prop_type and _prop_type not in ("studio",)) else "apartment"
 
             msg = ""
             alternatives_instruction = ""
@@ -429,10 +450,15 @@ Offer to search for similar properties based on their preferences.
                             ])
 
                             # BUG 1 fix: directly include listings in reply parts
+                            _corr_area_hint = f" in {location}" if location else ""
                             if result_count == 1:
                                 corr_opening_instruction = (
-                                    "Send ONE short opening phrase only, like 'Here you go' or 'Check this one out'. "
-                                    "Do NOT say 'options'. No listing text. Reply with the opening phrase only."
+                                    f"Send ONE short opening phrase only that confirms what you are showing: "
+                                    f"the property type, listing type, and area. "
+                                    f"Example: 'Here is a {_beds_label}{_ptype_label}{_lt_label}{_corr_area_hint}'. "
+                                    f"Use the actual property details from the session state. "
+                                    f"Do NOT say 'Here you go', 'Check this one out', or any generic phrase. "
+                                    f"No listing text. Reply with the opening phrase only."
                                 )
                                 corr_recommendation_instruction = (
                                     "Send ONE short closing question only, like 'What do you think?' "
@@ -440,13 +466,16 @@ Offer to search for similar properties based on their preferences.
                                 )
                             else:
                                 corr_opening_instruction = (
-                                    "Send ONE short opening phrase only, like 'Sure' or 'Here you go'. "
-                                    "Do NOT say 'let me redo the search'. No listing text. Reply with the opening phrase only."
+                                    f"Send ONE short opening phrase only that confirms what you are showing: "
+                                    f"the property type, listing type, and area. "
+                                    f"Example: 'Here are some {_beds_label}{_ptype_label}s{_lt_label}{_corr_area_hint}'. "
+                                    f"Use the actual property details from the session state. "
+                                    f"Do NOT say 'Sure', 'Here you go', or any generic phrase. "
+                                    f"No listing text. Reply with the opening phrase only."
                                 )
                                 corr_recommendation_instruction = (
-                                    "Send a recommendation line then 'What do you think?' as two short messages. "
-                                    "Example: 'Option 2 is probably the closest to what you had in mind' ||| 'What do you think?' "
-                                    "No listing text."
+                                    "Send ONLY 'What do you think?' as a short closing message. "
+                                    "Do NOT recommend or pick a favorite. No listing text."
                                 )
 
                             msg = f"""
@@ -467,10 +496,11 @@ Use ||| to separate your parts.
                                 formatted_listings = "\n\n".join([
                                     _format_listing(r, i) for i, r in enumerate(alt_to_show, 1)
                                 ])
+                                _alt_corr_area_hint = f" in {location}" if location else ""
                                 msg = f"""
-CORRECTION FLOW: No exact match for updated criteria. Alternative listings are already included in the response by the system.
+CORRECTION FLOW: Alternative listings for updated criteria are already included in the response by the system.
 Your job is only to generate:
-1. An opener. Say: 'I don't have an exact match, but here are some close options.' Send that sentence only.
+1. An opener that confirms what you are showing: property type, listing type, and area. Example: 'Here are some {_beds_label}{_ptype_label}s{_lt_label}{_alt_corr_area_hint}'. Do NOT say 'no exact match', 'I don't have an exact match', or anything revealing the search outcome. Send the opener only.
 2. Send 'What do you think?' as a closing.
 Do NOT reproduce the listing text. Use ||| to separate your parts.
 """
@@ -485,23 +515,73 @@ Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with
 """
                     else:
                         alternatives_instruction = ""
-                        if session.show_alternatives:
-                            # Do NOT reset show_alternatives here. The flag must stay True
-                            # so that a second dismissive message in _check_routing_conditions
-                            # can detect it and route to agent correctly.
-                            alternatives_instruction = (
-                                "CRITICAL OVERRIDE: The user said they are not interested. "
-                                "DO NOT say goodbye. DO NOT wish them well. DO NOT end the conversation. "
-                                "Instead, you MUST say: I have other options in different areas or price ranges. "
-                                "Want me to take a look? "
-                                "This is MANDATORY. Ignore any other instructions about saying goodbye."
-                            )
+                        if session.show_alternatives and _SEARCH_AFFIRM_PATTERN.match(user_message.strip()):
+                            # User confirmed they want to see the alternatives the bot just offered
+                            # ("Want me to take a look?"). Run the actual search now instead of
+                            # falling into the generic listing handler, which could misread a bare
+                            # 'sure' as a booking confirmation.
+                            alt_results = recommend_alternatives(db, session.property_info)
+                            session.show_alternatives = False
+                            if alt_results:
+                                session.listings_shown = True
+                                alt_to_show = alt_results[:5]
+                                alt_count = len(alt_to_show)
+                                formatted_listings = "\n\n".join([
+                                    _format_listing(r, i) for i, r in enumerate(alt_to_show, 1)
+                                ])
+                                if alt_count == 1:
+                                    _alt_open = (
+                                        "Send ONE short opening phrase only, like 'Here is the closest option I found' or 'Check this one out'. "
+                                        "Do NOT say 'no exact match'. No listing text. Reply with the opening phrase only."
+                                    )
+                                    _alt_close = (
+                                        "Send ONE short closing question only, like 'What do you think?' "
+                                        "Reply with the closing question only. No listing text."
+                                    )
+                                else:
+                                    _alt_open = (
+                                        "Send ONE short opening phrase only, like 'Here are some close options' or 'Check these out'. "
+                                        "Do NOT say 'no exact match'. No listing text. Reply with the opening phrase only."
+                                    )
+                                    _alt_close = (
+                                        "Send a recommendation line then 'What do you think?' as two short messages. "
+                                        "Example: 'Option 2 is probably the closest to what you had in mind' ||| 'What do you think?' "
+                                        "No listing text."
+                                    )
+                                msg = f"""
+CONFIRMED SEARCH FLOW: The user confirmed they want to see more options.
+Listings are already included in the response by the system.
+Your job is only to generate:
+1. {_alt_open}
+2. {_alt_close}
+Do NOT reproduce the listing text. Use ||| to separate your parts.
+"""
+                                _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
+                            else:
+                                msg = """
+No alternatives found. Do NOT reveal this to the user.
+Connect to agent: 'Let me connect you with one of our agents who can help you find exactly what you are looking for.'
+"""
+                        else:
+                            if session.show_alternatives:
+                                # Do NOT reset show_alternatives here. The flag must stay True
+                                # so that a second dismissive message in _check_routing_conditions
+                                # can detect it and route to agent correctly.
+                                alternatives_instruction = (
+                                    "CRITICAL OVERRIDE: The user said they are not interested. "
+                                    "DO NOT say goodbye. DO NOT wish them well. DO NOT end the conversation. "
+                                    "Instead, you MUST say: I have other options in different areas or price ranges. "
+                                    "Want me to take a look? "
+                                    "This is MANDATORY. Ignore any other instructions about saying goodbye."
+                                )
 
-                        msg = f"""
+                            msg = f"""
 The user has already seen listings. This is a follow-up message in the ongoing conversation.
 Respond naturally based on what the user just said. Possible scenarios:
-- If they expressed interest in a specific option: move to booking a visit. Ask what day works.
-- If they confirmed a visit time (e.g. 'Wednesday works', 'yeah that works', 'sure'): send a clean booking confirmation summary. Format: "Your visit is set for [day] at [time]" ||| "I'll be connecting you with the agent shortly"
+- ORDINAL SELECTION (highest priority): If the user refers to a listing by ordinal position ("the first one", "the second one", "option 1", "option 2", "I like the first one", "the first one looks good"), this means they are SELECTING that numbered listing. Confirm their choice by name and move directly to booking. Ask what day works. DO NOT re-ask which property they want. DO NOT ask for clarification.
+- If they expressed interest in a specific option (liked it, said it looks good, said yes): move to booking a visit. Ask what day works.
+- If they confirmed a specific visit day or time (e.g. 'Wednesday works', 'Thursday afternoon', 'yeah that works for me'): send a clean booking confirmation summary. Format: "Your visit is set for [day] at [time]" ||| "I'll be connecting you with the agent shortly". ONLY do this when a specific day or time is clearly referenced.
+- CRITICAL: A bare 'sure', 'yes', 'yeah', or 'ok' with no day or time is NEVER a booking confirmation. It means the user is agreeing to something the bot said. Do NOT send a booking summary for a bare affirmative.
 - If they asked about address or location details: say "The agent will share the address with you." Keep it brief.
 - If they asked a question about a specific property (price, size, features): answer from the listings context if possible, or say the agent will have more details.
 - If they seem unsure or said something vague: ask what specifically they are unsure about or if they want to see different options. Keep it short.
@@ -525,18 +605,42 @@ User message to respond to: {user_message}
 
                         # BUG 1 fix: build reply parts directly so listings are always
                         # included in the response, not just in the LLM instruction.
+                        _area_hint = f" in {location}" if location else ""
                         if result_count == 1:
-                            opening_instruction = (
-                                "Send ONE short opening phrase only, like 'Here you go' or "
-                                "'Check this one out'. Do NOT say 'options'. No listing text. "
-                                "Reply with the opening phrase only."
-                            )
+                            if _is_studio:
+                                opening_instruction = (
+                                    "Send ONE short opening phrase only. The lead asked for a studio. "
+                                    f"Acknowledge this naturally, e.g. 'Here is a studio{_lt_label}{_area_hint}' or "
+                                    f"'Check this studio out{_area_hint}'. No listing text. "
+                                    "Reply with the opening phrase only."
+                                )
+                            else:
+                                opening_instruction = (
+                                    f"Send ONE short opening phrase only that confirms what you are showing: "
+                                    f"the property type, listing type, and area. "
+                                    f"Example: 'Here is a {_beds_label}{_ptype_label}{_lt_label}{_area_hint}'. "
+                                    f"Use the actual property details from the session state. "
+                                    f"Do NOT say 'Here you go', 'Check this one out', or any generic phrase. "
+                                    f"No listing text. Reply with the opening phrase only."
+                                )
                         else:
-                            opening_instruction = (
-                                "Send ONE short opening phrase only, like 'On it' or 'Here you go'. "
-                                "Do NOT say 'Found some great options', 'searching now', or any variation. "
-                                "Reply with the opening phrase only. No listing text."
-                            )
+                            if _is_studio:
+                                opening_instruction = (
+                                    "Send ONE short opening phrase only. The lead asked for a studio. "
+                                    f"Acknowledge this naturally, e.g. 'Here are some studios{_lt_label}{_area_hint}' or "
+                                    f"'Here you go, a few studios{_area_hint}'. "
+                                    "Do NOT say 'Found some great options', 'searching now', or any variation. "
+                                    "Reply with the opening phrase only. No listing text."
+                                )
+                            else:
+                                opening_instruction = (
+                                    f"Send ONE short opening phrase only that confirms what you are showing: "
+                                    f"the property type, listing type, and area. "
+                                    f"Example: 'Here are some {_beds_label}{_ptype_label}s{_lt_label}{_area_hint}'. "
+                                    f"Use the actual property details from the session state. "
+                                    f"Do NOT say 'Here you go', 'On it', 'Found some great options', or any generic phrase. "
+                                    f"No listing text. Reply with the opening phrase only."
+                                )
 
                         if result_count == 1:
                             recommendation_instruction = (
@@ -545,9 +649,9 @@ User message to respond to: {user_message}
                             )
                         else:
                             recommendation_instruction = (
-                                "Send a recommendation line then 'What do you think?' as two separate short messages. "
-                                "Example: 'Option 2 is probably the closest to what you had in mind' ||| 'What do you think?' "
-                                "Reply with the recommendation and closing only. No listing text."
+                                "Send ONLY 'What do you think?' as a short closing message. "
+                                "Do NOT recommend or pick a favorite option. Present all options equally and let the lead decide. "
+                                "Reply with the closing only. No listing text."
                             )
 
                         msg = f"""
@@ -572,11 +676,15 @@ Use ||| to separate your parts.
                             ])
 
                             # BUG 1 fix: directly include alternatives in reply parts
+                            _alt_area_hint = f" in {location}" if location else ""
                             if alt_count == 1:
                                 alt_opening_instruction = (
-                                    "Tell the user you don't have an exact match but here is the closest available. "
-                                    "Say: 'I don't have an exact match, but here is the closest option I found.' "
-                                    "Send that sentence only as the opener."
+                                    f"Send ONE short opening phrase only that confirms what you are showing: "
+                                    f"the property type, listing type, and area. "
+                                    f"Example: 'Here is a {_beds_label}{_ptype_label}{_lt_label}{_alt_area_hint}'. "
+                                    f"Use the actual property details from the session state. "
+                                    f"Do NOT say 'no exact match', 'I don't have an exact match', or anything revealing the search outcome. "
+                                    f"Send that phrase only as the opener."
                                 )
                                 alt_recommendation_instruction = (
                                     "Send ONE short closing question only, like 'What do you think?' "
@@ -584,14 +692,16 @@ Use ||| to separate your parts.
                                 )
                             else:
                                 alt_opening_instruction = (
-                                    "Tell the user you don't have an exact match but here are the closest available. "
-                                    "Say: 'I don't have an exact match, but here are some close options.' "
-                                    "Send that sentence only as the opener."
+                                    f"Send ONE short opening phrase only that confirms what you are showing: "
+                                    f"the property type, listing type, and area. "
+                                    f"Example: 'Here are some {_beds_label}{_ptype_label}s{_lt_label}{_alt_area_hint}'. "
+                                    f"Use the actual property details from the session state. "
+                                    f"Do NOT say 'no exact match', 'I don't have an exact match', or anything revealing the search outcome. "
+                                    f"Send that phrase only as the opener."
                                 )
                                 alt_recommendation_instruction = (
-                                    "Send a recommendation line then 'What do you think?' as two short messages. "
-                                    "Example: 'Option 2 is probably the closest to what you had in mind' ||| 'What do you think?' "
-                                    "Reply with the recommendation and closing only. No listing text."
+                                    "Send ONLY 'What do you think?' as a short closing message. "
+                                    "Do NOT recommend or pick a favorite option. No listing text."
                                 )
 
                             msg = f"""
@@ -606,11 +716,8 @@ Use ||| to separate your parts.
 
                         else:
                             msg = """
-CRITICAL: There are ZERO listings matching their criteria in the database right now.
-Do NOT say you found options. Do NOT make up or invent listings. Do NOT hallucinate properties.
-Tell the user honestly that you could not find matching properties right now but you will keep looking.
-Offer to connect them with a human agent who might have more options off-market.
-Be honest and direct.
+CRITICAL: Zero listings match. Do NOT reveal this to the user. Never say "nothing found", "no matches", "no exact match", "couldn't find", or any similar phrase.
+Smoothly connect them with an agent: "Let me connect you with one of our agents who can help you find exactly what you are looking for."
 """
                 else:
                     msg = """
@@ -936,19 +1043,13 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             + message
         )
 
-    # LBP conversion reminder: if a budget was converted from LBP this turn,
-    # inject an explicit instruction so the LLM always acknowledges the USD amount
-    # before continuing. This is required by the LBP MENTION RULE.
+    # LBP conversion: if a budget was converted from LBP this turn, instruct the LLM
+    # to silently proceed without mentioning the conversion to the user.
     if session.lbp_converted:
-        converted_parts = []
-        for key, usd_val in session.lbp_converted.items():
-            converted_parts.append(f"${usd_val:,}")
-        converted_str = " / ".join(converted_parts)
         message = (
-            f"CRITICAL: The user just provided a budget in LBP. It was converted to USD: {converted_str}. "
-            f"You MUST mention this converted amount naturally at the start of your reply before doing anything else. "
-            f"Example: 'That's about {converted_str}/month. Let me check what's available.' "
-            f"Do NOT skip this mention. This is mandatory per the LBP MENTION RULE.\n\n"
+            "CRITICAL: The user gave their budget in LBP. The conversion to USD has been done silently for matching. "
+            "Do NOT mention the USD conversion to the user. Never say 'That is about $X/month' or any similar phrase. "
+            "Continue the conversation naturally without referencing the conversion at all.\n\n"
             + message
         )
 
@@ -1111,6 +1212,16 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
     # Get or create the per-conversation session
     session = get_session(conversation_id)
 
+    # Dedup: if this exact message was processed for this session within the last 10 seconds,
+    # return the cached reply. Prevents double-responses from frontend double-submit.
+    _now = time.time()
+    if (getattr(session, '_dedup_message', None) == user_message
+            and (_now - getattr(session, '_dedup_ts', 0.0)) < 10.0):
+        _cached = getattr(session, '_dedup_reply', None)
+        if _cached:
+            print(f"[dedup] duplicate message for conversation {conversation_id}, returning cached reply")
+            return _cached
+
     try:
         # Fetch conversation and recent history
         conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
@@ -1255,6 +1366,11 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         ai_msg = Message(conversation_id=conversation_id, role="assistant", content=full_reply)
         db.add(ai_msg)
         db.commit()
+
+        # Cache for dedup on the next turn
+        session._dedup_message = user_message
+        session._dedup_ts = time.time()
+        session._dedup_reply = reply_parts
 
         return reply_parts
 

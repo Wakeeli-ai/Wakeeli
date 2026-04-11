@@ -1,4 +1,5 @@
 import uuid
+import asyncio
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional, Literal
@@ -13,6 +14,17 @@ router = APIRouter()
 # Keyed by session_id so each browser tab gets its own isolated conversation.
 # Resets on server restart, which is acceptable for demo use.
 _demo_sessions: dict[str, int] = {}
+
+# Per-session asyncio locks. Prevents duplicate concurrent requests (e.g. frontend
+# double-submit) from generating two separate responses for the same message.
+_session_locks: dict[str, asyncio.Lock] = {}
+
+
+def _get_session_lock(session_id: str) -> asyncio.Lock:
+    """Return the asyncio Lock for this demo session, creating one if needed."""
+    if session_id not in _session_locks:
+        _session_locks[session_id] = asyncio.Lock()
+    return _session_locks[session_id]
 
 
 class DemoChatRequest(BaseModel):
@@ -50,18 +62,23 @@ async def demo_chat(request: DemoChatRequest, db: Session = Depends(get_db)):
     """
     session_id = request.session_id or str(uuid.uuid4())
 
-    # Look up or create the DB conversation for this demo session
-    conversation = _get_or_create_conversation(db, session_id)
-    conversation_id = conversation.id
+    # Acquire per-session lock before processing. This serializes concurrent
+    # requests for the same session (e.g. frontend double-submit) so only one
+    # response is generated per message.
+    lock = _get_session_lock(session_id)
+    async with lock:
+        # Look up or create the DB conversation for this demo session
+        conversation = _get_or_create_conversation(db, session_id)
+        conversation_id = conversation.id
 
-    # Run the full agent pipeline (same as /api/chat/test)
-    # The mode kwarg is forwarded so the pipeline can apply handoff-mode overrides
-    messages = process_user_message(
-        db,
-        conversation_id,
-        request.message,
-        demo_mode=request.mode,
-    )
+        # Run the full agent pipeline (same as /api/chat/test)
+        # The mode kwarg is forwarded so the pipeline can apply handoff-mode overrides
+        messages = process_user_message(
+            db,
+            conversation_id,
+            request.message,
+            demo_mode=request.mode,
+        )
 
     return {
         "messages": messages,

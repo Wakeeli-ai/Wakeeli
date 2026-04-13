@@ -367,6 +367,76 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* ==============================================
+   Responsive: tablet 768px+ and desktop 1024px+
+   ============================================== */
+
+@media (min-width: 768px) {
+  body {
+    max-width: 680px;
+    padding: 28px 28px 64px;
+  }
+  .page-title  { font-size: 22px; }
+  .month-label { font-size: 20px; }
+  .toggle-btn  { font-size: 13px; padding: 12px 8px; }
+
+  .cal-cell    { min-height: 68px; }
+  .cal-num     { font-size: 13px; width: 26px; height: 26px; }
+  .cal-today .cal-num { font-size: 11px; }
+  .cal-dot     { height: 7px; }
+  .legend-item { font-size: 11px; }
+
+  .modal-bg    { align-items: center; padding: 24px; }
+  .modal-card  {
+    max-width: 520px;
+    transform: scale(0.92);
+  }
+  .modal-bg.show .modal-card { transform: scale(1); }
+  #modal-body  {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .modal-person-row { margin-bottom: 0; }
+}
+
+@media (min-width: 1024px) {
+  body {
+    max-width: 900px;
+    padding: 40px 48px 80px;
+  }
+  .page-title    { font-size: 26px; }
+  .month-label   { font-size: 22px; }
+  .toggle-btn    { font-size: 14px; padding: 12px 10px; }
+  .metric-toggle { border-radius: 16px; margin-bottom: 20px; }
+  .nav-arrow     { width: 52px; height: 52px; font-size: 34px; }
+  .back-btn      { width: 52px; height: 52px; }
+  .month-nav     { margin-bottom: 18px; }
+
+  .cal-wrapper   { padding: 20px 16px 24px; margin-bottom: 16px; }
+  .cal-grid      { gap: 5px; }
+  .cal-weekdays  { gap: 5px; margin-bottom: 8px; }
+  .cal-weekdays div { font-size: 11px; padding: 4px 0; }
+  .cal-cell {
+    min-height: 84px;
+    border-radius: 12px;
+    padding: 10px 4px 9px;
+  }
+  .cal-num       { font-size: 15px; width: 30px; height: 30px; }
+  .cal-today .cal-num { font-size: 13px; }
+  .cal-dot       { height: 8px; border-radius: 3px; }
+  .cal-dots      { gap: 4px; padding: 0 5px; }
+
+  .legend-card   { padding: 16px 20px; }
+  .legend-item   { font-size: 12px; gap: 8px; }
+  .legend-swatch { width: 18px; height: 8px; }
+
+  .modal-card  { max-width: 620px; padding: 28px; }
+  .modal-date  { font-size: 20px; }
+  .mstat-val   { font-size: 14px; }
+  .mstat-label { font-size: 9px; }
+}
 </style>
 </head>
 <body>

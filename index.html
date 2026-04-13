@@ -736,6 +736,132 @@ body {
 .popup-v.clr-green { color: #34C759; }
 .popup-v.clr-amber { color: #FF9F0A; }
 .popup-v.clr-red   { color: #FF3B30; }
+
+/* ==============================================
+   Responsive: tablet 768px+ and desktop 1024px+
+   ============================================== */
+
+@media (min-width: 768px) {
+  body {
+    max-width: 800px;
+    padding: 28px 24px 72px;
+  }
+  .header { margin-bottom: 34px; }
+  .header-title { font-size: 22px; }
+  .header-date  { font-size: 13px; }
+  .moon-icon    { font-size: 28px; }
+
+  .persons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .hero-number { font-size: 58px; }
+
+  .leader-card { padding: 26px 24px; }
+  .leader-hero { font-size: 42px; }
+
+  .heat-card { padding: 20px 18px; }
+
+  .cal-link-inner { padding: 22px 26px; }
+  .cal-link-title { font-size: 16px; }
+}
+
+@media (min-width: 1024px) {
+  body {
+    max-width: 1200px;
+    padding: 44px 60px 96px;
+  }
+  .header {
+    margin-bottom: 44px;
+    align-items: center;
+  }
+  .header-title { font-size: 28px; letter-spacing: -0.8px; }
+  .header-date  { font-size: 14px; margin-top: 4px; }
+  .header-gentime { font-size: 12px; }
+  .moon-icon    { font-size: 32px; }
+
+  .section-label {
+    font-size: 13px;
+    letter-spacing: 1.2px;
+    margin-bottom: 14px;
+  }
+  .section-sublabel { font-size: 10px; margin-bottom: 12px; }
+
+  .persons-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 44px;
+  }
+  .persons-grid .person-card:first-child {
+    grid-column: 1 / -1;
+    padding: 28px 32px;
+  }
+  .hero-number {
+    font-size: 72px;
+    letter-spacing: -3.5px;
+  }
+  .hero-label   { font-size: 11px; margin-bottom: 22px; }
+  .card-name    { font-size: 14px; letter-spacing: 1.5px; }
+  .card-status  { font-size: 13px; }
+  .stat-label   { font-size: 10px; }
+  .stat-val     { font-size: 14px; }
+  .stat-item    { padding: 14px 8px; }
+  .spark-label  { font-size: 10px; }
+
+  .leaderboard-section {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 44px;
+  }
+  .leader-card {
+    flex: 1;
+    margin-bottom: 0;
+    padding: 28px 24px;
+  }
+  .lb-others {
+    flex: 2.2;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .leader-hero  { font-size: 50px; letter-spacing: -2px; }
+  .leader-name  { font-size: 13px; letter-spacing: 1.5px; }
+  .leader-sub   { font-size: 11px; }
+  .lb-avg       { font-size: 26px; }
+  .rank-badge   { width: 44px; height: 44px; font-size: 18px; }
+
+  .heat-section { margin-bottom: 44px; }
+  .heat-card    { padding: 24px 20px; }
+  .heat-layout  { gap: 10px; }
+  .heat-names   { gap: 8px; padding-top: 3px; }
+  .heat-name    { height: 54px; font-size: 10px; letter-spacing: 0.8px; }
+  .heat-row     { gap: 6px; }
+  .heat-cell {
+    width: 52px;
+    min-width: 52px;
+    height: 54px;
+    border-radius: 10px;
+  }
+  .heat-val { font-size: 9px; }
+  .heat-day { font-size: 10.5px; }
+  .heat-legend {
+    margin-top: 20px;
+    padding-top: 14px;
+    gap: 20px;
+  }
+  .legend-item { font-size: 10px; }
+  .legend-dot  { width: 12px; height: 12px; }
+
+  .calendar-link    { margin-bottom: 44px; }
+  .cal-link-inner   { padding: 28px 36px; }
+  .cal-link-title   { font-size: 19px; }
+  .cal-link-sub     { font-size: 13px; }
+  .cal-link-icon    { font-size: 30px; }
+  .cal-link-chevron { font-size: 32px; }
+
+  .footer { font-size: 12px; margin-top: 36px; }
+}
 </style>
 </head>
 <body>
@@ -750,7 +876,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>8:55 AM BEY</div>
+    <div class="header-gentime">Updated<br>8:57 AM BEY</div>
   </div>
 </header>
 
@@ -837,7 +963,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-green">8h&nbsp;48m</div>
+  <div class="hero-number val-green">8h&nbsp;50m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">

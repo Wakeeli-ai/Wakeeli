@@ -872,7 +872,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:11 AM BEY</div>
+    <div class="header-gentime">Updated<br>9:12 AM BEY</div>
   </div>
 </header>
 
@@ -959,7 +959,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-amber">9h&nbsp;03m</div>
+  <div class="hero-number val-amber">9h&nbsp;04m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1210,11 +1210,10 @@ body {
       ctx.restore();
     }
 
-    /* Draw ECG line segment from x1 to x2 -- sharp trace, whisper of glow */
-    function drawLine(x1, x2) {
-      if (x2 <= x1) return;
-      var steps = Math.max(4, Math.ceil((x2 - x1) * 6));
-      /* Sharp colored line -- no blur, no glow, pure crisp */
+    /* Redraw the full visible trail as one continuous smooth path */
+    function redrawTrail(endX, sweepStart) {
+      var startX = sweepStart;
+      if (endX <= startX) return;
       ctx.save();
       ctx.shadowBlur  = 0;
       ctx.globalAlpha = 1.0;
@@ -1223,20 +1222,23 @@ body {
       ctx.lineJoin    = 'round';
       ctx.lineCap     = 'round';
       ctx.beginPath();
-      for (var i = 0; i <= steps; i++) {
-        var px = x1 + (x2 - x1) * i / steps;
+      var first = true;
+      for (var px = startX; px <= endX; px += 0.5) {
         var py = yAt(px, baseline, amp);
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        if (first) { ctx.moveTo(px, py); first = false; }
+        else ctx.lineTo(px, py);
       }
+      /* Make sure we end exactly at endX */
+      var lastPy = yAt(endX, baseline, amp);
+      ctx.lineTo(endX, lastPy);
       ctx.stroke();
       ctx.restore();
     }
 
-    /* Draw the cursor dot at current position -- tight and sharp */
+    /* Draw the cursor dot */
     function drawDot(x) {
       var py = yAt(x, baseline, amp);
       ctx.save();
-      /* Sharp dot, no halo */
       ctx.shadowBlur  = 0;
       ctx.globalAlpha = 1.0;
       ctx.fillStyle   = color;
@@ -1248,28 +1250,29 @@ body {
 
     /* Initial canvas fill */
     fillZone(0, W);
+    var sweepStart = 0;
 
     function frame(ts) {
       if (!lastTs) lastTs = ts;
       var dt   = Math.min((ts - lastTs) / 1000, 0.05);
       lastTs   = ts;
-      var prev = curX;
       var newX = curX + SPEED * dt;
 
       if (newX >= W) {
-        /* Finish sweep to end of canvas */
-        drawLine(prev, W);
         var carry = newX - W;
-        /* Start new sweep from left: erase and draw fresh zone */
-        fillZone(0, carry + ERASE_W);
-        if (carry > 0) drawLine(0, carry);
+        sweepStart = 0;
         curX = carry;
+        /* Clear entire canvas and redraw from sweep start */
+        fillZone(0, W);
+        if (curX > 0) redrawTrail(curX, 0);
       } else {
-        /* Normal advance: erase zone just ahead, then draw segment */
+        /* Erase ahead */
         var ez = Math.min(ERASE_W, W - newX);
         if (ez > 0) fillZone(newX, ez);
-        drawLine(prev, newX);
         curX = newX;
+        /* Redraw entire trail from sweep start to cursor */
+        fillZone(sweepStart, curX - sweepStart);
+        redrawTrail(curX, sweepStart);
       }
 
       drawDot(curX);

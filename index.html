@@ -858,15 +858,20 @@ body {
 
   .footer { font-size: 12px; margin-top: 36px; }
 
-  .desktop-quote { display: block; }
 }
 
-/* Desktop quote: hidden on mobile, centered on desktop */
+/* Desktop quote: hidden on mobile, shown on desktop */
 .desktop-quote {
   display: none;
   text-align: center;
   padding: 48px 24px;
   margin: 16px 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  color: rgba(255,255,255,0.45);
+  font-style: italic;
+  letter-spacing: 0.3px;
+  line-height: 1.6;
 }
 
 .desktop-quote .quote-mark {
@@ -878,19 +883,6 @@ body {
   font-weight: 700;
 }
 
-.desktop-quote span:not(.quote-mark) {
-  font-family: Georgia, 'Times New Roman', serif;
-}
-
-.desktop-quote {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 20px;
-  color: rgba(255,255,255,0.45);
-  font-style: italic;
-  letter-spacing: 0.3px;
-  line-height: 1.6;
-}
-
 .quote-author {
   margin-top: 14px;
   font-size: 13px;
@@ -899,6 +891,10 @@ body {
   color: rgba(255,255,255,0.25);
   letter-spacing: 1.5px;
   text-transform: uppercase;
+}
+
+@media (min-width: 1024px) {
+  .desktop-quote { display: block; }
 }
 </style>
 </head>
@@ -914,7 +910,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:32 AM BEY</div>
+    <div class="header-gentime">Updated<br>9:34 AM BEY</div>
   </div>
 </header>
 

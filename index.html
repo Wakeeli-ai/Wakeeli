@@ -876,7 +876,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>8:57 AM BEY</div>
+    <div class="header-gentime">Updated<br>8:59 AM BEY</div>
   </div>
 </header>
 
@@ -963,7 +963,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-green">8h&nbsp;50m</div>
+  <div class="hero-number val-green">8h&nbsp;52m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1220,8 +1220,8 @@ body {
       var steps = Math.max(2, Math.ceil((x2 - x1) * 3));
       ctx.save();
       ctx.shadowColor = color;
-      ctx.shadowBlur  = 4;
-      ctx.strokeStyle = 'rgba(255,255,255,0.82)';
+      ctx.shadowBlur  = 1.5;
+      ctx.strokeStyle = color;
       ctx.lineWidth   = 1.5;
       ctx.lineJoin    = 'round';
       ctx.lineCap     = 'round';
@@ -1241,10 +1241,10 @@ body {
       ctx.save();
       /* Outer glow */
       ctx.shadowColor = color;
-      ctx.shadowBlur  = 10;
+      ctx.shadowBlur  = 4;
       ctx.fillStyle   = color;
       ctx.beginPath();
-      ctx.arc(x, py, 2.5, 0, Math.PI * 2);
+      ctx.arc(x, py, 2.0, 0, Math.PI * 2);
       ctx.fill();
       /* Bright white core */
       ctx.shadowBlur  = 0;

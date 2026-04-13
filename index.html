@@ -872,7 +872,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:04 AM BEY</div>
+    <div class="header-gentime">Updated<br>9:07 AM BEY</div>
   </div>
 </header>
 
@@ -959,7 +959,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-green">8h&nbsp;57m</div>
+  <div class="hero-number val-green">8h&nbsp;59m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1219,7 +1219,7 @@ body {
       ctx.shadowBlur  = 0;
       ctx.globalAlpha = 1.0;
       ctx.strokeStyle = color;
-      ctx.lineWidth   = 1.2;
+      ctx.lineWidth   = 1.5;
       ctx.lineJoin    = 'round';
       ctx.lineCap     = 'round';
       ctx.beginPath();
@@ -1239,9 +1239,9 @@ body {
       /* Sharp dot, no halo */
       ctx.shadowBlur  = 0;
       ctx.globalAlpha = 1.0;
-      ctx.fillStyle   = 'rgba(255,255,255,1.0)';
+      ctx.fillStyle   = color;
       ctx.beginPath();
-      ctx.arc(x, py, 1.5, 0, Math.PI * 2);
+      ctx.arc(x, py, 2.0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }

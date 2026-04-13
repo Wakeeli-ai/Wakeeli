@@ -771,7 +771,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-green">8h&nbsp;34m</div>
+  <div class="hero-number val-green">8h&nbsp;35m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -914,6 +914,127 @@ body {
 </div>
 
 <div class="footer">Beirut time &middot; Real data only</div>
+
+<script>
+(function() {
+  var active = null;
+
+  function colorClass(ind) {
+    if (ind === 'green') return 'clr-green';
+    if (ind === 'amber' || ind === 'orange') return 'clr-amber';
+    if (ind === 'red') return 'clr-red';
+    return '';
+  }
+
+  function buildPopup(cell) {
+    var el = document.createElement('div');
+    el.className = 'cell-popup';
+
+    var type = cell.dataset.popupType;
+    var person = cell.dataset.person || '';
+    var color = cell.dataset.color || '#fff';
+    var date = cell.dataset.date || '';
+    var ind = cell.dataset.indicator || 'empty';
+    var html = '';
+
+    if (type === 'm1') {
+      var sleep = cell.dataset.sleep || '--';
+      var wake = cell.dataset.wake || '--';
+      var hours = cell.dataset.hours || '--';
+      html =
+        '<div class="popup-person" style="color:' + color + '">' + person + '</div>' +
+        '<div class="popup-date-row">' + date + '</div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Slept</span><span class="popup-v">' + sleep + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Woke</span><span class="popup-v">' + wake + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Total</span><span class="popup-v ' + colorClass(ind) + '">' + hours + '</span></div>';
+    } else {
+      var bedtime = cell.dataset.bedtime || '--';
+      var prev = cell.dataset.prevBedtime || '--';
+      var delta = cell.dataset.delta || '--';
+      html =
+        '<div class="popup-person" style="color:' + color + '">' + person + '</div>' +
+        '<div class="popup-date-row">' + date + '</div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Bedtime</span><span class="popup-v">' + bedtime + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Prev night</span><span class="popup-v">' + prev + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Delta</span><span class="popup-v ' + colorClass(ind) + '">' + delta + '</span></div>';
+    }
+
+    el.innerHTML = html;
+    document.body.appendChild(el);
+
+    var rect = cell.getBoundingClientRect();
+    var pw = 164;
+    var ph = 132;
+    var vpw = window.innerWidth;
+    var vph = window.innerHeight;
+
+    var top = rect.bottom + 7;
+    if (top + ph > vph - 8) { top = rect.top - ph - 7; }
+    if (top < 8) { top = 8; }
+
+    var left = rect.left + rect.width / 2 - pw / 2;
+    if (left < 8) { left = 8; }
+    if (left + pw > vpw - 8) { left = vpw - pw - 8; }
+
+    el.style.top = top + 'px';
+    el.style.left = left + 'px';
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        el.classList.add('popup-visible');
+      });
+    });
+
+    return el;
+  }
+
+  function dismiss() {
+    if (active) {
+      var el = active.el;
+      active = null;
+      el.classList.remove('popup-visible');
+      setTimeout(function() {
+        if (el.parentNode) { el.parentNode.removeChild(el); }
+      }, 200);
+    }
+  }
+
+  function findCell(target) {
+    var t = target;
+    while (t && t !== document.body) {
+      if (t.dataset && t.dataset.popupType) { return t; }
+      t = t.parentNode;
+    }
+    return null;
+  }
+
+  function inPopup(target) {
+    var t = target;
+    while (t && t !== document.body) {
+      if (t.classList && t.classList.contains('cell-popup')) { return true; }
+      t = t.parentNode;
+    }
+    return false;
+  }
+
+  document.addEventListener('click', function(e) {
+    var cell = findCell(e.target);
+    if (cell) {
+      if (active && active.cell === cell) {
+        dismiss();
+        return;
+      }
+      dismiss();
+      var el = buildPopup(cell);
+      active = { el: el, cell: cell };
+    } else if (!inPopup(e.target)) {
+      dismiss();
+    }
+  });
+})();
+</script>
 
 </body>
 </html>

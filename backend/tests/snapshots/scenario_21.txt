@@ -11,17 +11,17 @@ USER: yes Beirut
 BOT: And your name?
 
 USER: ok 1500
-BOT: On it!
+BOT: On it, let me find you some options in Beirut!
 
 USER: 2
-BOT: On it, let me find you some 2-bedroom apartments for rent in Beirut under $1,500/month.
+BOT: On it, let me pull up some options for you!
 
 USER: no preference
-BOT: On it, let me find you some 2-bedroom apartments for rent in Beirut under $1,500/month.
+BOT: On it, let me find some options for you!
 
 ---
 CHECKS:
-  [FAIL] No crashes/errors: Some responses had errors
+  [PASS] No crashes/errors: All responses returned successfully
   [PASS] All replies have content: All responses non-empty
 
-OVERALL: FAIL
+OVERALL: PASS

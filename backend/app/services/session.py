@@ -155,9 +155,16 @@ class SessionState:
 
 
     def update_agent_state(self, new_data):
-        incoming = new_data.get("classification")
-        if incoming:
-            self.classification = incoming
+        new_class = new_data.get("classification")
+        if new_class:
+            # Never downgrade classification. A hot A1 lead must not be overwritten
+            # by an ambiguous B or A2 signal on a single unclear message.
+            # Use -1 as the default for an unset classification so any first
+            # classification always passes through.
+            current_priority = CLASSIFICATION_PRIORITY.get(self.classification, -1)
+            new_priority = CLASSIFICATION_PRIORITY.get(new_class, -1)
+            if new_priority >= current_priority:
+                self.classification = new_class
 
         # bare_greeting resets on every message based on current intent
         self.bare_greeting = bool(new_data.get("bare_greeting", False))

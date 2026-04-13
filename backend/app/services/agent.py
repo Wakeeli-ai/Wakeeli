@@ -1119,12 +1119,41 @@ Greet the user naturally and ask how you can help them find a property in Lebano
 
     check_token_budget(len(static_prompt.split()) * 2, "claude-sonnet-4-6")
 
+    # Load last 6 conversation turns so the bot remembers what it already said
+    # and asked. Capped at 6 turns (12 messages: 6 user + 6 assistant) to keep
+    # context useful without bloating the token count.
+    _hist_raw = (
+        db.query(Message)
+        .filter(Message.conversation_id == conversation_id)
+        .order_by(Message.timestamp.desc())
+        .limit(13)
+        .all()
+    )
+    _hist_raw = list(reversed(_hist_raw))
+
+    # The current user message was already saved to the DB before this function
+    # runs. Strip it from the tail so it is not duplicated in the messages array.
+    if _hist_raw and _hist_raw[-1].role == "user":
+        _hist_raw = _hist_raw[:-1]
+
+    # Keep at most 12 messages (6 full turns).
+    _hist_raw = _hist_raw[-12:]
+
+    # Build the alternating user/assistant list for the API.
+    # Drop any leading assistant message: the API requires the first message
+    # to have role "user".
+    _history_turns = [{"role": m.role, "content": m.content} for m in _hist_raw]
+    while _history_turns and _history_turns[0]["role"] != "user":
+        _history_turns.pop(0)
+
+    _messages_for_llm = _history_turns + [{"role": "user", "content": user_message}]
+
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1024,
             system=system_blocks,
-            messages=[{"role": "user", "content": user_message}],
+            messages=_messages_for_llm,
             extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
         )
         log_usage("claude-sonnet-4-6", response.usage, call_label="generate_reply", conversation_id=conversation_id)
@@ -1387,8 +1416,8 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
                 and not should_route):
             action = "process_property_request"
 
-        # Generate reply with active enforcement gate (max 2 regeneration attempts)
-        _MAX_RETRIES = 2
+        # Generate reply with active enforcement gate (max 1 retry = 2 generations)
+        _MAX_RETRIES = 1
         _best_reply_parts: list[str] = []
         _best_violation_count = float("inf")
         _last_enforcement: dict = {}
@@ -1432,6 +1461,44 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
 
         reply_parts = _best_reply_parts or []
 
+        # validate_response retry: 1 additional generation if blocking rules fire
+        # Total generation budget: 2 (enforce_rules) + 1 (validate) = 3
+        _validate_retry_used = False
+        _pre_inject_text = " ".join(reply_parts)
+        _validation = validate_response(
+            session_state=session.getter(),
+            bot_response=_pre_inject_text,
+            user_message=user_message,
+            classification=session.classification or "",
+            history=history,
+            prev_property_info=getattr(session, "_prev_property_info", None),
+            db=db,
+        )
+        if _validation["should_retry"] and not _validate_retry_used:
+            _validate_retry_used = True
+            _v_rules = ", ".join(v["rule"] for v in _validation["violations"])
+            _v_details = "; ".join(v["detail"] for v in _validation["violations"])
+            _validate_retry_ctx = (
+                f"VALIDATION RETRY: Your previous response violated framework rules: "
+                f"{_v_rules}. Details: {_v_details}. Regenerate without these violations."
+            )
+            _val_retry_parts = generate_reply(
+                action, user_message, db, conversation, conversation_id, session,
+                retry_context=_validate_retry_ctx,
+            )
+            if _val_retry_parts:
+                reply_parts = _val_retry_parts
+                _pre_inject_text = " ".join(reply_parts)
+                _validation = validate_response(
+                    session_state=session.getter(),
+                    bot_response=_pre_inject_text,
+                    user_message=user_message,
+                    classification=session.classification or "",
+                    history=history,
+                    prev_property_info=getattr(session, "_prev_property_info", None),
+                    db=db,
+                )
+
         # FIX 1: HARDCODED NAME INJECTION
         # If name is unknown and qualifying questions went out, but the LLM dropped
         # the name question, inject it here in code. Never rely on the LLM for this.
@@ -1468,19 +1535,11 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             reply_parts.append("Furnished or unfurnished?")
             session.furnished_ask_count = 1
 
-        # Run observation-only rule validator on the final reply
+        # Log all validate_response results (blocking violations and observations)
         try:
             _validation_text = " ".join(reply_parts)
-            _violations = validate_response(
-                session_state=session.getter(),
-                bot_response=_validation_text,
-                user_message=user_message,
-                classification=session.classification or "",
-                history=history,
-                prev_property_info=getattr(session, "_prev_property_info", None),
-                db=db,
-            )
-            log_violations(_violations, conversation_id, user_message, _validation_text)
+            _all_validate_violations = _validation["violations"] + _validation["observations"]
+            log_violations(_all_validate_violations, conversation_id, user_message, _validation_text)
         except Exception as _val_err:
             print(f"[validator] unexpected error during validation: {_val_err}")
 

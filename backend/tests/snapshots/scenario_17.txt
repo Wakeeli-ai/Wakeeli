@@ -1,15 +1,15 @@
-SCENARIO 17: Lead changes mind: rent -> buy
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 17: Lead changes mind ===
+Session ID: snap_s17_1775833043426839316
 Mode: auto
+Timestamp: Fri Apr 10 14:57:23 UTC 2026
 
-[17:36:23] Lead: I want to rent 2 bedrooms in Hamra for 1200 dollars
-[17:36:23] Agent: Hello, thanks for reaching out! Sure, to help you find the best options, furnished or unfurnished? What's your full name btw?
+--- USER: hi ---
+RESPONSE: {"messages":["Hello! How can I help you?"],"session_id":"snap_s17_1775833043426839316"}
 
-[17:36:29] Lead: actually I changed my mind, I want to buy instead
-[17:36:29] Agent: Sure! Here are some 2-bedroom options for sale in Hamra under $1,200:
+--- USER: rent ---
+RESPONSE: {"messages":["Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms?","What's your full name btw?"],"session_id":"snap_s17_1775833043426839316"}
 
+--- USER: actually I want to buy ---
+RESPONSE: {"messages":["Sure, to help you find the best options, what's your budget range, how many bedrooms, and where in Lebanon are you looking?","And your name?"],"session_id":"snap_s17_1775833043426839316"}
 
-What's your name btw?
-
-RESULT: PASS
-NOTES: All checks passed
+=== END SCENARIO 17 ===

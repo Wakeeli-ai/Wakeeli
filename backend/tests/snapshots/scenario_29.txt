@@ -2,20 +2,20 @@ SCENARIO 29: Phone number instead of name
 ========================================
 
 USER: hi
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Hello! How can I help you?
 
 USER: rent
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
 
 USER: Beirut, 1500, 2 bedrooms
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: And your name?
 
 USER: 03123456
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: And your name?
 
 ---
 CHECKS:
   [PASS] Does not say 'looks like a phone number': Bot did not call out the phone number
-  [FAIL] Re-asks for name: Bot did not ask for name
+  [PASS] Re-asks for name: Bot asked for name again
 
-OVERALL: FAIL
+OVERALL: PASS

@@ -2,20 +2,20 @@ SCENARIO 23: Lead returns mid-conversation
 ========================================
 
 USER: hi
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Hello! How can I help you?
 
 USER: rent
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
 
 USER: Achrafieh
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: And your name?
 
 USER: hey im back, 2 bedrooms 1000 a month
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: On it, let me check what's available in Achrafieh for you.
 
 ---
 CHECKS:
   [PASS] Never says 'welcome back': Did not say welcome back
-  [FAIL] Continues flow after return: Bot failed to continue flow
+  [PASS] Continues flow after return: Bot continued conversation after return message
 
-OVERALL: FAIL
+OVERALL: PASS

@@ -2,13 +2,34 @@ SCENARIO 27: Nothing found no 'nothing found' language
 ========================================
 
 USER: hi
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Hello! How can I help you?
 
 USER: buy in Tripoli, 50000, 5 bedrooms
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: And your name?
 
 USER: Ali
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: I don't have an exact match, but here are some close options.
+
+
+Option 2 is probably the closest to what you had in mind ||| 1. Furnished Duplex with Terrace - Ghosta
+   Ghosta, 2 bed, 2 bath, Fully Furnished, $175,000
+   180 sqm modern duplex with full automation system, oak doors, chimney and luxury wood-steel staircas...
+
+2. Bright 3BR Apartment - Ghosta
+   Ghosta, 3 bed, 2 bath, Unfurnished, $200,000
+   190 sqm well-lit apartment with quality tiles, built-in wardrobes and spacious salon. Calm residenti...
+
+3. Charming 2BR Garden Apartment - Ghosta
+   Ghosta, 2 bed, 2 bath, Unfurnished, $155,000
+   160 sqm apartment with a private 40 sqm garden. Tiled floors, sunny layout and well-proportioned bed...
+
+4. Elegant 3BR - Broumana
+   Broumana, 3 bed, 4 bath, Unfurnished, $460,000
+   280 sqm spacious apartment with big salon, dining room, TV room, walk-in closet and chimney. Quality...
+
+5. Contemporary 3BR Sea View - Dbayeh Waterfront
+   Dbayeh Waterfront, 3 bed, 4 bath, Unfurnished, $980,000
+   310 sqm elegant apartment with sea-facing balconies, high-end kitchen, marble floors and premium fix... ||| What do you think?
 
 ---
 CHECKS:

@@ -1,10 +1,29 @@
-SCENARIO 14: Zero exact matches -> alternatives not immediate handoff
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 14: Zero exact matches ===
 Mode: auto
+Session: snap_test_14
 
-[17:35:54] Lead: rent 5 bedroom apartment in Achrafieh for 200 dollars per month
-[17:35:54] Agent: And your name?
+[Turn 1]
+User: hi
+Bot: Hello! How can I help you?
 
-RESULT: FAIL
-NOTES:
-  - Turn 1: no alternatives offered when no exact match found
+[Turn 2]
+User: buy in Byblos, 100000, 5 bedrooms
+Bot: And your name?
+
+[Turn 3]
+User: Maya
+Bot: I don't have an exact match, but here are some close options.
+
+Option 2 is probably the closest to what you had in mind
+
+1. Historic Town 3BR - Byblos
+   Byblos (Jbeil), 3 bed, 3 bath, Unfurnished, $410,000
+   220 sqm premium apartment with sea views in one of the world's oldest cities. High-end finishes, mod...
+
+2. 2BR Apartment - Byblos
+   Byblos (Jbeil), 2 bed, 2 bath, Unfurnished, $290,000
+   175 sqm well-proportioned apartment with character. Stone building, high ceilings and bright rooms w...
+
+What do you think?
+
+CHECK RESULT: FAIL - The check requires that with zero exact matches (5-bed in Byblos at $100,000 which does not exist), the bot should connect to a human agent without saying "nothing found." Instead the bot said "I don't have an exact match" (reveals no match exists) and showed alternative listings rather than routing to a human agent. The bot did not say "nothing found" verbatim but violated the rule of silently connecting to a human when no inventory matches.

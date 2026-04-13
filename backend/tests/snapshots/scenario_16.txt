@@ -1,12 +1,24 @@
-SCENARIO 16: Auto mode: interest triggers tour booking not handoff
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 16: Auto mode books tour ===
+Session ID: snap_s16_1775832977453932460
 Mode: auto
+Timestamp: Fri Apr 10 14:56:17 UTC 2026
 
-[17:36:13] Lead: rent 2 bedroom Achrafieh 1000
-[17:36:13] Agent: And your name?
+--- USER: hi ---
+RESPONSE: {"messages":["Hello! How can I help you?"],"session_id":"snap_s16_1775832977453932460"}
 
-[17:36:18] Lead: I love the second option, I want to visit
-[17:36:18] Agent: What day works for you this week?
+--- USER: rent ---
+RESPONSE: {"messages":["Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms?","What's your full name btw?"],"session_id":"snap_s16_1775832977453932460"}
 
-RESULT: PASS
-NOTES: All checks passed
+--- USER: Beirut, 1000, 2 bedrooms ---
+RESPONSE: {"messages":["And your name?"],"session_id":"snap_s16_1775832977453932460"}
+
+--- USER: Sami ---
+RESPONSE: {"messages":["I don't have an exact match, but here are some close options.\n\nOption 2 is probably the closest to what you had in mind","1. Test\n   Achrafiejh, 1 bed, 4 bath, Unfurnished, $35,000/month\n\n2. Luxury Furnished 3BR - Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n3. Grand 4BR Penthouse - Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n4. Modern 2BR - Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...","What do you think?"],"session_id":"snap_s16_1775832977453932460"}
+
+--- USER: the first one looks good ---
+RESPONSE: {"messages":["Which one caught your eye, Sami? Want me to book a visit?","1. Luxury Furnished 3BR - Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n2. Grand 4BR Penthouse - Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n3. Modern 2BR - Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode..."],"session_id":"snap_s16_1775832977453932460"}
+
+--- USER: tomorrow at 3pm ---
+RESPONSE: {"messages":["Let me connect you with one of our agents to arrange that for you.","1. Test\n   Achrafiejh, 1 bed, 4 bath, Unfurnished, $35,000/month\n\n2. Luxury Furnished 3BR - Achrafieh\n   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month\n   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...\n\n3. Grand 4BR Penthouse - Achrafieh\n   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month\n   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...\n\n4. Modern 2BR - Achrafieh\n   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month\n   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode..."],"session_id":"snap_s16_1775832977453932460"}
+
+=== END SCENARIO 16 ===

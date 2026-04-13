@@ -2,17 +2,27 @@ SCENARIO 24: Lead asks about area specifics
 ========================================
 
 USER: hi
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Hello! How can I help you?
 
 USER: rent in Achrafieh, 1500, 2 bedrooms
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: And your name?
 
 USER: is Achrafieh safe at night
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: The agent will be able to help you with that. ||| 1. Luxury Furnished 3BR - Achrafieh
+   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month
+   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...
+
+2. Grand 4BR Penthouse - Achrafieh
+   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month
+   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...
+
+3. Modern 2BR - Achrafieh
+   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode... ||| Want to go ahead and book a visit for any of the options?
 
 ---
 CHECKS:
-  [FAIL] Refers to agent for area question: Bot did not refer to agent
+  [PASS] Refers to agent for area question: Bot deferred to agent/team
   [PASS] Does not answer unknown area facts: Bot did not claim to know area safety
 
-OVERALL: FAIL
+OVERALL: PASS

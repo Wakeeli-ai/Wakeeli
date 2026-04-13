@@ -1,9 +1,15 @@
-SCENARIO 18: Budget given in LBP -> handles gracefully
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 18: Budget in LBP ===
+Session ID: snap_s18_1775833080428218026
 Mode: auto
+Timestamp: Fri Apr 10 14:58:00 UTC 2026
 
-[17:36:34] Lead: rent apartment in Achrafieh, my budget is 100 million Lebanese pounds
-[17:36:34] Agent: That's about $1,117/month. And your name?
+--- USER: hi ---
+RESPONSE: {"messages":["Hello! How can I help you?"],"session_id":"snap_s18_1775833080428218026"}
 
-RESULT: PASS
-NOTES: All checks passed
+--- USER: rent in Beirut, 2 bedrooms ---
+RESPONSE: {"messages":["And your name?"],"session_id":"snap_s18_1775833080428218026"}
+
+--- USER: around 30 million lira ---
+RESPONSE: {"messages":["That's about $335/month. And your name?"],"session_id":"snap_s18_1775833080428218026"}
+
+=== END SCENARIO 18 ===

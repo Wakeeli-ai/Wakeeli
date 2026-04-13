@@ -1,10 +1,36 @@
-SCENARIO 12: Lead says 'Beirut' -> search Beirut + neighborhoods
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 12: Beirut expands to neighborhoods ===
 Mode: auto
+Session: snap_test_12
 
-[17:35:45] Lead: I want to rent 2 bedrooms in Beirut for 1000 dollars
-[17:35:45] Agent: Hello, thanks for reaching out! Sure, to help you find the best options, do you have a specific area in Beirut in mind? Like Hamra, Achrafieh, or Verdun? What's your full name btw?
+[Turn 1]
+User: hi
+Bot: Hello! How can I help you?
 
-RESULT: FAIL
-NOTES:
-  - Turn 1: 3 question marks (max 2)
+[Turn 2]
+User: rent in Beirut, 1500, 2 bedrooms
+Bot: And your name?
+
+[Turn 3]
+User: Sarah
+Bot: I don't have an exact match, but here are some close options.
+
+Option 2 is probably the closest to what you had in mind
+
+1. Test
+   Achrafiejh, 1 bed, 4 bath, Unfurnished, $35,000/month
+
+2. Luxury Furnished 3BR - Achrafieh
+   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month
+   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...
+
+3. Grand 4BR Penthouse - Achrafieh
+   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month
+   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...
+
+4. Modern 2BR - Achrafieh
+   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...
+
+What do you think?
+
+CHECK RESULT: PARTIAL PASS - Listings are shown after name collection. The results do include Beirut neighborhoods (Achrafieh is a Beirut district), confirming geographic expansion. However, all returned listings are from Achrafieh only rather than a spread across multiple Beirut neighborhoods (Hamra, Verdun, etc.). The check passes on the core criterion that Beirut expanded to named neighborhoods rather than returning no results, but diversity of neighborhoods is limited.

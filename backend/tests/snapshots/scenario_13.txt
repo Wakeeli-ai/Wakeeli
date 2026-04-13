@@ -1,9 +1,33 @@
-SCENARIO 13: Specific neighborhood 'Achrafieh' -> direct listing match
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 13: Specific neighborhood ===
 Mode: auto
+Session: snap_test_13
 
-[17:35:50] Lead: rent 2 bedroom in Achrafieh for 1000 dollars
-[17:35:50] Agent: Hello, thanks for reaching out! Sure, to help you find the best options, furnished or unfurnished? And your full name btw?
+[Turn 1]
+User: hi
+Bot: Hello! How can I help you?
 
-RESULT: PASS
-NOTES: All checks passed
+[Turn 2]
+User: rent in Achrafieh, 1200, 1 bedroom
+Bot: And your name?
+
+[Turn 3]
+User: Tony
+Bot: I don't have an exact match, but here are some close options.
+
+Option 2 is probably the closest to what you had in mind
+
+1. Luxury Furnished 3BR - Achrafieh
+   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month
+   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...
+
+2. Grand 4BR Penthouse - Achrafieh
+   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month
+   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...
+
+3. Modern 2BR - Achrafieh
+   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...
+
+What do you think?
+
+CHECK RESULT: PASS - All returned listings are specifically in Achrafieh. The system correctly searched within the requested neighborhood. No results from other areas were mixed in. The bot also correctly noted no exact match (no 1BR at $1,200) while still showing Achrafieh-only alternatives.

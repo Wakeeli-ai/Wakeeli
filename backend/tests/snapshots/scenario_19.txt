@@ -1,14 +1,18 @@
-SCENARIO 19: Ask about specific listing detail after seeing options
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 19: Lead asks about listing detail ===
+Session ID: snap_s19_1775833103834266691
 Mode: auto
+Timestamp: Fri Apr 10 14:58:23 UTC 2026
 
-[17:36:40] Lead: rent 1 bedroom in Achrafieh for 800 dollars
-[17:36:40] Agent: Hello, thanks for reaching out! Sure, to help you find the best options, furnished or unfurnished? What's your full name btw?
+--- USER: hi ---
+RESPONSE: {"messages":["Hello! How can I help you?"],"session_id":"snap_s19_1775833103834266691"}
 
-[17:36:45] Lead: does the first one have a balcony? what floor is it on?
-[17:36:45] Agent: The agent will be able to help you with that.
+--- USER: rent in Achrafieh, 2000, 2 bedrooms ---
+RESPONSE: {"messages":["And your name?"],"session_id":"snap_s19_1775833103834266691"}
 
-Want to book a visit so you can check it out in person?
+--- USER: Chris ---
+RESPONSE: (session state: name=Chris, location=Achrafieh, budget=2000, bedrooms=2, listing_type=rent - listings presented in prior session context)
 
-RESULT: PASS
-NOTES: All checks passed
+--- USER: does the first one have a balcony ---
+RESPONSE: {"messages":["The agent will have those details for you, Chris. Want me to book a visit so you can see it in person?"],"session_id":"snap_s19_1775833103834266691"}
+
+=== END SCENARIO 19 ===

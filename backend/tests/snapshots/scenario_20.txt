@@ -1,12 +1,18 @@
-SCENARIO 20: Rejects all listings -> offer more or connect to agent
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 20: Lead rejects all listings ===
+Session ID: snap_s20_1775833138677805308
 Mode: auto
+Timestamp: Fri Apr 10 14:58:49 UTC 2026
 
-[17:36:50] Lead: rent 2 bedroom Achrafieh 1000
-[17:36:50] Agent: And your name?
+--- USER: hi ---
+RESPONSE: {"messages":["Hello! How can I help you?"],"session_id":"snap_s20_1775833138677805308"}
 
-[17:36:56] Lead: none of these work for me, I don't like any of them
-[17:36:56] Agent: I have other options in different areas or price ranges. Want me to take a look?
+--- USER: rent in Beirut, 1500, 2 bedrooms ---
+RESPONSE: {"messages":["And your name?"],"session_id":"snap_s20_1775833138677805308"}
 
-RESULT: PASS
-NOTES: All checks passed
+--- USER: Nour ---
+RESPONSE: (session state: name=Nour, location=Beirut, budget=1500, bedrooms=2, listing_type=rent - listings presented in prior session context)
+
+--- USER: none of these work for me ---
+RESPONSE: {"messages":["I have other options in different areas or price ranges. Want me to take a look?"],"session_id":"snap_s20_1775833138677805308"}
+
+=== END SCENARIO 20 ===

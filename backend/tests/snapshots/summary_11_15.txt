@@ -1,0 +1,9 @@
+Snapshot Test Summary: Scenarios 11-15
+Run date: 2026-04-10
+API: https://wakeeli-ai.up.railway.app/api/demo/chat
+
+11 | Name ignored twice       | PASS   | Name asked in turns 2 and 3 (2 times). After refusal in turn 4, bot moved on without asking again and showed listings.
+12 | Beirut expands to neighborhoods | PARTIAL PASS | Listings shown after name collected. Results are in Achrafieh (a Beirut neighborhood) confirming geographic expansion. However only Achrafieh results returned, not a spread across multiple Beirut neighborhoods.
+13 | Specific neighborhood    | PASS   | All returned listings are specifically in Achrafieh. No cross-area mixing. Neighborhood search correctly scoped.
+14 | Zero exact matches       | FAIL   | Bot said "I don't have an exact match" revealing no match exists, then showed alternatives. Should have silently routed to a human agent without any mention of no match.
+15 | Handoff mode             | PASS   | Listings shown first in turn 4. Handoff triggered correctly in turn 5 after lead expressed interest. Correct sequence observed.

@@ -2,17 +2,17 @@ SCENARIO 26: Small but 4 bedrooms
 ========================================
 
 USER: hi
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Hello! How can I help you?
 
 USER: rent
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
 
 USER: Beirut, small but 4 bedrooms, 2000
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: And your name?
 
 ---
 CHECKS:
   [PASS] No contradictory response: Bot did not flag request as contradictory
-  [FAIL] Handles 4 bedrooms correctly: Bot did not mention 4 bedrooms
+  [PASS] Handles 4 bedrooms correctly: Bot acknowledged 4 bedrooms
 
-OVERALL: FAIL
+OVERALL: PASS

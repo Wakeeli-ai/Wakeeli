@@ -144,6 +144,73 @@ ENFORCEMENT_RULES: dict = {
         "soft": True,
         "patterns": [],
     },
+
+    # Rule 9: Never mention competing agencies
+    "NEVER_MENTION_OTHER_AGENCIES": {
+        "soft": False,
+        "patterns": [
+            r"other agenc",
+            r"competitor",
+            r"rival",
+            r"another agenc",
+            r"different agenc",
+        ],
+    },
+
+    # Rule 10: Never discuss price negotiation (human agent's job)
+    "NEVER_DISCUSS_PRICE_NEGOTIATION": {
+        "soft": False,
+        "patterns": [
+            r"negoti",
+            r"lower the price",
+            r"reduce the price",
+            r"discount",
+            r"flexible on price",
+            r"come down on",
+        ],
+    },
+
+    # Rule 11: Never confirm real-time property availability
+    "NEVER_CONFIRM_AVAILABILITY": {
+        "soft": False,
+        "patterns": [
+            r"still available",
+            r"is available",
+            r"available right now",
+            r"currently available",
+            r"confirmed available",
+        ],
+    },
+
+    # Rule 12: Never give legal advice
+    "NEVER_GIVE_LEGAL_ADVICE": {
+        "soft": False,
+        "patterns": [
+            r"legally",
+            r"contract clause",
+            r"your rights",
+            r"law requires",
+            r"legally binding",
+            r"consult a lawyer",
+        ],
+    },
+
+    # Rule 13: Never share phone numbers (handoff flow handles contact sharing)
+    "NEVER_SHARE_PHONE_NUMBERS": {
+        "soft": False,
+        "patterns": [
+            r"\+961",
+            r"\b01-",
+            r"\b03-",
+            r"\b70-",
+            r"\b71-",
+            r"\b76-",
+            r"\b78-",
+            r"\b79-",
+            r"\b81-",
+            r"\b\d{8}\b",
+        ],
+    },
 }
 
 
@@ -179,6 +246,12 @@ _TYPE_PRESENCE = re.compile(
 # ---------------------------------------------------------------------------
 # Existing compiled patterns (used by validate_response below)
 # ---------------------------------------------------------------------------
+
+_FORMAL_LANGUAGE_PATTERN = re.compile(
+    r"\b(henceforth|aforementioned|pursuant|herewith)\b|"
+    r"kindly be advised|please note that|I would like to inform you",
+    re.IGNORECASE,
+)
 
 _NAME_ASK_PATTERN = re.compile(
     r"(your name|what'?s your name|who am i speaking with|may i know your name|"
@@ -332,7 +405,7 @@ def validate_response(
     history: list,
     prev_property_info: Optional[dict] = None,
     db=None,
-) -> list[dict]:
+) -> dict:
     """
     Validate a bot response against conversation framework rules.
 
@@ -348,22 +421,40 @@ def validate_response(
 
     Returns
     -------
-    List of violation dicts. Empty list means all rules passed.
-    Each dict: {"rule": str, "detail": str, "severity": str}
+    dict with keys:
+        should_retry  : bool  - True when at least one blocking violation was found
+        violations    : list  - blocking violation dicts that trigger a retry
+        observations  : list  - non-blocking observation dicts (logged only)
+
+    Each violation/observation dict: {"rule": str, "detail": str, "severity": str}
+
+    Blocking rules (trigger retry): QUESTION_COUNT, NO_ASSUMPTIONS, LISTING_ACCURACY
+    Observe-only rules (logged only): BUY_RENT_ORDER, NAME_TIMING, OFF_TOPIC_HANDLING,
+                                      MAX_QUESTIONS, FLEXIBLE_BUDGET, SIMPLE_ENGLISH,
+                                      LISTING_INTRO
     """
-    violations = []
+    blocking_violations: list[dict] = []
+    observation_violations: list[dict] = []
     prop_info = session_state.get("property_info", {})
 
-    # Rule 1: QUESTION COUNT (raw question mark count)
+    def _record(rule: str, detail: str, severity: str, *, blocking: bool) -> None:
+        entry = {"rule": rule, "detail": detail, "severity": severity}
+        if blocking:
+            blocking_violations.append(entry)
+        else:
+            observation_violations.append(entry)
+
+    # Rule 1: QUESTION COUNT (blocking -- 3 or more question marks triggers retry)
     qmark_count = _count_question_marks(bot_response)
     if qmark_count > 2:
-        violations.append({
-            "rule": "QUESTION_COUNT",
-            "detail": f"Bot response contains {qmark_count} question marks, max is 2",
-            "severity": "high",
-        })
+        _record(
+            "QUESTION_COUNT",
+            f"Bot response contains {qmark_count} question marks, max is 2",
+            "high",
+            blocking=True,
+        )
 
-    # Rule 2: BUY/RENT ORDER
+    # Rule 2: BUY/RENT ORDER (observe-only)
     listing_type = prop_info.get("listing_type")
     if not listing_type:
         asked_other = (
@@ -372,64 +463,67 @@ def validate_response(
             or _BEDROOMS_ASK_PATTERN.search(bot_response)
         )
         if asked_other:
-            violations.append({
-                "rule": "BUY_RENT_ORDER",
-                "detail": "Bot asked about location/budget/bedrooms before buy/rent intent was established",
-                "severity": "medium",
-            })
+            _record(
+                "BUY_RENT_ORDER",
+                "Bot asked about location/budget/bedrooms before buy/rent intent was established",
+                "medium",
+                blocking=False,
+            )
 
-    # Rule 3: NAME TIMING
+    # Rule 3: NAME TIMING (observe-only)
     if _NAME_ASK_PATTERN.search(bot_response):
         field_count = _qualifying_field_count(session_state)
         if field_count < 2:
-            violations.append({
-                "rule": "NAME_TIMING",
-                "detail": (
+            _record(
+                "NAME_TIMING",
+                (
                     f"Name asked too early: only {field_count} qualifying "
                     f"field(s) collected (need at least 2)"
                 ),
-                "severity": "medium",
-            })
+                "medium",
+                blocking=False,
+            )
 
-    # Rule 4: NO ASSUMPTIONS
+    # Rule 4: NO ASSUMPTIONS (blocking -- listing_type inferred without explicit user signal)
     if prev_property_info is not None:
         prev_lt = prev_property_info.get("listing_type")
         curr_lt = prop_info.get("listing_type")
         if not prev_lt and curr_lt:
             if not _BUY_RENT_EXPLICIT.search(user_message):
-                violations.append({
-                    "rule": "NO_ASSUMPTIONS",
-                    "detail": (
+                _record(
+                    "NO_ASSUMPTIONS",
+                    (
                         f"listing_type set to '{curr_lt}' without an explicit "
                         f"buy/rent statement from the user"
                     ),
-                    "severity": "high",
-                })
+                    "high",
+                    blocking=True,
+                )
 
-    # Rule 5: OFF_TOPIC HANDLING
+    # Rule 5: OFF_TOPIC HANDLING (observe-only)
     if classification == "OFF_TOPIC":
         if not _REAL_ESTATE_REDIRECT.search(bot_response):
-            violations.append({
-                "rule": "OFF_TOPIC_HANDLING",
-                "detail": (
+            _record(
+                "OFF_TOPIC_HANDLING",
+                (
                     "Bot responded to an off-topic message without redirecting "
                     "back to real estate"
                 ),
-                "severity": "medium",
-            })
+                "medium",
+                blocking=False,
+            )
 
-    # Rule 6: MAX 2 QUESTIONS
+    # Rule 6: MAX 2 QUESTION SENTENCES (observe-only)
     q_sentence_count = _count_question_sentences(bot_response)
     if q_sentence_count > 2:
-        violations.append({
-            "rule": "MAX_QUESTIONS",
-            "detail": (
-                f"Bot asked {q_sentence_count} distinct question sentences, max is 2"
-            ),
-            "severity": "high",
-        })
+        _record(
+            "MAX_QUESTIONS",
+            f"Bot asked {q_sentence_count} distinct question sentences, max is 2",
+            "high",
+            blocking=False,
+        )
 
-    # Rule 7: LISTING ACCURACY
+    # Rule 7: LISTING ACCURACY (blocking -- referenced UUID not found in DB)
     if db is not None:
         listing_ids = _LISTING_UUID_PATTERN.findall(bot_response)
         if listing_ids:
@@ -438,18 +532,62 @@ def validate_response(
                 for lid in listing_ids:
                     exists = db.query(Listing).filter(Listing.id == lid).first()
                     if not exists:
-                        violations.append({
-                            "rule": "LISTING_ACCURACY",
-                            "detail": (
+                        _record(
+                            "LISTING_ACCURACY",
+                            (
                                 f"Listing ID '{lid}' referenced in bot response "
                                 f"does not exist in the database"
                             ),
-                            "severity": "high",
-                        })
+                            "high",
+                            blocking=True,
+                        )
             except Exception as e:
                 print(f"[validator] listing accuracy check failed: {e}")
 
-    return violations
+    # Rule 8: FLEXIBLE_BUDGET (observe-only)
+    # Log if bot re-asks about budget after it has already been asked twice
+    budget_ask_count = session_state.get("budget_ask_count", 0)
+    if budget_ask_count >= 2 and _BUDGET_ASK_PATTERN.search(bot_response):
+        _record(
+            "FLEXIBLE_BUDGET",
+            (
+                f"Bot re-asked about budget after budget_ask_count={budget_ask_count} "
+                f"(budget collection should be skipped at this point)"
+            ),
+            "high",
+            blocking=False,
+        )
+
+    # Rule 9: SIMPLE_ENGLISH (observe-only)
+    # Log overly formal language that sounds robotic or corporate
+    _formal_match = _FORMAL_LANGUAGE_PATTERN.search(bot_response)
+    if _formal_match:
+        _record(
+            "SIMPLE_ENGLISH",
+            f"Bot used overly formal language: matched '{_formal_match.group()}'",
+            "medium",
+            blocking=False,
+        )
+
+    # Rule 10: LISTING_INTRO (observe-only)
+    # Log premature listing reveal before the handoff sequence is ready
+    if session_state is not None and session_state.get("listings_shown") is False:
+        if _PRICE_PRESENCE.search(bot_response) or _BEDROOM_PRESENCE.search(bot_response):
+            _record(
+                "LISTING_INTRO",
+                (
+                    "Bot revealed listing data (price or bedroom count) before "
+                    "listings_shown flag was set"
+                ),
+                "medium",
+                blocking=False,
+            )
+
+    return {
+        "should_retry": len(blocking_violations) > 0,
+        "violations": blocking_violations,
+        "observations": observation_violations,
+    }
 
 
 def log_violations(

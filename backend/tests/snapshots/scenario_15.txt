@@ -1,14 +1,45 @@
-SCENARIO 15: Handoff mode: interest triggers agent handoff not booking
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 15: Handoff mode ===
 Mode: handoff
+Session: snap_test_15
 
-[17:36:02] Lead: rent 2 bedroom Achrafieh 1000
-[17:36:02] Agent: And your name?
+[Turn 1]
+User: hi
+Bot: Hello! How can I help you?
 
-[17:36:08] Lead: I love the second option, I want to visit
-[17:36:08] Agent: Which day works best for you this week?
+[Turn 2]
+User: rent
+Bot: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms?
+     What's your full name btw?
 
-RESULT: FAIL
-NOTES:
-  - Turn 2: auto-booked tour in handoff mode (should hand off to agent instead)
-  - Turn 2: no agent handoff in handoff mode after interest expressed
+[Turn 3]
+User: Beirut, 1000, 2 bedrooms
+Bot: And your name?
+
+[Turn 4]
+User: Rami
+Bot: I don't have an exact match, but here are some close options.
+
+Option 2 is probably the closest to what you had in mind
+
+1. Test
+   Achrafiejh, 1 bed, 4 bath, Unfurnished, $35,000/month
+
+2. Luxury Furnished 3BR - Achrafieh
+   Achrafieh, 3 bed, 3 bath, Fully Furnished, $2,800/month
+   200 sqm fully furnished premium apartment in the heart of Achrafieh. 3 bedrooms, 3 bathrooms, design...
+
+3. Grand 4BR Penthouse - Achrafieh
+   Achrafieh, 4 bed, 5 bath, Fully Furnished, $4,000/month
+   280 sqm fully furnished penthouse with a 70 sqm private terrace and city/sea views. 4 bedrooms, 5 ba...
+
+4. Modern 2BR - Achrafieh
+   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode...
+
+What do you think?
+
+[Turn 5]
+User: the first one looks good
+Bot: Let me connect you with one of our agents who handles that area. They will reach out shortly.
+
+CHECK RESULT: PASS - Listings were shown first in Turn 4 before any handoff. After the lead expressed interest in Turn 5, the bot triggered agent handoff. The correct sequence was observed: listings first, then handoff after interest was expressed.

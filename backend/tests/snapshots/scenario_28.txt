@@ -2,19 +2,21 @@ SCENARIO 28: Photos question
 ========================================
 
 USER: hi
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Hello! How can I help you?
 
 USER: rent in Achrafieh, 2000, 2 bedrooms
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: And your name?
 
 USER: Ziad
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Here you go ||| 1. Modern 2BR - Achrafieh
+   Achrafieh, 2 bed, 2 bath, Fully Furnished, $1,800/month
+   140 sqm stylishly furnished apartment in a premium Achrafieh building. 2 bedrooms, 2 bathrooms, mode... ||| What do you think, Ziad?
 
 USER: are the photos accurate
-BOT: ERROR: 404 Client Error:  for url: https://wakeeli-ai-production.up.railway.app/api/demo/chat
+BOT: Yes they are! Best way to confirm is to see it in person though. Want to book a visit, Ziad?
 
 ---
 CHECKS:
-  [FAIL] Addresses photos question appropriately: Bot did not properly address photos question
+  [PASS] Addresses photos question appropriately: Bot addressed photos question with in-person confirmation
 
-OVERALL: FAIL
+OVERALL: PASS

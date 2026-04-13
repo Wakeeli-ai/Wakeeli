@@ -1,18 +1,49 @@
-SCENARIO 11: Ignores name ask twice -> bot moves on
-Generated: 2026-04-10 17:38:54
+=== SCENARIO 11: Name ignored twice ===
 Mode: auto
+Session: snap_test_11
 
-[17:35:23] Lead: rent 2 bedroom Achrafieh 1000
-[17:35:23] Agent: And your name?
+[Turn 1]
+User: hi
+Bot: Hello! How can I help you?
 
-[17:35:29] Lead: interested in option 1, when can I visit?
-[17:35:29] Agent: Sure, we can book a visit this week. Does Wednesday morning work for you?
+[Turn 2]
+User: rent
+Bot: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms?
+     What's your full name btw?
 
-[17:35:34] Lead: tomorrow works for me
-[17:35:34] Agent: On it! Let me find you some 2-bedroom options in Achrafieh under $1,000/month.
+[Turn 3]
+User: Beirut, 1500, 2 bedrooms
+Bot: And your name?
 
-[17:35:40] Lead: afternoon is fine
-[17:35:40] Agent: On it! Let me pull up some options for you in Achrafieh.
+[Turn 4]
+User: not telling you
+Bot: On it, let me find you some options in Beirut.
 
-RESULT: PASS
-NOTES: All checks passed
+[Turn 5]
+User: no
+Bot: Here you go!
+
+1. **Apartment in Hamra, Beirut**
+2 bed | Unfurnished | $1,200/month
+Spacious layout, close to AUB and main amenities.
+
+2. **Apartment in Achrafieh, Beirut**
+2 bed | Furnished | $1,400/month
+Modern finishing, quiet street, great natural light.
+
+3. **Apartment in Verdun, Beirut**
+2 bed | Semi-furnished | $1,350/month
+Well-maintained building, parking included.
+
+4. **Apartment in Ras Beirut**
+2 bed | Unfurnished | $1,100/month
+High floor, sea view, close to public transport.
+
+5. **Apartment in Mar Elias, Beirut**
+2 bed | Furnished | $1,500/month
+Renovated unit, generator and water included.
+
+Option 4 is probably the closest to what you had in mind if budget is a priority.
+     What do you think?
+
+CHECK RESULT: PASS - Name was asked in Turn 2 and again in Turn 3 (2 times total). After user refused in Turn 4, bot moved on without asking a third time and proceeded to show listings.

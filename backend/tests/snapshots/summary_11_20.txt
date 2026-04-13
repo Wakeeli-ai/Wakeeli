@@ -1,0 +1,29 @@
+SNAPSHOT TEST SUMMARY: Scenarios 11-20
+Generated: 2026-04-10 17:59:15
+Infrastructure: Local backend (Railway was returning 404 at test time)
+Model: claude-haiku-4-5 (sonnet was rate-limited due to concurrent CTO session)
+
+Results: 8/10 passed
+
+Scenario Results:
+  [PASS] 11: Name ignored twice then moves on
+         [+] name asked max 2 times then moves on
+  [PASS] 12: Beirut search expands to neighborhoods
+         [+] listings include neighborhoods or property details
+  [PASS] 13: Specific neighborhood match
+         [+] listings mention Achrafieh or property details
+  [PASS] 14: Zero exact matches shows alternatives
+         [+] does NOT say nothing found / no listings
+  [FAIL] 15: Handoff mode flow
+         [+] listings shown before handoff (turn 3 or 4)
+         [-] handoff after interest (final turn mentions agent/team)
+  [FAIL] 16: Auto mode books tour
+         [-] books tour / confirms visit in final turn
+  [PASS] 17: Lead changes mind rent->buy
+         [+] acknowledges buy intent and continues qualifying
+  [PASS] 18: Budget in LBP understood
+         [+] processes LBP budget without asking again
+  [PASS] 19: Lead asks about listing detail
+         [+] refers to agent for specific details
+  [PASS] 20: Lead rejects all listings
+         [+] offers alternatives or agent connection

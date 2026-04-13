@@ -857,6 +857,48 @@ body {
   .cal-link-chevron { font-size: 32px; }
 
   .footer { font-size: 12px; margin-top: 36px; }
+
+  .desktop-quote { display: block; }
+}
+
+/* Desktop quote: hidden on mobile, centered on desktop */
+.desktop-quote {
+  display: none;
+  text-align: center;
+  padding: 48px 24px;
+  margin: 16px 0;
+}
+
+.desktop-quote .quote-mark {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 64px;
+  line-height: 0;
+  vertical-align: -18px;
+  color: rgba(255,255,255,0.15);
+  font-weight: 700;
+}
+
+.desktop-quote span:not(.quote-mark) {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.desktop-quote {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  color: rgba(255,255,255,0.45);
+  font-style: italic;
+  letter-spacing: 0.3px;
+  line-height: 1.6;
+}
+
+.quote-author {
+  margin-top: 14px;
+  font-size: 13px;
+  font-style: normal;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
 }
 </style>
 </head>
@@ -872,7 +914,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:19 AM BEY</div>
+    <div class="header-gentime">Updated<br>9:31 AM BEY</div>
   </div>
 </header>
 
@@ -1099,6 +1141,12 @@ body {
       </div>
     </div>
   </div>
+</div>
+
+<!-- Desktop quote -->
+<div class="desktop-quote">
+  <span class="quote-mark">\u201c</span>Early to bed... makes a man healthy, wealthy, and wise<span class="quote-mark">\u201d</span>
+  <div class="quote-author">\u2014 Benjamin Franklin</div>
 </div>
 
 <!-- Calendar archive link -->

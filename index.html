@@ -522,6 +522,43 @@ body {
   flex-shrink: 0;
 }
 
+/* ---- Section sublabel ---- */
+.section-sublabel {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: -6px;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+/* ---- Consistency name cell ---- */
+.cons-name-cell {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.cons-name-text {
+  line-height: 1;
+}
+
+.cons-avg-badge {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 7px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.30);
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.consistency-card {
+  animation-delay: 620ms;
+}
+
 /* ---- Footer ---- */
 .footer {
   text-align: center;
@@ -549,7 +586,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>8:07 AM BEY</div>
+    <div class="header-gentime">Updated<br>8:15 AM BEY</div>
   </div>
 </header>
 
@@ -633,7 +670,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-green">8h</div>
+  <div class="hero-number val-green">8h&nbsp;07m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -712,6 +749,7 @@ body {
 
 <!-- 14-day heat map -->
 <div class="section-label">14-Day Sleep Map</div>
+<div class="section-sublabel">Sleep Quality Measure 1</div>
 <div class="heat-section">
   <div class="glass-card heat-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
 <div class="heat-layout">
@@ -732,6 +770,46 @@ body {
       <div class="legend-item">
         <div class="legend-dot" style="background:rgba(255,59,48,0.65)"></div>
         Under 5h
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,255,255,0.08)"></div>
+        No data
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 14-day consistency map -->
+<div class="section-label">14-Day Consistency Map</div>
+<div class="section-sublabel">Sleep Quality Measure 2</div>
+<div class="heat-section">
+  <div class="glass-card heat-card consistency-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
+<div class="heat-layout">
+  <div class="heat-names"><div class="heat-name cons-name-cell" style="color:#8B5CF6"><span class="cons-name-text">Fox</span><span class="cons-avg-badge">Avg:1h39m</span></div><div class="heat-name cons-name-cell" style="color:#00C2B7"><span class="cons-name-text">AJ</span><span class="cons-avg-badge"></span></div><div class="heat-name cons-name-cell" style="color:#FF5252"><span class="cons-name-text">Liam</span><span class="cons-avg-badge"></span></div><div class="heat-name cons-name-cell" style="color:#FF9F0A"><span class="cons-name-text">Jamy</span><span class="cons-avg-badge">Avg:3h</span></div></div>
+  <div class="heat-scroll">
+    <div class="heat-row"><div class="heat-cell" style="background:rgba(255,107,53,0.55);border-color:rgba(255,107,53,0.65);" title="Apr 13: Slept at 1:30 AM, prev night 3:09 AM, delta: 1h 39min"><span class="heat-val">+1h39m</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 12: No previous night to compare"><span class="heat-val"></span><span class="heat-day">12</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 11: No sleep data for this night"><span class="heat-val"></span><span class="heat-day">11</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 10: No previous night to compare"><span class="heat-val"></span><span class="heat-day">10</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 9: No data"><span class="heat-val"></span><span class="heat-day">9</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 8: No data"><span class="heat-val"></span><span class="heat-day">8</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 7: No data"><span class="heat-val"></span><span class="heat-day">7</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 6: No data"><span class="heat-val"></span><span class="heat-day">6</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 5: No data"><span class="heat-val"></span><span class="heat-day">5</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 4: No data"><span class="heat-val"></span><span class="heat-day">4</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 3: No data"><span class="heat-val"></span><span class="heat-day">3</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 2: No data"><span class="heat-val"></span><span class="heat-day">2</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 1: No data"><span class="heat-val"></span><span class="heat-day">1</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Mar 31: First data point, no previous night"><span class="heat-val"></span><span class="heat-day">31</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 13: No sleep data for this night"><span class="heat-val"></span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 12: No previous night to compare"><span class="heat-val"></span><span class="heat-day">12</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 11: No data"><span class="heat-val"></span><span class="heat-day">11</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 10: No data"><span class="heat-val"></span><span class="heat-day">10</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 9: No data"><span class="heat-val"></span><span class="heat-day">9</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 8: No data"><span class="heat-val"></span><span class="heat-day">8</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 7: No data"><span class="heat-val"></span><span class="heat-day">7</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 6: No data"><span class="heat-val"></span><span class="heat-day">6</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 5: No data"><span class="heat-val"></span><span class="heat-day">5</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 4: No data"><span class="heat-val"></span><span class="heat-day">4</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 3: No data"><span class="heat-val"></span><span class="heat-day">3</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 2: No data"><span class="heat-val"></span><span class="heat-day">2</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 1: No data"><span class="heat-val"></span><span class="heat-day">1</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Mar 31: First data point, no previous night"><span class="heat-val"></span><span class="heat-day">31</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 13: No sleep data for this night"><span class="heat-val"></span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 12: No previous night to compare"><span class="heat-val"></span><span class="heat-day">12</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 11: No data"><span class="heat-val"></span><span class="heat-day">11</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 10: No data"><span class="heat-val"></span><span class="heat-day">10</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 9: No data"><span class="heat-val"></span><span class="heat-day">9</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 8: No data"><span class="heat-val"></span><span class="heat-day">8</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 7: No data"><span class="heat-val"></span><span class="heat-day">7</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 6: No data"><span class="heat-val"></span><span class="heat-day">6</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 5: No data"><span class="heat-val"></span><span class="heat-day">5</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 4: No data"><span class="heat-val"></span><span class="heat-day">4</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 3: No data"><span class="heat-val"></span><span class="heat-day">3</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 2: No data"><span class="heat-val"></span><span class="heat-day">2</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 1: No data"><span class="heat-val"></span><span class="heat-day">1</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Mar 31: First data point, no previous night"><span class="heat-val"></span><span class="heat-day">31</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 13: No sleep data for this night"><span class="heat-val"></span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);" title="Apr 12: Slept at 11:30 PM, prev night 8:30 PM, delta: 3h"><span class="heat-val">+3h</span><span class="heat-day">12</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 11: No previous night to compare"><span class="heat-val"></span><span class="heat-day">11</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 10: No data"><span class="heat-val"></span><span class="heat-day">10</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 9: No data"><span class="heat-val"></span><span class="heat-day">9</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 8: No data"><span class="heat-val"></span><span class="heat-day">8</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 7: No data"><span class="heat-val"></span><span class="heat-day">7</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 6: No data"><span class="heat-val"></span><span class="heat-day">6</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 5: No data"><span class="heat-val"></span><span class="heat-day">5</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 4: No data"><span class="heat-val"></span><span class="heat-day">4</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 3: No data"><span class="heat-val"></span><span class="heat-day">3</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 2: No data"><span class="heat-val"></span><span class="heat-day">2</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Apr 1: No data"><span class="heat-val"></span><span class="heat-day">1</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Mar 31: First data point, no previous night"><span class="heat-val"></span><span class="heat-day">31</span></div></div>
+  </div>
+</div>
+    <div class="heat-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(52,199,89,0.80)"></div>
+        Within 30m
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(48,209,88,0.48)"></div>
+        Within 1h
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,159,10,0.65)"></div>
+        Within 1.5h
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,107,53,0.65)"></div>
+        Within 2.5h
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,59,48,0.65)"></div>
+        Over 2.5h
       </div>
       <div class="legend-item">
         <div class="legend-dot" style="background:rgba(255,255,255,0.08)"></div>

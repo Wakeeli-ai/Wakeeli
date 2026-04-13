@@ -872,7 +872,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:12 AM BEY</div>
+    <div class="header-gentime">Updated<br>9:13 AM BEY</div>
   </div>
 </header>
 
@@ -959,7 +959,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-amber">9h&nbsp;04m</div>
+  <div class="hero-number val-amber">9h&nbsp;05m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1210,47 +1210,25 @@ body {
       ctx.restore();
     }
 
-    /* Redraw the full visible trail as one continuous smooth path */
-    function redrawTrail(endX, sweepStart) {
-      var startX = sweepStart;
-      if (endX <= startX) return;
-      ctx.save();
-      ctx.shadowBlur  = 0;
-      ctx.globalAlpha = 1.0;
-      ctx.strokeStyle = color;
-      ctx.lineWidth   = 1.5;
-      ctx.lineJoin    = 'round';
-      ctx.lineCap     = 'round';
-      ctx.beginPath();
-      var first = true;
-      for (var px = startX; px <= endX; px += 0.5) {
-        var py = yAt(px, baseline, amp);
-        if (first) { ctx.moveTo(px, py); first = false; }
-        else ctx.lineTo(px, py);
-      }
-      /* Make sure we end exactly at endX */
-      var lastPy = yAt(endX, baseline, amp);
-      ctx.lineTo(endX, lastPy);
-      ctx.stroke();
-      ctx.restore();
+    /* Pre-render the full ECG waveform onto an offscreen canvas once */
+    var offscreen = document.createElement('canvas');
+    offscreen.width  = canvas.width;
+    offscreen.height = canvas.height;
+    var offCtx = offscreen.getContext('2d');
+    offCtx.scale(dpr, dpr);
+    offCtx.strokeStyle = color;
+    offCtx.lineWidth   = 1.5;
+    offCtx.lineJoin    = 'round';
+    offCtx.lineCap     = 'round';
+    offCtx.beginPath();
+    for (var px = 0; px <= W; px += 0.5) {
+      var py = yAt(px, baseline, amp);
+      if (px === 0) offCtx.moveTo(px, py); else offCtx.lineTo(px, py);
     }
+    offCtx.stroke();
 
-    /* Draw the cursor dot */
-    function drawDot(x) {
-      var py = yAt(x, baseline, amp);
-      ctx.save();
-      ctx.shadowBlur  = 0;
-      ctx.globalAlpha = 1.0;
-      ctx.fillStyle   = color;
-      ctx.beginPath();
-      ctx.arc(x, py, 2.0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    /* Initial canvas fill */
+    /* Initial canvas: black background */
     fillZone(0, W);
-    var sweepStart = 0;
 
     function frame(ts) {
       if (!lastTs) lastTs = ts;
@@ -1259,23 +1237,56 @@ body {
       var newX = curX + SPEED * dt;
 
       if (newX >= W) {
-        var carry = newX - W;
-        sweepStart = 0;
-        curX = carry;
-        /* Clear entire canvas and redraw from sweep start */
-        fillZone(0, W);
-        if (curX > 0) redrawTrail(curX, 0);
-      } else {
-        /* Erase ahead */
-        var ez = Math.min(ERASE_W, W - newX);
-        if (ez > 0) fillZone(newX, ez);
-        curX = newX;
-        /* Redraw entire trail from sweep start to cursor */
-        fillZone(sweepStart, curX - sweepStart);
-        redrawTrail(curX, sweepStart);
+        newX = newX - W;
+        curX = 0;
       }
 
-      drawDot(curX);
+      /* Clear entire canvas */
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, W, H);
+
+      /* Draw faint grid */
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth   = 0.5;
+      [H * 0.28, H * 0.56, H * 0.84].forEach(function(gy) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+      });
+      for (var vx = 0; vx <= W; vx += 20) {
+        ctx.beginPath(); ctx.moveTo(vx, 0); ctx.lineTo(vx, H); ctx.stroke();
+      }
+      ctx.restore();
+
+      /* Reveal the pre-rendered ECG up to cursor position using clip */
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, newX * dpr, H * dpr);
+      ctx.clip();
+      ctx.drawImage(offscreen, 0, 0);
+      ctx.restore();
+
+      /* Erase zone just ahead of cursor for sweep effect */
+      var ez = Math.min(ERASE_W, W - newX);
+      if (ez > 0) {
+        var grad = ctx.createLinearGradient(newX, 0, newX + ez, 0);
+        grad.addColorStop(0, 'rgba(0,0,0,0.6)');
+        grad.addColorStop(1, 'rgba(0,0,0,1)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(newX, 0, ez, H);
+      }
+
+      /* Draw cursor dot */
+      var dotY = yAt(newX, baseline, amp);
+      ctx.save();
+      ctx.shadowBlur  = 0;
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle   = color;
+      ctx.beginPath();
+      ctx.arc(newX, dotY, 2.0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      curX = newX;
       requestAnimationFrame(frame);
     }
 

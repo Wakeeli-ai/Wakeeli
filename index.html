@@ -872,7 +872,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:09 AM BEY</div>
+    <div class="header-gentime">Updated<br>9:11 AM BEY</div>
   </div>
 </header>
 
@@ -959,7 +959,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-amber">9h&nbsp;01m</div>
+  <div class="hero-number val-amber">9h&nbsp;03m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1170,7 +1170,7 @@ body {
 
   function initCanvas(canvas) {
     var color = canvas.dataset.color;
-    var dpr   = Math.min(window.devicePixelRatio || 1, 2);
+    var dpr   = window.devicePixelRatio || 1;
     var rect  = canvas.parentElement.getBoundingClientRect();
     var cssW  = rect.width > 10 ? rect.width : 398;
 
@@ -1213,7 +1213,7 @@ body {
     /* Draw ECG line segment from x1 to x2 -- sharp trace, whisper of glow */
     function drawLine(x1, x2) {
       if (x2 <= x1) return;
-      var steps = Math.max(2, Math.ceil((x2 - x1) * 3));
+      var steps = Math.max(4, Math.ceil((x2 - x1) * 6));
       /* Sharp colored line -- no blur, no glow, pure crisp */
       ctx.save();
       ctx.shadowBlur  = 0;

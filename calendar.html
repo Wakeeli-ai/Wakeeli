@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sleep Calendar</title>
+<style>
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+:root {
+  --bg:             #000000;
+  --card-bg:        rgba(255,255,255,0.05);
+  --card-border:    rgba(255,255,255,0.08);
+  --text-primary:   #FFFFFF;
+  --text-secondary: rgba(255,255,255,0.50);
+  --text-dim:       rgba(255,255,255,0.25);
+  --radius:         20px;
+  --pad:            16px;
+  --green:          #34C759;
+  --amber:          #FF9F0A;
+  --red:            #FF3B30;
+}
+html { background: var(--bg); }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI',
+               Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  padding: var(--pad);
+  padding-top: 20px;
+  padding-bottom: 48px;
+  max-width: 430px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.5px;
+  background: rgba(255,255,255,0.15);
+  opacity: 0.85;
+}
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.09);
+  text-decoration: none;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+.back-btn:active { background: rgba(255,255,255,0.16); }
+.page-title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.header-spacer { width: 44px; }
+.metric-toggle {
+  display: flex;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 13px;
+  padding: 3px;
+  margin-bottom: 16px;
+  gap: 3px;
+}
+.toggle-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border: none;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  letter-spacing: 0.1px;
+}
+.toggle-btn.active {
+  background: rgba(255,255,255,0.12);
+  color: var(--text-primary);
+}
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.nav-arrow {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  color: var(--text-primary);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, opacity 0.15s ease;
+  font-family: inherit;
+}
+.nav-arrow:active { background: rgba(255,255,255,0.14); }
+.month-label {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.cal-wrapper {
+  padding: 14px 10px 16px;
+  margin-bottom: 12px;
+}
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 5px;
+}
+.cal-weekdays div {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  padding: 2px 0;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.cal-cell {
+  border-radius: 9px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 3px 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  min-height: 56px;
+}
+.cal-cell:not(.cal-disabled):not(.cal-empty):active {
+  transform: scale(0.90);
+  background: rgba(255,255,255,0.09);
+}
+.cal-disabled {
+  opacity: 0.18;
+  cursor: default;
+  pointer-events: none;
+}
+.cal-empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+.cal-today {
+  border-color: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.07);
+}
+.cal-num {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.cal-today .cal-num {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+  font-weight: 800;
+  border-radius: 50%;
+  font-size: 10px;
+}
+.cal-dots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  width: 100%;
+  padding: 0 3px;
+}
+.cal-dot {
+  height: 5px;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+.legend-card {
+  padding: 12px 16px;
+  margin-bottom: 0;
+}
+.legend-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.legend-swatch {
+  width: 14px;
+  height: 6px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+  padding: 16px;
+  padding-bottom: env(safe-area-inset-bottom, 28px);
+}
+.modal-bg.show {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal-card {
+  width: 100%;
+  max-width: 398px;
+  padding: 20px;
+  border-radius: 24px;
+  transform: translateY(40px);
+  transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal-bg.show .modal-card {
+  transform: translateY(0);
+}
+.modal-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.modal-date {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+.modal-close:active { background: rgba(255,255,255,0.15); }
+.modal-measure-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 16px;
+}
+.modal-person-row {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 13px 14px;
+  margin-bottom: 8px;
+}
+.modal-person-row:last-child { margin-bottom: 0; }
+.modal-person-name {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.modal-person-stats {
+  display: flex;
+  gap: 6px;
+}
+.mstat {
+  flex: 1;
+  text-align: center;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  padding: 7px 4px;
+}
+.mstat-label {
+  display: block;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+.mstat-val {
+  display: block;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.no-data-note {
+  text-align: center;
+  padding: 24px 0 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <a href="index.html" class="back-btn" aria-label="Back">
+    <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
+      <path d="M8.5 1.5L1.5 8L8.5 14.5" stroke="rgba(255,255,255,0.75)"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+  <h1 class="page-title">Sleep Calendar</h1>
+  <div class="header-spacer"></div>
+</header>
+
+<div class="metric-toggle">
+  <button class="toggle-btn active" id="btn-m1" onclick="setMeasure(1)">
+    Measure 1 &bull; Duration
+  </button>
+  <button class="toggle-btn" id="btn-m2" onclick="setMeasure(2)">
+    Measure 2 &bull; Consistency
+  </button>
+</div>
+
+<div class="month-nav">
+  <button class="nav-arrow" id="prev-btn" onclick="prevMonth()" aria-label="Previous month">&#8249;</button>
+  <span class="month-label" id="month-label"></span>
+  <button class="nav-arrow" id="next-btn" onclick="nextMonth()" aria-label="Next month">&#8250;</button>
+</div>
+
+<div class="cal-wrapper glass-card">
+  <div class="cal-weekdays">
+    <div>Mon</div><div>Tue</div><div>Wed</div>
+    <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<div class="legend-card glass-card" id="legend-m1">
+  <div class="legend-row">
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#34C759"></div>7-9h
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#FF9F0A"></div>5-7h
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#FF3B30"></div>&lt;5h
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:rgba(255,255,255,0.14)"></div>No data
+    </div>
+  </div>
+</div>
+<div class="legend-card glass-card" id="legend-m2" style="display:none">
+  <div class="legend-row">
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#34C759"></div>&lt;75m
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#FF9F0A"></div>75-100m
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:#FF3B30"></div>&gt;100m
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:rgba(255,255,255,0.14)"></div>No data
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg" onclick="closeModal()">
+  <div class="modal-card glass-card" id="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <span class="modal-date" id="modal-date"></span>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-measure-label" id="modal-measure-label"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+var PERSONS = ["Fox", "AJ", "Liam", "Jamy"];
+var COLORS  = {"Fox":"#8B5CF6","AJ":"#00C2B7","Liam":"#FF5252","Jamy":"#FF9F0A"};
+var CAL_DATA = {"Fox":{"2026-04-12":{"sleep":"3:09 AM","wake":"7:52 AM","duration":4.71,"cons_delta":null},"2026-04-13":{"sleep":"1:30 AM","wake":"6:45 AM","duration":5.25,"cons_delta":1.65}},"AJ":{"2026-04-12":{"sleep":"12:29 AM","wake":"8:19 AM","duration":7.83,"cons_delta":null},"2026-04-13":{"sleep":"10:58 PM","wake":"5:48 AM","duration":6.83,"cons_delta":1.5167}},"Liam":{"2026-04-12":{"sleep":"3:00 AM","wake":"10:31 AM","duration":7.53,"cons_delta":null}},"Jamy":{"2026-04-11":{"sleep":"5:00 AM","wake":"10:30 AM","duration":5.5,"cons_delta":null},"2026-04-12":{"sleep":"12:00 AM","wake":"6:30 AM","duration":6.5,"cons_delta":5.0},"2026-04-13":{"sleep":"11:30 PM","wake":"7:41 AM","duration":8.18,"cons_delta":0.5}}};
+var CHALLENGE_START = new Date(2026, 3, 11);
+var TODAY = "2026-04-13";
+var MONTH_NAMES = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December"
+];
+
+var curYear    = 2026;
+var curMonth   = 3;
+var curMeasure = 1;
+
+function setMeasure(m) {
+  curMeasure = m;
+  document.getElementById('btn-m1').classList.toggle('active', m === 1);
+  document.getElementById('btn-m2').classList.toggle('active', m === 2);
+  document.getElementById('legend-m1').style.display = m === 1 ? '' : 'none';
+  document.getElementById('legend-m2').style.display = m === 2 ? '' : 'none';
+  renderCalendar();
+}
+
+function prevMonth() {
+  if (curYear === 2026 && curMonth === 3) return;
+  curMonth--;
+  if (curMonth < 0) { curMonth = 11; curYear--; }
+  renderCalendar();
+}
+
+function nextMonth() {
+  curMonth++;
+  if (curMonth > 11) { curMonth = 0; curYear++; }
+  renderCalendar();
+}
+
+function padZ(n) { return String(n).padStart(2, '0'); }
+
+function getDurColor(h) {
+  if (h == null) return 'rgba(255,255,255,0.12)';
+  if (h >= 7 && h <= 9) return '#34C759';
+  if (h >= 5) return '#FF9F0A';
+  return '#FF3B30';
+}
+
+function getConsColor(dh) {
+  if (dh == null) return 'rgba(255,255,255,0.12)';
+  if (dh <= 1.25) return '#34C759';
+  if (dh <= 1.6667) return '#FF9F0A';
+  return '#FF3B30';
+}
+
+function renderCalendar() {
+  var label = document.getElementById('month-label');
+  label.textContent = MONTH_NAMES[curMonth] + ' ' + curYear;
+
+  var prevBtn = document.getElementById('prev-btn');
+  var atStart = (curYear === 2026 && curMonth === 3);
+  prevBtn.style.opacity = atStart ? '0.22' : '1';
+  prevBtn.disabled = atStart;
+
+  var daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
+  var startDow    = new Date(curYear, curMonth, 1).getDay();
+  startDow = (startDow + 6) % 7;
+
+  var grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  var i, day, emp, cell, dateStr, dateObj, isPast, isToday, numDiv, dotsDiv, dot;
+
+  for (i = 0; i < startDow; i++) {
+    emp = document.createElement('div');
+    emp.className = 'cal-cell cal-empty';
+    grid.appendChild(emp);
+  }
+
+  for (day = 1; day <= daysInMonth; day++) {
+    dateStr = curYear + '-' + padZ(curMonth + 1) + '-' + padZ(day);
+    dateObj = new Date(curYear, curMonth, day);
+    isPast  = dateObj < CHALLENGE_START;
+    isToday = dateStr === TODAY;
+
+    cell = document.createElement('div');
+    cell.className = 'cal-cell' +
+      (isPast  ? ' cal-disabled' : '') +
+      (isToday ? ' cal-today'   : '');
+
+    numDiv = document.createElement('div');
+    numDiv.className = 'cal-num';
+    numDiv.textContent = day;
+    cell.appendChild(numDiv);
+
+    if (!isPast) {
+      dotsDiv = document.createElement('div');
+      dotsDiv.className = 'cal-dots';
+      for (var pi = 0; pi < PERSONS.length; pi++) {
+        var p = PERSONS[pi];
+        var d = (CAL_DATA[p] || {})[dateStr];
+        dot = document.createElement('div');
+        dot.className = 'cal-dot';
+        if (curMeasure === 1) {
+          dot.style.background = d ? getDurColor(d.duration) : 'rgba(255,255,255,0.10)';
+        } else {
+          dot.style.background = d ? getConsColor(d.cons_delta) : 'rgba(255,255,255,0.10)';
+        }
+        dotsDiv.appendChild(dot);
+      }
+      cell.appendChild(dotsDiv);
+      (function(ds) {
+        cell.addEventListener('click', function() { openDay(ds); });
+      })(dateStr);
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+function fmtDur(h) {
+  if (h == null || h <= 0) return '--';
+  var hrs  = Math.floor(h);
+  var mins = Math.round((h - hrs) * 60);
+  return mins === 0 ? hrs + 'h' : hrs + 'h ' + String(mins).padStart(2, '0') + 'm';
+}
+
+function fmtDelta(dh) {
+  if (dh == null) return '--';
+  var mins = Math.round(dh * 60);
+  if (mins < 60) return '+' + mins + 'm';
+  var h = Math.floor(mins / 60);
+  var m = mins % 60;
+  return m === 0 ? '+' + h + 'h' : '+' + h + 'h ' + m + 'm';
+}
+
+function openDay(dateStr) {
+  var parts = dateStr.split('-');
+  var mName = MONTH_NAMES[parseInt(parts[1], 10) - 1];
+  document.getElementById('modal-date').textContent =
+    mName + ' ' + parseInt(parts[2], 10) + ', ' + parts[0];
+  document.getElementById('modal-measure-label').textContent =
+    curMeasure === 1 ? 'Measure 1: Sleep Duration' : 'Measure 2: Bedtime Consistency';
+
+  var html = '';
+  var hasAnyData = false;
+
+  for (var pi = 0; pi < PERSONS.length; pi++) {
+    var person = PERSONS[pi];
+    var d      = (CAL_DATA[person] || {})[dateStr];
+    var color  = COLORS[person];
+
+    if (curMeasure === 1) {
+      var dur      = d ? fmtDur(d.duration)     : '--';
+      var slp      = d ? d.sleep                 : '--';
+      var wk       = d ? d.wake                  : '--';
+      var durColor = d ? getDurColor(d.duration) : 'rgba(255,255,255,0.30)';
+      if (d) hasAnyData = true;
+      html +=
+        '<div class="modal-person-row">' +
+        '<div class="modal-person-name" style="color:' + color + '">' + person + '</div>' +
+        '<div class="modal-person-stats">' +
+        '<div class="mstat"><span class="mstat-label">Slept</span>' +
+          '<span class="mstat-val">' + slp + '</span></div>' +
+        '<div class="mstat"><span class="mstat-label">Woke</span>' +
+          '<span class="mstat-val">' + wk + '</span></div>' +
+        '<div class="mstat"><span class="mstat-label">Total</span>' +
+          '<span class="mstat-val" style="color:' + durColor + '">' + dur + '</span></div>' +
+        '</div></div>';
+    } else {
+      var delta     = d ? fmtDelta(d.cons_delta)    : '--';
+      var consColor = d ? getConsColor(d.cons_delta) : 'rgba(255,255,255,0.30)';
+      var slp2      = d ? d.sleep                    : '--';
+      if (d) hasAnyData = true;
+      html +=
+        '<div class="modal-person-row">' +
+        '<div class="modal-person-name" style="color:' + color + '">' + person + '</div>' +
+        '<div class="modal-person-stats">' +
+        '<div class="mstat"><span class="mstat-label">Slept at</span>' +
+          '<span class="mstat-val">' + slp2 + '</span></div>' +
+        '<div class="mstat"><span class="mstat-label">Delta</span>' +
+          '<span class="mstat-val" style="color:' + consColor + '">' + delta + '</span></div>' +
+        '</div></div>';
+    }
+  }
+
+  if (!hasAnyData) {
+    html = '<div class="no-data-note">No data recorded yet</div>';
+  }
+
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-bg').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+renderCalendar();
+</script>
+</body>
+</html>

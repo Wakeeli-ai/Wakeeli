@@ -597,6 +597,69 @@ body {
   margin-top: 24px;
 }
 
+/* ---- Calendar archive link ---- */
+.calendar-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 28px;
+  animation: fadeSlideUp 0.5s ease forwards;
+  animation-delay: 700ms;
+  opacity: 0;
+}
+.cal-link-inner {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.cal-link-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.5px;
+  background: rgba(255,255,255,0.18);
+  opacity: 0.85;
+}
+.calendar-link:active .cal-link-inner {
+  background: rgba(255,255,255,0.09);
+  transform: scale(0.985);
+}
+.cal-link-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.cal-link-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.cal-link-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  margin-bottom: 2px;
+}
+.cal-link-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.cal-link-chevron {
+  font-size: 24px;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
 /* ---- Scrollbar global ---- */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -685,7 +748,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>8:44 AM BEY</div>
+    <div class="header-gentime">Updated<br>8:51 AM BEY</div>
   </div>
 </header>
 
@@ -772,7 +835,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-green">8h&nbsp;37m</div>
+  <div class="hero-number val-green">8h&nbsp;44m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -913,6 +976,21 @@ body {
     </div>
   </div>
 </div>
+
+<!-- Calendar archive link -->
+<div class="section-label">History</div>
+<a href="calendar.html" class="calendar-link">
+  <div class="cal-link-inner">
+    <div class="cal-link-left">
+      <span class="cal-link-icon">&#128197;</span>
+      <div>
+        <div class="cal-link-title">Sleep Calendar</div>
+        <div class="cal-link-sub">Full archive &amp; history</div>
+      </div>
+    </div>
+    <span class="cal-link-chevron">&#8250;</span>
+  </div>
+</a>
 
 <div class="footer">Beirut time &middot; Real data only</div>
 

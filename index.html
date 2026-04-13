@@ -872,7 +872,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:16 AM BEY</div>
+    <div class="header-gentime">Updated<br>9:17 AM BEY</div>
   </div>
 </header>
 
@@ -959,7 +959,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-amber">9h&nbsp;09m</div>
+  <div class="hero-number val-amber">9h&nbsp;10m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1260,8 +1260,10 @@ body {
       /* Reveal the pre-rendered ECG up to cursor position using clip */
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, 0, newX * dpr, H * dpr);
+      ctx.rect(0, 0, newX, H);
       ctx.clip();
+      /* Draw offscreen canvas mapped back to CSS coordinates */
+      ctx.scale(1/dpr, 1/dpr);
       ctx.drawImage(offscreen, 0, 0);
       ctx.restore();
 

@@ -93,6 +93,8 @@ body {
   z-index: 3;
   border-radius: 20px 20px 0 0;
   background: #000;
+  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
 }
 
 .ecg-canvas {
@@ -748,7 +750,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>8:51 AM BEY</div>
+    <div class="header-gentime">Updated<br>8:55 AM BEY</div>
   </div>
 </header>
 
@@ -835,7 +837,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-green">8h&nbsp;44m</div>
+  <div class="hero-number val-green">8h&nbsp;48m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1092,8 +1094,8 @@ body {
       var steps = Math.max(2, Math.ceil((x2 - x1) * 3));
       ctx.save();
       ctx.shadowColor = color;
-      ctx.shadowBlur  = 7;
-      ctx.strokeStyle = 'rgba(255,255,255,0.90)';
+      ctx.shadowBlur  = 4;
+      ctx.strokeStyle = 'rgba(255,255,255,0.82)';
       ctx.lineWidth   = 1.5;
       ctx.lineJoin    = 'round';
       ctx.lineCap     = 'round';
@@ -1113,16 +1115,16 @@ body {
       ctx.save();
       /* Outer glow */
       ctx.shadowColor = color;
-      ctx.shadowBlur  = 18;
+      ctx.shadowBlur  = 10;
       ctx.fillStyle   = color;
       ctx.beginPath();
-      ctx.arc(x, py, 3.5, 0, Math.PI * 2);
+      ctx.arc(x, py, 2.5, 0, Math.PI * 2);
       ctx.fill();
       /* Bright white core */
       ctx.shadowBlur  = 0;
       ctx.fillStyle   = 'rgba(255,255,255,0.95)';
       ctx.beginPath();
-      ctx.arc(x, py, 1.4, 0, Math.PI * 2);
+      ctx.arc(x, py, 1.0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }

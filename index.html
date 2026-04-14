@@ -913,7 +913,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>7:58 AM BEY</div>
+    <div class="header-gentime">Updated<br>8:17 AM BEY</div>
   </div>
 </header>
 
@@ -971,7 +971,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-darkgreen">7h&nbsp;59m</div>
+  <div class="hero-number val-darkgreen">8h&nbsp;18m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1220,10 +1220,22 @@ body {
   }
 
   function initCanvas(canvas) {
+    /* Cancel any previous animation loop on this canvas */
+    if (canvas._ecgStop) { canvas._ecgStop(); canvas._ecgStop = null; }
+
     var color = canvas.dataset.color;
     var dpr   = window.devicePixelRatio || 1;
     var rect  = canvas.parentElement.getBoundingClientRect();
-    var cssW  = rect.width > 10 ? rect.width : 398;
+
+    /* If layout not ready yet (e.g. on mobile before first paint), retry next frame */
+    if (rect.width < 10) {
+      requestAnimationFrame(function() { initCanvas(canvas); });
+      return;
+    }
+
+    var cssW  = rect.width;
+    var alive = true;
+    canvas._ecgStop = function() { alive = false; };
 
     canvas.width  = Math.round(cssW * dpr);
     canvas.height = Math.round(CVS_H * dpr);
@@ -1308,12 +1320,18 @@ body {
       }
       ctx.restore();
 
-      /* Reveal the pre-rendered ECG up to cursor position using clip */
+      /* Reveal the pre-rendered ECG up to cursor position using clip.
+         All coordinates here are CSS pixels -- ctx already has scale(dpr,dpr)
+         applied, so we must NOT multiply by dpr again (that would double-scale
+         on HiDPI screens and break mobile where dpr is typically 2 or 3).
+         drawImage must specify destination size in CSS pixels for the same
+         reason: without dw/dh, canvas draws at physical pixel count which the
+         transform then scales up by dpr a second time. */
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, 0, newX * dpr, H * dpr);
+      ctx.rect(0, 0, newX, H);
       ctx.clip();
-      ctx.drawImage(offscreen, 0, 0);
+      ctx.drawImage(offscreen, 0, 0, W, H);
       ctx.restore();
 
       /* Erase zone just ahead of cursor for sweep effect */
@@ -1338,7 +1356,7 @@ body {
       ctx.restore();
 
       curX = newX;
-      requestAnimationFrame(frame);
+      if (alive) requestAnimationFrame(frame);
     }
 
     requestAnimationFrame(frame);
@@ -1347,6 +1365,15 @@ body {
   function boot() {
     document.querySelectorAll('.ecg-canvas').forEach(initCanvas);
   }
+
+  /* Re-init on resize/orientation change so canvas remeasures its width */
+  var _ecgResizeTimer;
+  window.addEventListener('resize', function() {
+    clearTimeout(_ecgResizeTimer);
+    _ecgResizeTimer = setTimeout(function() {
+      document.querySelectorAll('.ecg-canvas').forEach(initCanvas);
+    }, 200);
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);

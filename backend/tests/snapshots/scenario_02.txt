@@ -1,19 +1,19 @@
 SCENARIO 02: Basic rent flow
-Session ID: 368f19f0-53c2-4285-a0eb-48f4094b96fb
-Timestamp: 2026-04-10T17:43:26.899118
+Session ID: 708762ef-f882-480b-9b8f-fbc9612fc3d5
+Timestamp: 2026-04-13T17:42:54.585818
 Target: https://wakeeli-ai.up.railway.app/api/demo/chat
 
 [Lead]: hello
-[Agent]: Hello! How can I help you?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: rent
-[Agent]: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: Hamra
-[Agent]: And your name?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: 1500 a month, 2 bedrooms
-[Agent]: On it!
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 RESULT: PASS (verify manually)
 

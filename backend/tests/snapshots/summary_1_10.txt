@@ -1,5 +1,5 @@
 WAKEELI SNAPSHOT TEST SUMMARY -- SCENARIOS 1 TO 10
-Run at: 2026-04-10T17:46:02.078605
+Run at: 2026-04-13T17:43:53.714578
 Target: https://wakeeli-ai.up.railway.app/api/demo/chat
 ============================================================
 

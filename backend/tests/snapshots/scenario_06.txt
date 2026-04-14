@@ -1,22 +1,22 @@
 SCENARIO 06: Budget vague second time
-Session ID: d510a565-52ac-4e5a-b55d-f9c06fb9668e
-Timestamp: 2026-04-10T17:44:43.397547
+Session ID: 11ff8707-c204-4242-8f7b-f3d68a075d49
+Timestamp: 2026-04-13T17:43:24.579549
 Target: https://wakeeli-ai.up.railway.app/api/demo/chat
 
 [Lead]: hi
-[Agent]: Hello! How can I help you?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: rent
-[Agent]: Sure, to help you find the best options, what area are you looking in, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: Beirut, 2 bedrooms
-[Agent]: And your name?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: not sure about budget
-[Agent]: Sure, even a rough range helps, like $1,000–2,000/month?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: really no idea
-[Agent]: On it, let me check what's available for a 2-bedroom rental in Beirut.
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 RESULT: PASS (verify manually)
 

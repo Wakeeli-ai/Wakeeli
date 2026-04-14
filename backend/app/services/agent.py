@@ -16,6 +16,7 @@ from app.services.prompt import (
 from app.services.session import SessionState, STAGES
 from app.services.token_tracker import log_usage, check_token_budget
 from app.services.validator import validate_response, log_violations, enforce_rules, log_enforcement
+from app.services.language import detect_language
 from pprint import pprint
 
 client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
@@ -1094,6 +1095,22 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             + message
         )
 
+    # Language enforcement: tell the LLM which language was detected so it mirrors
+    # the user precisely, consistent with the LANGUAGE MIRROR RULE in the static prompt.
+    _detected_lang = state.get('detected_language', 'english')
+    _lang_label = {
+        'arabizi': 'Franco-Arabic (Arabizi) - Metn/Beirut Lebanese romanized Arabic',
+        'arabic':  'Arabic (native script)',
+        'french':  'French',
+        'english': 'English',
+    }.get(_detected_lang, 'English')
+    message = (
+        f"LANGUAGE DIRECTIVE: Detected user language is {_lang_label}. "
+        f"Respond in that exact language and style per the LANGUAGE MIRROR RULE. "
+        f"Do not switch to English unless the user switches first.\n\n"
+        + message
+    )
+
     static_prompt = get_static_system_prompt()
     dynamic_prompt = get_dynamic_action_prompt(message)
     session_state_text = f"\nCurrent session state: {state}"
@@ -1326,6 +1343,10 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             db.add(ai_msg)
             db.commit()
             return [response_msg]
+
+        # Detect language on the raw user message before entity extraction.
+        # Stored on session so generate_reply can enforce the correct language mode.
+        session.detected_language = detect_language(user_message)
 
         extracted = extract_entities(user_message, history, conversation_id=conversation_id)
 

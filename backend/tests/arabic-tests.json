@@ -1,0 +1,279 @@
+{
+  "suite": "Wakeeli Chatbot - Arabic/Arabizi Test Scenarios",
+  "language_notes": "Metn district Christian Lebanese dialect. Franco-Arab (Arabizi) style. No formal Arabic, no English transliteration.",
+  "version": "1.0",
+  "created": "2026-04-14",
+  "scenarios": [
+    {
+      "scenario_number": 1,
+      "title": "Full Arabizi Rent Flow - Initial Intent",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh"
+      ],
+      "expected_behaviors": [
+        "Bot detects Arabic/Arabizi input and immediately switches to Arabizi response mode",
+        "Bot confirms it understood the request: rental apartment in Achrafieh",
+        "Bot begins qualification: asks about budget (shu l budget tabt3ak?)",
+        "Bot asks about size/bedrooms (kam gheref nom bet7taj?)",
+        "Bot does NOT switch to English under any circumstance",
+        "Tone is warm, natural, Franco-Lebanese - not formal",
+        "Bot does not say 'Certainly!' or any English AI cliches in any language"
+      ]
+    },
+    {
+      "scenario_number": 2,
+      "title": "Arabizi Budget Declaration",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$"
+      ],
+      "expected_behaviors": [
+        "Bot correctly parses '$1500' as the monthly budget from 'hawela l 1500$'",
+        "Bot acknowledges budget in Arabizi (e.g. 'mnih, 1500$ l shaher')",
+        "Bot does NOT ask for budget again - it understood",
+        "Bot continues qualification flow: moves to next question (bedrooms, floor, furnished/unfurnished)",
+        "Budget is stored in lead profile for matching"
+      ]
+    },
+    {
+      "scenario_number": 3,
+      "title": "Arabizi Bedroom Count",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ghereften nom"
+      ],
+      "expected_behaviors": [
+        "Bot correctly maps 'ghereften nom' to 2 bedrooms",
+        "Bot confirms understanding (e.g. '2 gheref nom, mzabt')",
+        "Lead profile updated: bedrooms = 2",
+        "Bot continues to next qualification question without re-asking bedrooms",
+        "No confusion between 'gheref' (rooms) and 'saloun' or other room types"
+      ]
+    },
+    {
+      "scenario_number": 4,
+      "title": "Arabizi Furnished Preference",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ghereften nom",
+        "mafrouch"
+      ],
+      "expected_behaviors": [
+        "Bot correctly maps 'mafrouch' to furnished preference",
+        "Bot acknowledges: furnished requirement stored",
+        "Lead profile updated: furnished = true",
+        "Bot proceeds to show matching listings or confirm it will search",
+        "Bot response stays in Arabizi throughout"
+      ]
+    },
+    {
+      "scenario_number": 5,
+      "title": "Arabizi Visit Confirmation",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ghereften nom",
+        "mafrouch",
+        "eh bshufa"
+      ],
+      "expected_behaviors": [
+        "Bot correctly maps 'eh bshufa' (yes I want to see it) as visit confirmation",
+        "Bot moves to booking flow immediately",
+        "Bot asks for preferred date/time in Arabizi",
+        "Bot does NOT re-qualify the lead after confirmation",
+        "Transition to booking is smooth and natural"
+      ]
+    },
+    {
+      "scenario_number": 6,
+      "title": "Arabizi Timing - Tomorrow Afternoon",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ghereften nom",
+        "mafrouch",
+        "eh bshufa",
+        "boukra ba3d el doher"
+      ],
+      "expected_behaviors": [
+        "Bot correctly parses 'boukra ba3d el doher' as tomorrow afternoon",
+        "Bot confirms the time slot in Arabizi",
+        "Bot does not ask for the time again",
+        "Bot proposes a specific time window if needed (e.g. '2pm aw 3pm, shu byenassbak?')",
+        "Tour/visit record created with correct date (tomorrow) and time range (afternoon)"
+      ]
+    },
+    {
+      "scenario_number": 7,
+      "title": "Arabizi Listing Selection - First Option",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ghereften nom",
+        "bfadel awal wehde"
+      ],
+      "expected_behaviors": [
+        "Bot correctly maps 'bfadel awal wehde' to selecting the first listing presented",
+        "Bot confirms selection of listing #1 in Arabizi",
+        "Bot does not re-list options after selection",
+        "Bot moves directly to visit booking flow",
+        "Selected listing is locked into lead profile"
+      ]
+    },
+    {
+      "scenario_number": 8,
+      "title": "Arabizi Price Objection - Too Expensive",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ghereften nom",
+        "mafrouch",
+        "ktir ghale"
+      ],
+      "expected_behaviors": [
+        "Bot correctly maps 'ktir ghale' to a price objection",
+        "Bot does NOT give up or apologize excessively",
+        "Bot offers alternatives: lower-priced listings, nearby neighborhoods, or unfurnished option",
+        "Bot asks if adjusting any criteria is acceptable (e.g. different area, unfurnished, smaller size)",
+        "Tone remains helpful and solution-oriented in Arabizi"
+      ]
+    },
+    {
+      "scenario_number": 9,
+      "title": "Arabizi Vague Response",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ghereften nom",
+        "hayalla"
+      ],
+      "expected_behaviors": [
+        "Bot detects 'hayalla' as vague/ambiguous (could mean 'let's go' or filler/brush-off)",
+        "Bot does NOT assume a definitive action",
+        "Bot gently re-engages with a clear specific question in Arabizi",
+        "Bot does not loop endlessly - if vague response repeats 2+ times, escalates to human agent",
+        "No English fallback triggered by vagueness alone"
+      ]
+    },
+    {
+      "scenario_number": 10,
+      "title": "Arabizi Larger Property Request",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ghereften nom",
+        "mafrouch",
+        "3endik shi akbar"
+      ],
+      "expected_behaviors": [
+        "Bot correctly maps '3endik shi akbar' to a request for larger properties",
+        "Bot confirms it's searching for larger options (3+ bedrooms or larger sqm) in Arabizi",
+        "Bot searches listings with higher bedroom count or larger square footage",
+        "Bot presents alternative listings in Arabizi",
+        "Bot flags if the budget needs to increase for larger options"
+      ]
+    },
+    {
+      "scenario_number": 11,
+      "title": "Language Switch - English Start, Arabizi Mid-Flow",
+      "language_mode": "mixed_switch",
+      "messages": [
+        "Hi, I'm looking for an apartment to rent in Achrafieh",
+        "My budget is around $1500 per month",
+        "ghereften nom, mafrouch"
+      ],
+      "expected_behaviors": [
+        "Turn 1-2: Bot responds in English matching user's language",
+        "Turn 3: User switches to Arabizi - bot MUST switch to Arabizi immediately",
+        "Bot does not stay in English after user switches",
+        "Arabizi response from turn 3 onward uses proper Metn dialect",
+        "All previously collected data (budget, location) is retained across the language switch",
+        "Bot does not re-ask questions already answered"
+      ]
+    },
+    {
+      "scenario_number": 12,
+      "title": "Arabizi Off-Topic - Weather Question",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "shu l jaw l yawm?"
+      ],
+      "expected_behaviors": [
+        "Bot recognizes 'shu l jaw l yawm?' as off-topic (weather question, not real estate)",
+        "Bot does NOT answer the weather question",
+        "Bot politely redirects to real estate in Arabizi",
+        "Bot does not escalate to human agent for a simple off-topic - just redirects",
+        "If user persists with off-topic after 2 attempts, then escalate to agent",
+        "Redirect tone is friendly and natural, not robotic"
+      ]
+    },
+    {
+      "scenario_number": 13,
+      "title": "Arabizi Budget in LBP",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "200 melyoun"
+      ],
+      "expected_behaviors": [
+        "Bot correctly identifies '200 melyoun' as Lebanese Pounds (LBP)",
+        "Bot silently converts 200,000,000 LBP to approximate USD equivalent at current exchange rate",
+        "Bot does NOT ask the user to restate in dollars",
+        "Bot confirms budget understanding in Arabizi using the dollar equivalent naturally",
+        "Exchange rate used should reflect current market rate (approximately 89,500 LBP per $1 USD as of 2026)",
+        "Lead profile stores both LBP and USD values"
+      ]
+    },
+    {
+      "scenario_number": 14,
+      "title": "Full Arabic Script Conversation",
+      "language_mode": "arabic_script",
+      "messages": [
+        "أنا أبحث عن شقة للإيجار في الأشرفية",
+        "ميزانيتي حوالي 1500 دولار شهرياً",
+        "غرفتا نوم",
+        "مفروشة"
+      ],
+      "expected_behaviors": [
+        "Bot detects native Arabic script input",
+        "Bot responds entirely in Arabic script (not Arabizi, not English)",
+        "Arabic used is Levantine Lebanese dialect in script form, not Modern Standard Arabic",
+        "Bot correctly parses all intent: rental, Achrafieh, $1500, 2BR, furnished",
+        "Bot continues qualification and booking flow in Arabic script",
+        "No language mixing in bot responses once Arabic script mode is established"
+      ]
+    },
+    {
+      "scenario_number": 15,
+      "title": "Arabizi Bot Identity Question",
+      "language_mode": "arabizi",
+      "messages": [
+        "3am nabesh 3a she2a la ajar bi Achrafieh",
+        "hawela l 1500$",
+        "ente bot?"
+      ],
+      "expected_behaviors": [
+        "Bot detects 'ente bot?' as an identity challenge",
+        "Bot does NOT deny being an AI",
+        "Bot does NOT say 'I am an AI assistant' in a robotic way",
+        "Bot gracefully acknowledges it's a smart assistant and immediately offers to connect with a human agent",
+        "Escalation to human agent is triggered or offered clearly",
+        "Response is in Arabizi, natural and non-defensive",
+        "All collected lead data is passed to the human agent upon escalation"
+      ]
+    }
+  ]
+}

@@ -1,10 +1,10 @@
 SCENARIO 09: Off-topic message
-Session ID: 76f54fc0-38c1-4e5d-abe7-3fac02f018b2
-Timestamp: 2026-04-10T17:45:37.428234
+Session ID: a680abdd-9cde-4401-a982-2822a560aafa
+Timestamp: 2026-04-13T17:43:44.111035
 Target: https://wakeeli-ai.up.railway.app/api/demo/chat
 
 [Lead]: what is the weather today
-[Agent]: I appreciate the chat but I can only help with real estate! Are you looking to buy or rent a property in Lebanon?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 RESULT: PASS (verify manually)
 

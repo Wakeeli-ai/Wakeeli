@@ -1,16 +1,16 @@
 SCENARIO 08: Buy flow no furnished
-Session ID: f391ae2a-4cac-4083-af70-e466865de13f
-Timestamp: 2026-04-10T17:45:25.933029
+Session ID: a1752c71-9354-4bd7-95ec-e1d03f55ba3d
+Timestamp: 2026-04-13T17:43:40.190141
 Target: https://wakeeli-ai.up.railway.app/api/demo/chat
 
 [Lead]: hi
-[Agent]: Hello! How can I help you?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: buy
-[Agent]: Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: Achrafieh, 200000, 2 bedrooms
-[Agent]: And your name?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 RESULT: PASS (verify manually)
 

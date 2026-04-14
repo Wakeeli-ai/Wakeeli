@@ -1,19 +1,19 @@
 SCENARIO 01: Basic buy flow
-Session ID: ca4f299b-9d36-48ee-a457-ee8b64e8f99c
-Timestamp: 2026-04-10T17:43:01.618420
+Session ID: 6bc2fca8-7028-4fca-ab4c-8f26f5aaecd8
+Timestamp: 2026-04-13T17:42:44.478037
 Target: https://wakeeli-ai.up.railway.app/api/demo/chat
 
 [Lead]: hi
-[Agent]: Hello! How can I help you?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: buy
-[Agent]: Sure, to help you find the best options, where in Lebanon are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: Achrafieh
-[Agent]: And your name?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: 300000 dollars, 3 bedrooms
-[Agent]: On it, let me find you some options in Achrafieh!
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 RESULT: PASS (verify manually)
 

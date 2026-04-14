@@ -52,6 +52,10 @@ class SessionState:
             "timeline": None
         }
 
+        # Language detected from the most recent user message.
+        # Updated every turn before entity extraction.
+        self.detected_language: str = 'english'
+
     def getter(self):
         return {
             "stage": self.stage,
@@ -67,6 +71,7 @@ class SessionState:
             "budget_ask_count": self.budget_ask_count,
             "furnished_ask_count": self.furnished_ask_count,
             "show_alternatives": self.show_alternatives,
+            "detected_language": self.detected_language,
             "user_info": self.user_info,
             "property_info": self.property_info
         }

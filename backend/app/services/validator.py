@@ -289,6 +289,29 @@ _LISTING_UUID_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Language enforcement patterns
+_ARABIZI_MARKER = re.compile(
+    r"\w*[2357]\w*|"
+    r"\b(shu|bas|marhaba|kifak|tamem|baddi|wein|shi|eza|khaline|hayde|"
+    r"esta2jer|she2a|mafrouch|hayalla|bshufa|hawela|ktir|ghale|nabesh|"
+    r"ista2jar|ishtari|ajar|3endik|kteer|kbir|sgir|yalla|halla2|boukra|"
+    r"la2|na3am|ahla|mneh|tayyeb|3am|haydik|hadik|bfadel|habet)\b",
+    re.IGNORECASE,
+)
+_ARABIC_SCRIPT = re.compile(r"[\u0600-\u06FF]")
+_FRENCH_MARKER = re.compile(
+    r"\b(le|la|les|de|du|et|est|pas|pour|je|tu|il|vous|nous|ils|une|avec|"
+    r"dans|sur|par|qui|que|au|aux|en|se|ne|plus|bien|merci|bonjour|oui|non|"
+    r"appartement|chambre|louer|acheter|quartier|villa|disponible|cherche|"
+    r"recherche|votre|notre|mon|ton|son|leur|comment|quand|quel|quelle|"
+    r"prix|budget|pieces|etage|tres|voici|bien|sur)\b",
+    re.IGNORECASE,
+)
+_WRONG_DIALECT = re.compile(
+    r"\b(ijjar|shaqqa|ghurfe|hawalik|dawwer)\b",
+    re.IGNORECASE,
+)
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -581,6 +604,60 @@ def validate_response(
                 ),
                 "medium",
                 blocking=False,
+            )
+
+    # Rule 11: LANGUAGE_MATCH (blocking)
+    # If the session has a detected language, the response must be in that language.
+    # A response in pure English when Arabizi/Arabic/French is expected triggers retry.
+    detected_lang = (session_state.get("detected_language") or "").lower()
+    if detected_lang == "arabizi":
+        if not _ARABIZI_MARKER.search(bot_response):
+            _record(
+                "LANGUAGE_MATCH",
+                (
+                    "Session language is 'arabizi' but response contains no Arabizi "
+                    "markers. Bot must respond in Franco-Arab Metn/Beirut dialect."
+                ),
+                "high",
+                blocking=True,
+            )
+    elif detected_lang == "arabic":
+        if not _ARABIC_SCRIPT.search(bot_response):
+            _record(
+                "LANGUAGE_MATCH",
+                (
+                    "Session language is 'arabic' but response contains no Arabic "
+                    "script characters. Bot must respond in Lebanese Arabic."
+                ),
+                "high",
+                blocking=True,
+            )
+    elif detected_lang == "french":
+        if not _FRENCH_MARKER.search(bot_response):
+            _record(
+                "LANGUAGE_MATCH",
+                (
+                    "Session language is 'french' but response contains no French "
+                    "words. Bot must respond entirely in French."
+                ),
+                "high",
+                blocking=True,
+            )
+
+    # Rule 12: WRONG_DIALECT (blocking)
+    # When in Arabizi mode, forbidden non-Metn words trigger retry.
+    if detected_lang == "arabizi":
+        wrong_match = _WRONG_DIALECT.search(bot_response)
+        if wrong_match:
+            _record(
+                "WRONG_DIALECT",
+                (
+                    f"Arabizi response contains forbidden generic-Levantine word "
+                    f"'{wrong_match.group()}'. Use Metn/Beirut vocabulary only: "
+                    f"esta2jer, she2a, gherfet nom, mafrouch, hawela."
+                ),
+                "high",
+                blocking=True,
             )
 
     return {

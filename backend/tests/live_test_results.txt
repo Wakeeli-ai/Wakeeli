@@ -1,8 +1,8 @@
 WAKEELI LIVE DEMO TEST SUITE
 Endpoint:  https://wakeeli-ai.up.railway.app/api/demo/chat
-Run at:    2026-04-07 12:24:46
+Run at:    2026-04-13 18:08:43
 ==============================================================
-RESULT:    28/30 passed   2/30 failed
+RESULT:    25/30 passed   5/30 failed
 ==============================================================
 
 ==============================================================
@@ -27,15 +27,18 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     I want to buy an apartment
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, where are you looking to buy, what's your budget range, and how many bedrooms do you need? What's your full name btw?
+    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? What's your full name btw?
 
 ==============================================================
 SCENARIO: 4. Explicit rent
-STATUS:   PASS   |   All checks passed
+STATUS:   FAIL   |   1 violation(s)
 
   Turn 1:
     SENT:     I want to rent a place
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms do you need? What's your full name btw?
+    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms do you need? What's your full name btw? Furnished or unfurnished?
+
+  VIOLATIONS:
+    [X] Turn 1: 3 question marks (max 2 allowed)
 
 ==============================================================
 SCENARIO: 5. Multi-info (rent 2BR Achrafieh $1000)
@@ -43,7 +46,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     I want to rent a 2 bedroom apartment in Achrafieh for 1000 dollars
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, would you prefer furnished or unfurnished? What's your full name btw?
+    RECEIVED: And your name? Furnished or unfurnished?
 
 ==============================================================
 SCENARIO: 6. Off-topic (weather)
@@ -55,7 +58,7 @@ STATUS:   PASS   |   All checks passed
 
 ==============================================================
 SCENARIO: 7. Full multi-turn conversation
-STATUS:   FAIL   |   2 violation(s)
+STATUS:   FAIL   |   1 violation(s)
 
   Turn 1:
     SENT:     hi
@@ -63,23 +66,22 @@ STATUS:   FAIL   |   2 violation(s)
 
   Turn 2:
     SENT:     rent
-    RECEIVED: Sure, to help you find the best options, where are you looking and what's your budget range? What's your full name btw?
+    RECEIVED: Sure, to help you find the best options, what area are you looking in, what's your budget range, and how many bedrooms do you need? What's your full name btw? Furnished or unfurnished?
 
   Turn 3:
     SENT:     Achrafieh
-    RECEIVED: Sure, to help you find the best options, what's your budget range, how many bedrooms, and furnished or unfurnished? And your name?
+    RECEIVED: Sure, to help you find the best options, what's your budget range and how many bedrooms? And your name?
 
   Turn 4:
     SENT:     1000 dollars, 2 bedrooms
-    RECEIVED: Furnished or unfurnished?
+    RECEIVED: Here are some 2-bedroom apartments for rent in Achrafieh under $1,000/month.
 
   Turn 5:
     SENT:     the first one looks good
-    RECEIVED: Which one caught your eye? Share the link or ID and I'll check it right away.
+    RECEIVED: Option 1 it is! When would you like to visit? Does Wednesday work for you?
 
   VIOLATIONS:
-    [X] Turn 4: no listings shown after full info provided
-    [X] Turn 5: no tour booking attempt after positive selection
+    [X] Turn 2: 3 question marks (max 2 allowed)
 
 ==============================================================
 SCENARIO: 8. Arabic greeting (marhaba)
@@ -91,7 +93,7 @@ STATUS:   PASS   |   All checks passed
 
 ==============================================================
 SCENARIO: 9. Name not asked on first message
-STATUS:   PASS   |   All checks passed
+STATUS:   FAIL   |   1 violation(s)
 
   Turn 1:
     SENT:     hi
@@ -99,19 +101,26 @@ STATUS:   PASS   |   All checks passed
 
   Turn 2:
     SENT:     buy
-    RECEIVED: Sure, to help you find the best options, what's your budget range and which area in Lebanon are you looking at? What's your full name btw?
+    RECEIVED: Sure, to help you find the best options, what area are you looking in, what's your budget range, and how many bedrooms? What's your full name btw?
 
   Turn 3:
     SENT:     Beirut
-    RECEIVED: Sure, to help you find the best options, what's your budget range, how many bedrooms, and do you have a specific area in Beirut in mind — like Hamra, Achrafieh, or Verdun? And your name?
+    RECEIVED: Sure! What's your budget range and how many bedrooms are you looking for in Beirut? Any specific area in mind, like Hamra, Achrafieh, or Verdun? And what is your name?
+
+  VIOLATIONS:
+    [X] Turn 3: 3 question marks (max 2 allowed)
 
 ==============================================================
 SCENARIO: 10. Question count limit (max 2)
-STATUS:   PASS   |   All checks passed
+STATUS:   FAIL   |   2 violation(s)
 
   Turn 1:
     SENT:     I want to rent an apartment
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, where are you looking and what's your budget range? What's your full name btw?
+    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, what area are you looking in, what's your budget range, and how many bedrooms do you need? What's your full name btw? Furnished or unfurnished?
+
+  VIOLATIONS:
+    [X] Turn 1: 3 question marks (max 2 allowed)
+    [X] Turn 1: 3 question marks in single response (limit is 2)
 
 ==============================================================
 SCENARIO: 11. Budget in LBP
@@ -119,7 +128,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     I want to rent an apartment for 100 million Lebanese pounds
-    RECEIVED: That's about $1,117/month. Sure, to help you find the best options, where in Lebanon are you looking, how many bedrooms, and furnished or unfurnished? What's your full name btw?
+    RECEIVED: Sure, to help you find the best options, what area are you looking in, and how many bedrooms do you need? And your name?
 
 ==============================================================
 SCENARIO: 12. Multiple areas mentioned
@@ -151,7 +160,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     1500
-    RECEIVED: Hello, thanks for reaching out! Is this for rent or to buy?
+    RECEIVED: Is this for rent or to buy?
 
 ==============================================================
 SCENARIO: 16. Lead sends just a name
@@ -159,7 +168,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     Sarah
-    RECEIVED: Hello! How can I help you?
+    RECEIVED: Is this for rent or to buy?
 
 ==============================================================
 SCENARIO: 17. Furnished only preference
@@ -175,11 +184,11 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     I want to rent a 2 bedroom in Hamra
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, what's your budget range and would you prefer furnished or unfurnished? What's your full name btw?
+    RECEIVED: Here are some 2-bedroom apartments for rent in Hamra! And what is your name? Furnished or unfurnished?
 
   Turn 2:
     SENT:     Actually wait, I want to buy not rent
-    RECEIVED: Still in Hamra, 2 bedrooms — what's your budget range for the purchase? And furnished or unfurnished?
+    RECEIVED: Sure! What's your budget range for the purchase?
 
 ==============================================================
 SCENARIO: 19. Commission question
@@ -187,7 +196,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     how much commission do you charge?
-    RECEIVED: I only handle property searches and tours, not commission info! Are you looking to buy or rent something in Lebanon?
+    RECEIVED: I appreciate the chat but I can only help with real estate! Are you looking to buy or rent a property in Lebanon?
 
 ==============================================================
 SCENARIO: 20. Asking about Wakeeli itself
@@ -195,7 +204,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     what is Wakeeli?
-    RECEIVED: I can only help with real estate! Are you looking to buy or rent a property in Lebanon?
+    RECEIVED: I appreciate the chat but I can only help with real estate! Are you looking to buy or rent a property in Lebanon?
 
 ==============================================================
 SCENARIO: 21. Short response - yes
@@ -215,19 +224,19 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     rent 2 bedroom Achrafieh 1200 dollars
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, would you prefer furnished or unfurnished? What's your full name btw?
+    RECEIVED: And your name? Furnished or unfurnished?
 
   Turn 2:
     SENT:     show me more options please
-    RECEIVED: Here you go!
+    RECEIVED: Here are some 2-bedroom apartments for rent in Achrafieh under $1,200/month:
 
-1. **Apartment in Achrafieh, Sioufi**
-   2 bedrooms | Unfurnished | $900/month
-   Bright unit on a high floor, great natural light and city views.
+1. **Apartment in Achrafieh, Sursock**
+   2 bedrooms | 1 bathroom | $1,100/month
+   Unfurnished, bright and spacious, close to amenities
 
 2. **Apartment in Achrafieh, Rmeil**
-   2 bedrooms | Furnished | $1,100/month
-   Modern finishing, close to restaurants and cafes, parking...
+   2 bedrooms | 2 bathrooms | $1,000/month
+   S...
 
 ==============================================================
 SCENARIO: 23. Reject all listings
@@ -235,11 +244,11 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     rent 2 bedroom Achrafieh 1000 dollars
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, would you prefer furnished or unfurnished? What's your full name btw?
+    RECEIVED: And your name? Furnished or unfurnished?
 
   Turn 2:
     SENT:     none of these work for me, I don't like any of them
-    RECEIVED: I have other options in different areas or price ranges. Want me to take a look?
+    RECEIVED: I have other options in different areas or price ranges — want me to search further?
 
 ==============================================================
 SCENARIO: 24. Ask about specific listing details
@@ -247,11 +256,17 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     rent 1 bedroom Mar Mikhael 800 dollars
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, would you prefer furnished or unfurnished? What's your full name btw?
+    RECEIVED: And your name? Furnished or unfurnished?
 
   Turn 2:
     SENT:     what floor is the first one on? does it have a balcony?
-    RECEIVED: The agent will be able to help you with that once we get a visit set up. | Were you interested in booking a visit for any of the listings?
+    RECEIVED: The agent will be able to help you with that. Here are some 1-bedroom apartments for rent in Mar Mikhael under $800:
+
+1. **Mar Mikhael** | 1 bed | $700/month | Unfurnished
+2. **Mar Mikhael** | 1 bed | $750/month | Furnished
+3. **Mar Mikhael** | 1 bed | $800/month | Semi-furnished
+
+Which one catches ...
 
 ==============================================================
 SCENARIO: 25. Book tour for tomorrow
@@ -259,13 +274,11 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     rent 2 bedroom Verdun 1500 dollars
-    RECEIVED: Hello, thanks for reaching out! Sure, to help you find the best options, would you prefer furnished or unfurnished? What's your full name btw?
+    RECEIVED: And your name? Furnished or unfurnished?
 
   Turn 2:
     SENT:     I like the second one, can I visit tomorrow?
-    RECEIVED: Same-day and next-day visits get routed to an agent directly.
-
-Let me connect you with one of our agents to arrange that for you.
+    RECEIVED: For same-day or next-day visits, let me connect you with one of our agents to arrange that for you.
 
 ==============================================================
 SCENARIO: 26. Far timeline (maybe next year)
@@ -273,7 +286,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     I might want to buy an apartment, but maybe next year
-    RECEIVED: No problem, I can show you what's on the market now so you get an idea of the prices and options. Sure, to help you find the best options, where are you looking to buy, what's your budget range, and how many bedrooms? What's your full name btw?
+    RECEIVED: Hello, thanks for reaching out! No problem, I can show you what's on the market now so you get an idea. What area are you looking in, roughly how many bedrooms, and even a rough budget range helps, like $200k-300k? What's your full name btw?
 
 ==============================================================
 SCENARIO: 27. Emoji only input
@@ -289,7 +302,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     I'm already working with a real estate agent
-    RECEIVED: Got it! If you ever need anything else, feel free to reach out.
+    RECEIVED: Got it! Feel free to reach out if you ever need anything else. 😊
 
 ==============================================================
 SCENARIO: 29. Lead asks for agent contact directly
@@ -297,7 +310,7 @@ STATUS:   PASS   |   All checks passed
 
   Turn 1:
     SENT:     can you give me a phone number for one of your agents?
-    RECEIVED: I can only help with real estate here! Are you looking to buy or rent something in Lebanon?
+    RECEIVED: I can only help with real estate listings! Are you looking to buy or rent a property in Lebanon?
 
 ==============================================================
 SCENARIO: 30. Lead speaks in French
@@ -305,20 +318,26 @@ STATUS:   FAIL   |   1 violation(s)
 
   Turn 1:
     SENT:     Bonjour, je cherche un appartement a louer a Beyrouth
-    RECEIVED: Bonjour, merci de nous avoir contactés ! Pour vous trouver les meilleures options, quel est votre budget, combien de chambres vous souhaitez, et meublé ou non meublé ? Vous avez un quartier précis en tête à Beyrouth, comme Hamra, Achrafieh, ou Verdun ? Et votre prénom ?
+    RECEIVED: Sure, pour trouver les meilleures options, quel est votre budget et combien de chambres vous cherchez? Vous avez un quartier précis à Beyrouth en tête, comme Hamra, Achrafieh ou Mar Elias? Et votre prénom? And what is your name?
 
   VIOLATIONS:
-    [X] Turn 1: 3 question marks (max 2 allowed)
+    [X] Turn 1: 4 question marks (max 2 allowed)
 
 ==============================================================
 FINAL SUMMARY
 ==============================================================
-PASSED: 28/30
-FAILED: 2/30
+PASSED: 25/30
+FAILED: 5/30
 
 FAILURES:
-  [7. Full multi-turn conversation]  2 violation(s)
-    - Turn 4: no listings shown after full info provided
-    - Turn 5: no tour booking attempt after positive selection
-  [30. Lead speaks in French]  1 violation(s)
+  [4. Explicit rent]  1 violation(s)
     - Turn 1: 3 question marks (max 2 allowed)
+  [7. Full multi-turn conversation]  1 violation(s)
+    - Turn 2: 3 question marks (max 2 allowed)
+  [9. Name not asked on first message]  1 violation(s)
+    - Turn 3: 3 question marks (max 2 allowed)
+  [10. Question count limit (max 2)]  2 violation(s)
+    - Turn 1: 3 question marks (max 2 allowed)
+    - Turn 1: 3 question marks in single response (limit is 2)
+  [30. Lead speaks in French]  1 violation(s)
+    - Turn 1: 4 question marks (max 2 allowed)

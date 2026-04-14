@@ -1,16 +1,16 @@
 SCENARIO 10: Name handling
-Session ID: 77b68688-8c3a-4345-a053-16002b4e0019
-Timestamp: 2026-04-10T17:46:00.077915
+Session ID: 27b67f7e-f359-4a70-96fa-bf8ad66260c0
+Timestamp: 2026-04-13T17:43:51.713689
 Target: https://wakeeli-ai.up.railway.app/api/demo/chat
 
 [Lead]: hi
-[Agent]: Hello! How can I help you?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: buy
-[Agent]: Sure, to help you find the best options, where are you looking to buy, what's your rough budget range, and how many bedrooms? ||| What's your full name btw?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: Beirut
-[Agent]: And your name?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 RESULT: PASS (verify manually)
 

@@ -1,16 +1,16 @@
 SCENARIO 07: Furnished asked for rent
-Session ID: d0d1cf7b-c7b9-47a5-997b-eaf5ad57f1ef
-Timestamp: 2026-04-10T17:45:03.705412
+Session ID: 9c3e8b5e-b55d-41e0-981e-4fb4e5f09628
+Timestamp: 2026-04-13T17:43:32.303778
 Target: https://wakeeli-ai.up.railway.app/api/demo/chat
 
 [Lead]: hi
-[Agent]: Hello! How can I help you?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: rent
-[Agent]: Sure, to help you find the best options, where are you looking, what's your budget range, and how many bedrooms? ||| What's your full name btw?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 [Lead]: Jounieh, 1500 a month, 2 bedrooms
-[Agent]: And your name?
+[Agent]: Bear with me for a second, something went wrong. Please try again.
 
 RESULT: PASS (verify manually)
 

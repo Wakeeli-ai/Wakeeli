@@ -1,0 +1,182 @@
+{
+  "suite": "Wakeeli Chatbot - French Test Scenarios",
+  "language_notes": "Lebanese French speakers. Mix of French and occasional Arabic/English words is normal. Bot should match user's language exactly.",
+  "version": "1.0",
+  "created": "2026-04-14",
+  "scenarios": [
+    {
+      "scenario_number": 1,
+      "title": "Full French Rental Flow",
+      "language_mode": "french",
+      "messages": [
+        "Bonjour, je cherche un appartement à louer à Achrafieh",
+        "Mon budget est environ 1500 dollars par mois",
+        "Deux chambres",
+        "Meublé de préférence",
+        "Oui, je voudrais visiter"
+      ],
+      "expected_behaviors": [
+        "Bot detects French and responds entirely in French throughout",
+        "Bot correctly parses: rental, Achrafieh, $1500/month, 2 bedrooms, furnished",
+        "Bot qualifies naturally in French without re-asking answered questions",
+        "On visit confirmation, bot moves to booking flow in French",
+        "Tone is professional and warm, not robotic",
+        "Bot never switches to English or Arabic unprompted"
+      ]
+    },
+    {
+      "scenario_number": 2,
+      "title": "French Budget Parsing",
+      "language_mode": "french",
+      "messages": [
+        "Je cherche un appartement à Verdun",
+        "Mon budget c'est dans les 2000 dollars"
+      ],
+      "expected_behaviors": [
+        "Bot parses 'dans les 2000 dollars' correctly as approximately $2000/month",
+        "Bot acknowledges budget without asking for clarification",
+        "Budget stored in lead profile",
+        "Bot continues to next qualification question in French",
+        "No confusion between 'dans les X' (approximately X) and exact values"
+      ]
+    },
+    {
+      "scenario_number": 3,
+      "title": "French Off-Topic Handling",
+      "language_mode": "french",
+      "messages": [
+        "Je cherche un appartement à Hamra",
+        "Est-ce que vous pouvez me recommander un bon restaurant à Beyrouth?"
+      ],
+      "expected_behaviors": [
+        "Bot identifies restaurant question as off-topic",
+        "Bot does NOT answer the restaurant question",
+        "Bot politely redirects to real estate in French",
+        "Redirect is friendly, not abrupt",
+        "Bot re-engages qualification flow from where it left off"
+      ]
+    },
+    {
+      "scenario_number": 4,
+      "title": "French Listing Selection",
+      "language_mode": "french",
+      "messages": [
+        "Je cherche un appartement à Achrafieh",
+        "1500 dollars, deux chambres, meublé",
+        "Je prends le deuxième"
+      ],
+      "expected_behaviors": [
+        "Bot correctly maps 'je prends le deuxième' to selecting the second listing",
+        "Bot confirms listing #2 selection in French",
+        "Bot moves immediately to visit booking without re-listing options",
+        "Selected listing is locked in lead profile",
+        "Bot does not re-qualify after selection"
+      ]
+    },
+    {
+      "scenario_number": 5,
+      "title": "French Booking Flow",
+      "language_mode": "french",
+      "messages": [
+        "Je cherche un appartement à Achrafieh",
+        "1500 dollars, deux chambres",
+        "Oui je veux visiter",
+        "Demain après-midi si possible"
+      ],
+      "expected_behaviors": [
+        "Bot correctly parses 'demain après-midi' as tomorrow afternoon",
+        "Bot confirms the time slot in French",
+        "Bot proposes specific time options if needed (e.g. '14h ou 15h, qu'est-ce qui vous convient?')",
+        "Tour record created with correct date and time range",
+        "Confirmation message sent in French with all visit details"
+      ]
+    },
+    {
+      "scenario_number": 6,
+      "title": "French-English Mixed Language",
+      "language_mode": "mixed_french_english",
+      "messages": [
+        "Hi I'm looking for an apartment in Achrafieh",
+        "Budget autour de 1500 dollars",
+        "Deux chambres, meublé"
+      ],
+      "expected_behaviors": [
+        "Turn 1: Bot responds in English matching user",
+        "Turn 2: User switches to French - bot should switch to French",
+        "Turn 3: User continues in French - bot stays in French",
+        "All collected data retained across language switch",
+        "No re-asking questions already answered",
+        "Bot does not mix languages in its own responses"
+      ]
+    },
+    {
+      "scenario_number": 7,
+      "title": "French Vague Intent",
+      "language_mode": "french",
+      "messages": [
+        "Bonjour",
+        "Je cherche quelque chose"
+      ],
+      "expected_behaviors": [
+        "Bot greets warmly in French",
+        "Bot detects 'je cherche quelque chose' as vague/incomplete intent",
+        "Bot asks a clear open question to establish intent: buy or rent? Which area?",
+        "Bot does not assume property type or location",
+        "Bot does not present listings before understanding the request",
+        "Tone is helpful and natural, not interrogative"
+      ]
+    },
+    {
+      "scenario_number": 8,
+      "title": "French Returning Lead Recognition",
+      "language_mode": "french",
+      "messages": [
+        "Bonjour, c'est encore moi, je vous avais contacté la semaine dernière pour un appartement à Achrafieh"
+      ],
+      "expected_behaviors": [
+        "Bot acknowledges the returning lead in French",
+        "Bot attempts to retrieve previous conversation context if available",
+        "If context found: bot summarizes what was previously discussed and asks how to proceed",
+        "If context not found: bot gracefully re-qualifies from scratch without making the user feel like a stranger",
+        "Bot does not pretend to remember if it doesn't have the data",
+        "Tone is warm and familiar, not cold or transactional"
+      ]
+    },
+    {
+      "scenario_number": 9,
+      "title": "French Studio Request",
+      "language_mode": "french",
+      "messages": [
+        "Je cherche un studio à louer à Mar Mikhael",
+        "Budget max 800 dollars",
+        "Non meublé c'est pas grave"
+      ],
+      "expected_behaviors": [
+        "Bot correctly maps 'studio' to 1 room / bachelor apartment",
+        "Bot parses '$800 max' as budget ceiling",
+        "Bot correctly maps 'non meublé c'est pas grave' to unfurnished preference acceptable",
+        "Lead profile: studio, Mar Mikhael, max $800, unfurnished OK",
+        "Bot searches and presents relevant listings in French",
+        "Bot flags if no studio matches are available in that area/budget"
+      ]
+    },
+    {
+      "scenario_number": 10,
+      "title": "French Agent Handoff",
+      "language_mode": "french",
+      "messages": [
+        "Je cherche un appartement à Achrafieh",
+        "1500 dollars, deux chambres",
+        "J'aimerais parler à un agent humain s'il vous plaît"
+      ],
+      "expected_behaviors": [
+        "Bot immediately recognizes the explicit human agent request",
+        "Bot confirms handoff in French without argument or persuasion attempt",
+        "Bot summarizes collected lead data and confirms it will be passed to the agent",
+        "Bot sets expectation on response time if known",
+        "Human agent notification triggered with full lead profile",
+        "Bot does not try to continue the sales flow after handoff request"
+      ]
+    }
+  ]
+}

@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 intent_detection_prompt = """
 You are an intelligent real estate AI assistant for Wakeeli, a Lebanese real estate platform.
 Your task is to analyze the user's message and return structured JSON with the following fields.
@@ -176,6 +179,11 @@ CRITICAL — LBP CURRENCY CONVERSION:
 - 500,000,000 LBP → budget value: 5587
 - 1,000,000,000 LBP → budget value: 11173
 NEVER store raw LBP values in budget_min or budget_max. Always divide by 89,500 first.
+
+--------------------------------
+
+MULTILINGUAL EXTRACTION RULE:
+The user message may be in English, Arabizi, Lebanese Arabic, or French. Extract intent and entities regardless of language. ALWAYS return JSON fields in English regardless of input language.
 
 --------------------------------
 
@@ -527,6 +535,51 @@ For listings, it is fine to have one longer message that contains the numbered l
 --------------------------------"""
 
 
+def get_language_mode_prompt(detected_language: Optional[str]) -> str:
+    """Return a language-mode instruction block for the current session language.
+
+    Injected into the dynamic action prompt so the bot cannot drift to the
+    wrong language or wrong dialect.
+    """
+    if not detected_language:
+        return ""
+
+    lang = detected_language.lower()
+
+    if lang == "arabizi":
+        return (
+            "\n\nLANGUAGE MODE: ARABIZI ACTIVE. The lead is texting in Franco-Arab "
+            "(Arabizi), Metn/Beirut dialect. You MUST respond in the same Arabizi "
+            "dialect. Key vocabulary (Fox-verified, real words used in Metn and "
+            "Beirut): esta2jer (rent, NOT ijjar), she2a (apartment, NOT shaqqa), "
+            "ghereften nom or gherfet nom (bedrooms, NOT ghurfe), mafrouch or fi "
+            "3afesh (furnished), bshufa (I want to see it), boukra ba3d el doher "
+            "(tomorrow afternoon), bfadel or habet (I prefer/I liked), ktir ghale "
+            "(too expensive), hayalla (whatever/anything), 3endik shi akbar (do you "
+            "have something bigger), nabesh (looking for), hawela "
+            "(around/approximately), ajar (rent noun). NEVER use: ijjar, shaqqa, "
+            "ghurfe, hawalik, dawwer. Those are NOT Metn/Beirut dialect. Stay casual "
+            "and natural. Short messages. No formal Arabic (fusha) ever."
+        )
+
+    if lang == "arabic":
+        return (
+            "\n\nLANGUAGE MODE: ARABIC ACTIVE. Respond in Lebanese Arabic dialect, "
+            "written in Arabic script. Informal, conversational. Never use Modern "
+            "Standard Arabic (fusha)."
+        )
+
+    if lang == "french":
+        return (
+            "\n\nLANGUAGE MODE: FRENCH ACTIVE. Respond entirely in French. Property "
+            "terms: appartement, villa, chambre (bedroom), louer (rent), acheter "
+            "(buy), quartier (neighborhood). Maintain Nour persona. Warm and "
+            "professional."
+        )
+
+    return ""
+
+
 def get_static_system_prompt() -> str:
     """Return the large static V2 DM Scripts framework section.
 
@@ -536,11 +589,16 @@ def get_static_system_prompt() -> str:
     return _STATIC_SYSTEM_PROMPT
 
 
-def get_dynamic_action_prompt(custom_message: str) -> str:
+def get_dynamic_action_prompt(
+    custom_message: str,
+    detected_language: Optional[str] = None,
+) -> str:
     """Return just the action-specific instruction for the current turn.
 
     This section changes every request and must NOT be cached.
+    Pass detected_language to inject the appropriate language-mode block.
     """
-    return f"\nACTION BEHAVIOR\n\n{custom_message}\n"
+    language_block = get_language_mode_prompt(detected_language)
+    return f"\nACTION BEHAVIOR\n\n{custom_message}\n{language_block}"
 
 

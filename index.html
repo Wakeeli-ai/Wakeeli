@@ -344,6 +344,7 @@ body {
   animation: fadeSlideUp 0.5s ease forwards;
   animation-delay: 380ms;
   opacity: 0;
+  cursor: pointer;
 }
 
 .leader-rank {
@@ -413,6 +414,7 @@ body {
   flex-direction: column;
   gap: 7px;
   align-items: flex-start;
+  cursor: pointer;
 }
 
 .lb-name {
@@ -913,7 +915,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>11:58 AM BEY</div>
+    <div class="header-gentime">Updated<br>12:09 PM BEY</div>
   </div>
 </header>
 
@@ -1071,7 +1073,7 @@ body {
 <!-- Leaderboard -->
 <div class="section-label">Leaderboard</div>
 <div class="leaderboard-section">
-<div class="glass-card leader-card" style="--accent:#FF9F0A;--glow:rgba(255,159,10,0.18)">
+<div class="glass-card leader-card" style="--accent:#FF9F0A;--glow:rgba(255,159,10,0.18)" data-popup-type="rank" data-person="Jamy" data-color="#FF9F0A" data-rank="1" data-duration-score="54" data-timing-score="17" data-combined-score="35.5" data-nights="4" data-best-night="8h 16m (Apr 14)" data-worst-night="5h 30m (Apr 11)">
   <div class="leader-rank">
     <span class="rank-badge" style="background:#FFD700;color:#000">1</span>
   </div>
@@ -1081,7 +1083,7 @@ body {
     <div class="leader-sub">7-day average</div>
   </div>
 </div>
-<div class="lb-others"><div class="glass-card lb-card" style="--accent:#00C2B7;--glow:rgba(0,194,183,0.18)"><span class="rank-badge sm" style="background:#C0C0C0;color:#000">2</span><span class="lb-name" style="color:#00C2B7">AJ</span><div class="lb-avg val-darkgreen">7h&nbsp;01m</div><div class="lb-sub">7d avg</div></div><div class="glass-card lb-card" style="--accent:#FF5252;--glow:rgba(255,82,82,0.18)"><span class="rank-badge sm" style="background:#CD7F32;color:#000">3</span><span class="lb-name" style="color:#FF5252">Liam</span><div class="lb-avg val-green">8h&nbsp;44m</div><div class="lb-sub">7d avg</div></div><div class="glass-card lb-card" style="--accent:#8B5CF6;--glow:rgba(139,92,246,0.18)"><span class="rank-badge sm" style="background:rgba(255,255,255,0.2);color:#fff">4</span><span class="lb-name" style="color:#8B5CF6">Fox</span><div class="lb-avg val-amber">6h&nbsp;01m</div><div class="lb-sub">7d avg</div></div></div>
+<div class="lb-others"><div class="glass-card lb-card" style="--accent:#00C2B7;--glow:rgba(0,194,183,0.18)" data-popup-type="rank" data-person="AJ" data-color="#00C2B7" data-rank="2" data-duration-score="3" data-timing-score="69" data-combined-score="35.8" data-nights="3" data-best-night="7h 50m (Apr 12)" data-worst-night="6h 22m (Apr 14)"><span class="rank-badge sm" style="background:#C0C0C0;color:#000">2</span><span class="lb-name" style="color:#00C2B7">AJ</span><div class="lb-avg val-darkgreen">7h&nbsp;01m</div><div class="lb-sub">7d avg</div></div><div class="glass-card lb-card" style="--accent:#FF5252;--glow:rgba(255,82,82,0.18)" data-popup-type="rank" data-person="Liam" data-color="#FF5252" data-rank="3" data-duration-score="33" data-timing-score="90" data-combined-score="61.7" data-nights="3" data-best-night="9h 28m (Apr 14)" data-worst-night="7h 32m (Apr 12)"><span class="rank-badge sm" style="background:#CD7F32;color:#000">3</span><span class="lb-name" style="color:#FF5252">Liam</span><div class="lb-avg val-green">8h&nbsp;44m</div><div class="lb-sub">7d avg</div></div><div class="glass-card lb-card" style="--accent:#8B5CF6;--glow:rgba(139,92,246,0.18)" data-popup-type="rank" data-person="Fox" data-color="#8B5CF6" data-rank="4" data-duration-score="46" data-timing-score="105" data-combined-score="75.3" data-nights="4" data-best-night="7h 15m (Apr 11)" data-worst-night="4h 43m (Apr 12)"><span class="rank-badge sm" style="background:rgba(255,255,255,0.2);color:#fff">4</span><span class="lb-name" style="color:#8B5CF6">Fox</span><div class="lb-avg val-amber">6h&nbsp;01m</div><div class="lb-sub">7d avg</div></div></div>
 </div>
 
 <!-- 14-day heat map -->
@@ -1389,7 +1391,7 @@ body {
         '<div class="popup-stat"><span class="popup-lbl">Slept</span><span class="popup-v">' + sleep + '</span></div>' +
         '<div class="popup-stat"><span class="popup-lbl">Woke</span><span class="popup-v">' + wake + '</span></div>' +
         '<div class="popup-stat"><span class="popup-lbl">Total</span><span class="popup-v ' + colorClass(ind) + '">' + hours + '</span></div>';
-    } else {
+    } else if (type === 'm2') {
       var bedtime = cell.dataset.bedtime || '--';
       var prev = cell.dataset.prevBedtime || '--';
       var delta = cell.dataset.delta || '--';
@@ -1400,14 +1402,37 @@ body {
         '<div class="popup-stat"><span class="popup-lbl">Bedtime</span><span class="popup-v">' + bedtime + '</span></div>' +
         '<div class="popup-stat"><span class="popup-lbl">Prev night</span><span class="popup-v">' + prev + '</span></div>' +
         '<div class="popup-stat"><span class="popup-lbl">Delta</span><span class="popup-v ' + colorClass(ind) + '">' + delta + '</span></div>';
+    } else if (type === 'rank') {
+      var rank       = cell.dataset.rank || '--';
+      var durScore   = cell.dataset.durationScore || '--';
+      var timScore   = cell.dataset.timingScore || '--';
+      var combScore  = cell.dataset.combinedScore || '--';
+      var nights     = cell.dataset.nights || '--';
+      var bestNight  = cell.dataset.bestNight || '--';
+      var worstNight = cell.dataset.worstNight || '--';
+      var durFmt   = durScore  === '--' ? '--' : durScore  + ' min';
+      var timFmt   = timScore  === '--' ? '--' : timScore  + ' min';
+      var combFmt  = combScore === '--' ? '--' : combScore + ' min';
+      html =
+        '<div class="popup-person" style="color:' + color + '">' + person + '</div>' +
+        '<div class="popup-date-row">Rank #' + rank + '</div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Duration score</span><span class="popup-v">' + durFmt + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Timing score</span><span class="popup-v">' + timFmt + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Combined</span><span class="popup-v">' + combFmt + '</span></div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Nights tracked</span><span class="popup-v">' + nights + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Best night</span><span class="popup-v clr-darkgreen">' + bestNight + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Worst night</span><span class="popup-v clr-red">' + worstNight + '</span></div>';
     }
 
     el.innerHTML = html;
     document.body.appendChild(el);
 
     var rect = cell.getBoundingClientRect();
-    var pw = 164;
-    var ph = 132;
+    var pw = (type === 'rank') ? 200 : 164;
+    var ph = (type === 'rank') ? 218 : 132;
+    if (type === 'rank') { el.style.width = pw + 'px'; }
     var vpw = window.innerWidth;
     var vph = window.innerHeight;
 

@@ -913,7 +913,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>8:17 AM BEY</div>
+    <div class="header-gentime">Updated<br>8:32 AM BEY</div>
   </div>
 </header>
 
@@ -971,7 +971,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-darkgreen">8h&nbsp;18m</div>
+  <div class="hero-number val-green">8h&nbsp;33m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1252,46 +1252,11 @@ body {
     var curX     = 0;
     var lastTs   = null;
 
-    /* Fill a zone with black background and faint grid lines */
-    function fillZone(x, w) {
-      if (w <= 0) return;
-      var x2 = x + w;
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(x - 1, 0, w + 2, H);
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-      ctx.lineWidth   = 0.5;
-      /* Horizontal grid lines */
-      [H * 0.28, H * 0.56, H * 0.84].forEach(function(gy) {
-        ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x2, gy); ctx.stroke();
-      });
-      /* Vertical grid lines every 20px */
-      var vx = Math.ceil(x / 20) * 20;
-      for (; vx <= x2; vx += 20) {
-        ctx.beginPath(); ctx.moveTo(vx, 0); ctx.lineTo(vx, H); ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    /* Pre-render the full ECG waveform onto an offscreen canvas once */
-    var offscreen = document.createElement('canvas');
-    offscreen.width  = canvas.width;
-    offscreen.height = canvas.height;
-    var offCtx = offscreen.getContext('2d');
-    offCtx.scale(dpr, dpr);
-    offCtx.strokeStyle = color;
-    offCtx.lineWidth   = 1.5;
-    offCtx.lineJoin    = 'round';
-    offCtx.lineCap     = 'round';
-    offCtx.beginPath();
+    /* Pre-compute waveform path in CSS pixel coords (avoid recalc every frame) */
+    var pts = [];
     for (var px = 0; px <= W; px += 0.5) {
-      var py = yAt(px, baseline, amp);
-      if (px === 0) offCtx.moveTo(px, py); else offCtx.lineTo(px, py);
+      pts.push(px, yAt(px, baseline, amp));
     }
-    offCtx.stroke();
-
-    /* Initial canvas: black background */
-    fillZone(0, W);
 
     function frame(ts) {
       if (!lastTs) lastTs = ts;
@@ -1301,10 +1266,10 @@ body {
 
       if (newX >= W) {
         newX = newX - W;
-        curX = 0;
       }
 
-      /* Clear entire canvas */
+      /* Clear entire canvas -- all coords in CSS pixels, ctx.scale(dpr,dpr)
+         is already applied so no DPR multiplication needed anywhere below */
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, W, H);
 
@@ -1320,18 +1285,25 @@ body {
       }
       ctx.restore();
 
-      /* Reveal the pre-rendered ECG up to cursor position using clip.
-         All coordinates here are CSS pixels -- ctx already has scale(dpr,dpr)
-         applied, so we must NOT multiply by dpr again (that would double-scale
-         on HiDPI screens and break mobile where dpr is typically 2 or 3).
-         drawImage must specify destination size in CSS pixels for the same
-         reason: without dw/dh, canvas draws at physical pixel count which the
-         transform then scales up by dpr a second time. */
+      /* Draw waveform directly on main canvas inside clip region.
+         Drawing directly (no drawImage / offscreen) eliminates GPU texture
+         resampling that caused blurring on high-DPR mobile devices. The
+         ctx.scale(dpr,dpr) transform already maps CSS coords to device pixels,
+         so lineWidth=1.5 renders at exactly 1.5*dpr physical pixels = crisp. */
       ctx.save();
       ctx.beginPath();
       ctx.rect(0, 0, newX, H);
       ctx.clip();
-      ctx.drawImage(offscreen, 0, 0, W, H);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 1.5;
+      ctx.lineJoin    = 'round';
+      ctx.lineCap     = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pts[0], pts[1]);
+      for (var i = 2; i < pts.length; i += 2) {
+        ctx.lineTo(pts[i], pts[i + 1]);
+      }
+      ctx.stroke();
       ctx.restore();
 
       /* Erase zone just ahead of cursor for sweep effect */

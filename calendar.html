@@ -482,13 +482,13 @@ body {
       <div class="legend-swatch" style="background:#1E8449"></div>6.5-8.5h optimal
     </div>
     <div class="legend-item">
-      <div class="legend-swatch" style="background:#34C759"></div>8.5-9.5h cinderella
+      <div class="legend-swatch" style="background:#34C759"></div>8.5-9h cinderella
     </div>
     <div class="legend-item">
-      <div class="legend-swatch" style="background:#FF9F0A"></div>5-6.5h okay
+      <div class="legend-swatch" style="background:#FF9F0A"></div>5-6.5h / 9-9.5h okay
     </div>
     <div class="legend-item">
-      <div class="legend-swatch" style="background:#FF3B30"></div>&lt;5h / 9.5h+ oversleep
+      <div class="legend-swatch" style="background:#FF3B30"></div>&lt;5h / 9.5h+ red
     </div>
     <div class="legend-item">
       <div class="legend-swatch" style="background:rgba(255,255,255,0.14)"></div>No data
@@ -565,6 +565,7 @@ function padZ(n) { return String(n).padStart(2, '0'); }
 function getDurColor(h) {
   if (h == null) return 'rgba(255,255,255,0.12)';
   if (h >= 9.5) return '#FF3B30';   // oversleep
+  if (h >= 9)   return '#FF9F0A';   // too much (orange)
   if (h >= 8.5) return '#34C759';   // cinderella
   if (h >= 6.5) return '#1E8449';   // optimal
   if (h >= 5)   return '#FF9F0A';   // okay

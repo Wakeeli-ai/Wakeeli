@@ -915,7 +915,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>8:31 AM BEY</div>
+    <div class="header-gentime">Updated<br>10:05 AM BEY</div>
   </div>
 </header>
 
@@ -973,7 +973,7 @@ body {
     <span class="card-status">Sleeping</span>
   </div>
 
-  <div class="hero-number val-darkgreen">7h&nbsp;17m</div>
+  <div class="hero-number val-green live-sleep-timer" data-sleep-ts="1776636900000">8h&nbsp;51m</div>
   <div class="hero-label">ongoing</div>
 
   <div class="stat-row">
@@ -1499,6 +1499,42 @@ body {
       dismiss();
     }
   });
+})();
+</script>
+
+<script>
+/* Live sleep timer: updates elapsed time on sleeping person cards every 30s */
+(function() {
+  function fmtElapsed(ms) {
+    var totalMin = Math.floor(ms / 60000);
+    if (totalMin < 0) { totalMin = 0; }
+    var h = Math.floor(totalMin / 60);
+    var m = totalMin % 60;
+    var mm = m < 10 ? '0' + m : '' + m;
+    if (h > 0) { return h + 'h ' + mm + 'm'; }
+    return mm + 'm';
+  }
+
+  function updateTimers() {
+    var now = Date.now();
+    document.querySelectorAll('.live-sleep-timer[data-sleep-ts]').forEach(function(el) {
+      var ts = parseInt(el.getAttribute('data-sleep-ts'), 10);
+      if (!ts) { return; }
+      var elapsed = now - ts;
+      el.textContent = fmtElapsed(elapsed);
+    });
+  }
+
+  function boot() {
+    updateTimers();
+    setInterval(updateTimers, 30000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 })();
 </script>
 

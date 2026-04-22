@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 import time
@@ -17,6 +18,7 @@ from app.services.session import SessionState, STAGES
 from app.services.token_tracker import log_usage, check_token_budget
 from app.services.validator import validate_response, log_violations, enforce_rules, log_enforcement
 from app.services.language import detect_language
+from app.services.silence import should_go_silent, should_stay_silent
 from pprint import pprint
 
 client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
@@ -85,6 +87,14 @@ _TRIPLE_DASH_PATTERN = re.compile(r'---+[^\n]*(?:\n|$)', re.MULTILINE)
 # Phrases that indicate self-referential reasoning leaking into a response part
 _SELF_REF_PHRASES = re.compile(
     r'\b(let me restart|let me just|let me respond|i need to|i realize[d]?|i should\b|wait[,\s]+i|hmm[,\s]+i)\b',
+    re.IGNORECASE
+)
+
+# Bug 2: qualifying keywords used to detect if the LLM response is still asking
+# the lead for core criteria. When a qualifying question is detected in any part,
+# listing injection is suppressed so the bot finishes qualifying before showing properties.
+_QUALIFYING_QUESTION_PATTERN = re.compile(
+    r'\b(budget|bedroom|bedrooms|location|furnished|furnishing|property type)\b',
     re.IGNORECASE
 )
 
@@ -180,6 +190,24 @@ _VAGUE_BUDGET_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# Explicit "don't care" detection for area/location and budget.
+# When matched, the field is treated as fully satisfied (sets location_any/budget_any).
+# This is distinct from vague budget (which asks once more for a rough range).
+_LOCATION_ANY_PATTERN = re.compile(
+    r"\b(anywhere|any area|any location|any neighborhood|any place|any part|"
+    r"all areas|doesnt matter|doesn.?t matter|no preference|no specific area|"
+    r"wherever|la fre2|la fre|mish muhim.*area|area.*mish muhim)\b",
+    re.IGNORECASE
+)
+_BUDGET_ANY_PATTERN = re.compile(
+    r"\b(any budget|no budget limit|no limit|no max|unlimited budget|"
+    r"doesnt matter.*budget|budget.*doesnt matter|doesn.?t matter.*budget|"
+    r"budget.*doesn.?t matter|whatever.*budget|budget.*whatever|"
+    r"mish muhim.*budget|budget.*mish muhim|mish muhim.*price|"
+    r"open budget|no restriction.*budget|budget.*no restriction)\b",
+    re.IGNORECASE
+)
+
 
 
 def update_memory(session: SessionState, extracted, user_message: str = ""):
@@ -201,6 +229,17 @@ def update_memory(session: SessionState, extracted, user_message: str = ""):
                 prop_info[key] = usd_val
                 if user_said_lbp:
                     session.lbp_converted[key] = usd_val
+    # Detect explicit "dont care" signals for area and budget.
+    # When the lead says 'anywhere', 'any budget', etc., treat that field as satisfied.
+    # These flags persist across turns and satisfy the search gate without a real value.
+    if user_message:
+        if _LOCATION_ANY_PATTERN.search(user_message):
+            session.location_any = True
+        if _BUDGET_ANY_PATTERN.search(user_message):
+            session.budget_any = True
+            # Also skip budget asking entirely since they explicitly don't care
+            session.budget_ask_count = 2
+
     session.update_agent_state(extracted)
     # Vague budget (budget_flexible) never counts as valid budget info.
     # Clear it after every update so the bot always asks for a rough range
@@ -412,7 +451,11 @@ Example:
                     if listing.description:
                         desc_snippet = (listing.description[:100] + "...") if len(listing.description) > 100 else listing.description
 
-                    # Find similar listings for cross-sell after booking confirmation
+                    # Find similar listings for cross-sell after booking confirmation.
+                    # Intentionally weaker than the 2-of-3 user-criteria gate: criteria
+                    # here come from the found listing's own attributes (type, area, price),
+                    # not user-stated preferences. This is a post-booking cross-sell lookup,
+                    # not a discovery search, so the 2-of-3 gate does not apply.
                     similar_filters = {
                         "listing_type": listing.listing_type,
                         "location": listing.area or listing.city,
@@ -481,8 +524,19 @@ Offer to search for similar properties based on their preferences.
                     if criteria_changed:
                         # BUG 7 fix: reset listings_shown and re-search rather than
                         # falling back to agent. Only fall back if truly zero results.
+                        # Correction gate: area AND budget both required (or their
+                        # respective "dont care" flags set). Bedrooms is optional.
+                        _corr_budget = (
+                            session.property_info.get("budget_min")
+                            or session.property_info.get("budget_max")
+                            or session.budget_ask_count >= 2
+                        )
+                        _corr_gate = (
+                            (bool(session.property_info.get("location")) or session.location_any)
+                            and (bool(_corr_budget) or session.budget_any)
+                        )
                         session.listings_shown = False
-                        results = search_listings(db, session.property_info)
+                        results = search_listings(db, session.property_info) if _corr_gate else []
                         if results:
                             session.listings_shown = True
                             results_to_show = results[:5]
@@ -503,7 +557,7 @@ Offer to search for similar properties based on their preferences.
                                     f"No listing text. Reply with the opening phrase only."
                                 )
                                 corr_recommendation_instruction = (
-                                    "Send ONE short closing question only, like 'What do you think?' "
+                                    "Send ONE short closing question only, like 'Would any of these work for you?' "
                                     "Reply with the closing question only. No listing text."
                                 )
                             else:
@@ -516,7 +570,7 @@ Offer to search for similar properties based on their preferences.
                                     f"No listing text. Reply with the opening phrase only."
                                 )
                                 corr_recommendation_instruction = (
-                                    "Send ONLY 'What do you think?' as a short closing message. "
+                                    "Send a short natural closing question like 'Would any of these work for you?' "
                                     "Do NOT recommend or pick a favorite. No listing text."
                                 )
 
@@ -531,6 +585,10 @@ Use ||| to separate your parts.
                             _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
 
                         else:
+                            # listings_shown=True (outer condition) guarantees the session
+                            # already passed the 2-of-3 gate. Intentionally weaker here:
+                            # we relax criteria via recommend_alternatives when exact search
+                            # returned zero results after the user corrected their criteria.
                             alt_results = recommend_alternatives(db, session.property_info)
                             if alt_results:
                                 session.listings_shown = True
@@ -543,7 +601,7 @@ Use ||| to separate your parts.
 CORRECTION FLOW: Alternative listings for updated criteria are already included in the response by the system.
 Your job is only to generate:
 1. An opener that confirms what you are showing: property type, listing type, and area. Example: 'Here are some {_beds_label}{_ptype_label}s{_lt_label}{_alt_corr_area_hint}'. Do NOT say 'no exact match', 'I don't have an exact match', or anything revealing the search outcome. Send the opener only.
-2. Send 'What do you think?' as a closing.
+2. Send a short natural closing question like 'Let me know if any of these interest you.'
 Do NOT reproduce the listing text. Use ||| to separate your parts.
 """
                                 _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
@@ -562,6 +620,10 @@ Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with
                             # ("Want me to take a look?"). Run the actual search now instead of
                             # falling into the generic listing handler, which could misread a bare
                             # 'sure' as a booking confirmation.
+                            # Intentionally weaker than the 2-of-3 gate: this path can only be
+                            # reached when session.listings_shown=True (outer condition at the
+                            # top of this elif block), which guarantees the session already
+                            # passed the 2-of-3 gate when listings were first shown.
                             alt_results = recommend_alternatives(db, session.property_info)
                             session.show_alternatives = False
                             if alt_results:
@@ -577,7 +639,7 @@ Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with
                                         "Do NOT say 'no exact match'. No listing text. Reply with the opening phrase only."
                                     )
                                     _alt_close = (
-                                        "Send ONE short closing question only, like 'What do you think?' "
+                                        "Send ONE short closing question only, like 'Would any of these work for you?' "
                                         "Reply with the closing question only. No listing text."
                                     )
                                 else:
@@ -586,9 +648,8 @@ Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with
                                         "Do NOT say 'no exact match'. No listing text. Reply with the opening phrase only."
                                     )
                                     _alt_close = (
-                                        "Send a recommendation line then 'What do you think?' as two short messages. "
-                                        "Example: 'Option 2 is probably the closest to what you had in mind' ||| 'What do you think?' "
-                                        "No listing text."
+                                        "Send ONE short closing question only, like 'Would any of these work for you?' "
+                                        "No listing text. No recommendation."
                                     )
                                 msg = f"""
 CONFIRMED SEARCH FLOW: The user confirmed they want to see more options.
@@ -634,7 +695,7 @@ Respond naturally based on what the user just said. Possible scenarios:
 
 User message to respond to: {user_message}
 """
-                elif sum([bool(location), bool(has_budget_for_search), bool(bedrooms)]) >= 2:
+                elif (bool(location) or session.location_any) and (bool(has_budget_for_search) or session.budget_any):
                     results = search_listings(db, property_info)
 
                     if results:
@@ -686,12 +747,12 @@ User message to respond to: {user_message}
 
                         if result_count == 1:
                             recommendation_instruction = (
-                                "Send ONE short closing question only, like 'What do you think?' "
+                                "Send ONE short closing question only, like 'Would any of these work for you?' "
                                 "Reply with the closing question only. No listing text."
                             )
                         else:
                             recommendation_instruction = (
-                                "Send ONLY 'What do you think?' as a short closing message. "
+                                "Send a short natural closing question like 'Would any of these work for you?' "
                                 "Do NOT recommend or pick a favorite option. Present all options equally and let the lead decide. "
                                 "Reply with the closing only. No listing text."
                             )
@@ -729,7 +790,7 @@ Use ||| to separate your parts.
                                     f"Send that phrase only as the opener."
                                 )
                                 alt_recommendation_instruction = (
-                                    "Send ONE short closing question only, like 'What do you think?' "
+                                    "Send ONE short closing question only, like 'Would any of these work for you?' "
                                     "Reply with the closing question only. No listing text."
                                 )
                             else:
@@ -742,7 +803,7 @@ Use ||| to separate your parts.
                                     f"Send that phrase only as the opener."
                                 )
                                 alt_recommendation_instruction = (
-                                    "Send ONLY 'What do you think?' as a short closing message. "
+                                    "Send a short natural closing question like 'Would any of these work for you?' "
                                     "Do NOT recommend or pick a favorite option. No listing text."
                                 )
 
@@ -764,7 +825,8 @@ Smoothly connect them with an agent: "Let me connect you with one of our agents 
                 else:
                     msg = """
 Not enough information to search yet.
-At least 2 of the following are needed: location, budget range, number of bedrooms.
+Both area/location AND budget are required before showing listings.
+Bedrooms and furnished are optional but helpful - ask for them too if missing.
 Ask only for what is still missing. Bundle into one short message.
 """
 
@@ -772,13 +834,21 @@ Ask only for what is still missing. Bundle into one short message.
             if alternatives_instruction:
                 alt_override_prefix = f"{alternatives_instruction}\n\n"
 
+            _new_search_this_turn = _direct_parts is not None
+            if _new_search_this_turn:
+                _search_presentation_text = (
+                    "Present property information clearly.\n"
+                    "Help the user move toward booking a visit.\n"
+                    "Do NOT echo or summarize the user's requirements before presenting results. "
+                    "If you need to acknowledge their last input, say something brief like "
+                    '"All right, noted!" then go straight to the listings.\n\n'
+                )
+            else:
+                _search_presentation_text = ""
+
             message = f"""
 {alt_override_prefix}Be natural and conversational.
-Present property information clearly.
-Help the user move toward booking a visit.
-Do NOT echo or summarize the user's requirements before presenting results. If you need to acknowledge their last input, say something brief like "All right, noted!" then go straight to the listings.
-
-{msg}
+{_search_presentation_text}{msg}
 """
 
         except Exception as e:
@@ -843,14 +913,15 @@ One question. Nothing else. Do not bundle with other questions.
                     # After two asks (or one vague answer + one ask), skip budget and proceed without.
                     _budget_skip = not _has_budget and session.budget_ask_count >= 2
                     _has_budget_for_search = _has_budget or _budget_skip
-                    _search_score = sum([
-                        bool(property_info.get("location")),
-                        _has_budget_for_search,
-                        bool(property_info.get("bedrooms")),
-                    ])
-                    _enough_to_search = bool(property_info.get("listing_type")) and _search_score >= 2
+                    # Gate: area AND budget both required (or their "dont care" flags).
+                    # Bedrooms and furnished are optional and never block the search.
+                    _enough_to_search = (
+                        bool(property_info.get("listing_type"))
+                        and (bool(property_info.get("location")) or session.location_any)
+                        and (_has_budget_for_search or session.budget_any)
+                    )
 
-                    _has_furnishing = bool(property_info.get("furnishing"))
+                    _has_furnishing = property_info.get("furnishing") is not None
                     _furnished_skip = not _has_furnishing and session.furnished_ask_count >= 1
 
                     _all_missing = []
@@ -1183,17 +1254,44 @@ Greet the user naturally and ask how you can help them find a property in Lebano
     # Split on ||| delimiter and clean each part, stripping any stray quotation marks
     parts = [p.strip().strip('"').strip("'").strip() for p in raw_reply.split("|||") if p.strip()]
 
+    # Rule 15 guard: if the system is injecting listings via _direct_parts, the LLM
+    # must NOT also reproduce listing text. Strip any part that matches numbered-listing
+    # patterns with price data (these are the system's job, not the LLM's).
+    _LISTING_LEAK_PATTERN = re.compile(
+        r"(?m)^\d+\.\s+.{20,}(?:\$|USD|usd|\d{2,},\d{3})",
+        re.IGNORECASE,
+    )
+    if _direct_parts is not None and parts:
+        _clean_parts = []
+        for _p in parts:
+            if _LISTING_LEAK_PATTERN.search(_p):
+                print(f"[Rule15] Stripped LLM listing leak from part: {_p[:80]!r}")
+            else:
+                _clean_parts.append(_p)
+        if _clean_parts:
+            parts = _clean_parts
+
     # Listings flow: inject the formatted listings block between the LLM opener and closer.
     # _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
     # LLM generates: opener (parts[0]) and closer (parts[1:])
     # Final reply: [opener, listings, ...closer_parts]
     if _direct_parts is not None:
         listing_block = _direct_parts[1]
-        if parts:
-            assembled = parts[0:1] + [listing_block] + parts[1:]
-        else:
-            assembled = [listing_block]
-        return assembled
+        # Bug 2 guard: if any LLM response part contains a qualifying question
+        # (asking about budget, bedrooms, location, furnished, or property type),
+        # skip listing injection for this turn so the bot finishes qualifying first.
+        # Check per part so that "What do you think?" does not trigger a false positive.
+        _is_qualifying = any(
+            '?' in part and bool(_QUALIFYING_QUESTION_PATTERN.search(part))
+            for part in parts
+        )
+        if not _is_qualifying:
+            if parts:
+                assembled = parts[0:1] + [listing_block] + parts[1:]
+            else:
+                assembled = [listing_block]
+            return assembled
+        # Qualifying question detected: fall through and return parts without listing injection
 
     return parts if parts else [raw_reply]
 
@@ -1303,15 +1401,20 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
     # Get or create the per-conversation session
     session = get_session(conversation_id)
 
-    # Dedup: if this exact message was processed for this session within the last 10 seconds,
-    # return the cached reply. Prevents double-responses from frontend double-submit.
+    # Dedup: hash of (message + stored_ts). If the same message arrives within 10 seconds,
+    # the hash matches and the cached reply is returned. Prevents double-responses from
+    # frontend double-submit.
     _now = time.time()
-    if (getattr(session, '_dedup_message', None) == user_message
-            and (_now - getattr(session, '_dedup_ts', 0.0)) < 10.0):
-        _cached = getattr(session, '_dedup_reply', None)
-        if _cached:
-            print(f"[dedup] duplicate message for conversation {conversation_id}, returning cached reply")
-            return _cached
+    _stored_dedup_ts = getattr(session, '_dedup_ts', 0.0)
+    if (_now - _stored_dedup_ts) < 10.0:
+        _incoming_hash = hashlib.sha256(
+            f"{user_message}{_stored_dedup_ts}".encode()
+        ).hexdigest()
+        if _incoming_hash == getattr(session, '_dedup_hash', None):
+            _cached = getattr(session, '_dedup_reply', None)
+            if _cached:
+                print(f"[dedup] duplicate message for conversation {conversation_id}, returning cached reply")
+                return _cached
 
     try:
         # Fetch conversation and recent history
@@ -1343,6 +1446,10 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             db.add(ai_msg)
             db.commit()
             return [response_msg]
+
+        # Silence guard: off-topic, bot identity, or post-handoff (history-based)
+        if should_go_silent(user_message, history) or should_stay_silent(history):
+            return []
 
         # Detect language on the raw user message before entity extraction.
         # Stored on session so generate_reply can enforce the correct language mode.
@@ -1437,8 +1544,8 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
                 and not should_route):
             action = "process_property_request"
 
-        # Generate reply with active enforcement gate (max 1 retry = 2 generations)
-        _MAX_RETRIES = 1
+        # Generate reply with active enforcement gate (max 2 retries = 3 generations)
+        _MAX_RETRIES = 2
         _best_reply_parts: list[str] = []
         _best_violation_count = float("inf")
         _last_enforcement: dict = {}
@@ -1535,18 +1642,19 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
             and _name_count_reasonable
             and _name_not_in_reply
             and reply_parts
+            and not session.handed_off
         ):
             reply_parts.append("And what is your name?")
 
         # FIX 2: HARDCODED FURNISHED INJECTION
         # If listing_type is rent, furnished is unknown, and it was never asked,
         # and the reply didn't include a furnished question, inject it in code.
-        _furnished_missing = not session.property_info.get("furnishing")
+        _furnished_missing = session.property_info.get("furnishing") is None
         _furnished_never_asked = session.furnished_ask_count == 0
         _furnished_not_in_reply = not _FURNISHED_IN_REPLY.search(_reply_joined)
         _is_rent = session.property_info.get("listing_type") == "rent"
         if (
-            action == "more_info_needed"
+            action in ("more_info_needed", "collect_property_info")
             and _is_rent
             and _furnished_missing
             and _furnished_never_asked
@@ -1570,9 +1678,12 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         db.add(ai_msg)
         db.commit()
 
-        # Cache for dedup on the next turn
-        session._dedup_message = user_message
-        session._dedup_ts = time.time()
+        # Cache for dedup on the next turn: store hash of (message + ts)
+        _dedup_ts = time.time()
+        session._dedup_hash = hashlib.sha256(
+            f"{user_message}{_dedup_ts}".encode()
+        ).hexdigest()
+        session._dedup_ts = _dedup_ts
         session._dedup_reply = reply_parts
 
         return reply_parts

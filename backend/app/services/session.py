@@ -32,6 +32,10 @@ class SessionState:
         self.lbp_converted = {}
         # Set to True for one turn when the name was just extracted this turn
         self.name_just_set = False
+        # Set to True when lead explicitly says they don't care about area/budget
+        # (e.g. 'anywhere', 'any budget'). Satisfies the search gate for that field.
+        self.location_any = False
+        self.budget_any = False
 
         self.user_info = {
             "name": None,
@@ -72,6 +76,8 @@ class SessionState:
             "furnished_ask_count": self.furnished_ask_count,
             "show_alternatives": self.show_alternatives,
             "detected_language": self.detected_language,
+            "location_any": self.location_any,
+            "budget_any": self.budget_any,
             "user_info": self.user_info,
             "property_info": self.property_info
         }
@@ -122,15 +128,18 @@ class SessionState:
 
         # ---------------------------
         # 4. ENOUGH INFO TO SEARCH
-        # Requires listing_type + at least 2 of: location, budget, bedrooms.
-        # Furnished is never required to trigger listing presentation.
+        # Requires listing_type + BOTH area AND budget.
+        # Bedrooms and furnished are optional and never block the search gate.
+        # Exception: if lead explicitly said they don't care (location_any / budget_any),
+        # that field is treated as satisfied.
         # ---------------------------
         has_budget = bool(budget_min) or bool(budget_max)
         # After two asks (or one vague answer + one ask), skip budget and allow search to proceed.
         _budget_skip = not has_budget and self.budget_ask_count >= 2
-        _search_score = sum([bool(location), has_budget or _budget_skip, bool(bedrooms)])
+        _location_satisfied = bool(location) or self.location_any
+        _budget_satisfied = has_budget or _budget_skip or self.budget_any
 
-        if listing_type and _search_score >= 2:
+        if listing_type and _location_satisfied and _budget_satisfied:
             if not name:
                 self.stage = 5
             else:
@@ -141,7 +150,12 @@ class SessionState:
         # 5. VAGUE PROPERTY REQUEST
         # ---------------------------
         if self.classification == "A2":
-            self.stage = 2
+            # If the user confirmed they have no link, treat as discovery so
+            # the more_info_needed flow runs and furnished injection fires.
+            if self.user_info.get("not_link_or_id"):
+                self.stage = 5
+            else:
+                self.stage = 2
             return
 
         # ---------------------------
@@ -185,9 +199,19 @@ class SessionState:
             self.user_info.update(new_user_info)
 
         if "property_info" in new_data:
-            self.property_info.update(
-                {k: v for k, v in new_data["property_info"].items() if v is not None}
-            )
+            pi = {k: v for k, v in new_data["property_info"].items() if v is not None}
+            # Normalise furnishing to bool: True = furnished, False = unfurnished, None = unknown
+            if "furnishing" in pi:
+                raw = pi["furnishing"]
+                if isinstance(raw, str):
+                    raw_lower = raw.lower().strip()
+                    if "unfurnished" in raw_lower:
+                        pi["furnishing"] = False
+                    elif "furnished" in raw_lower:
+                        pi["furnishing"] = True
+                    else:
+                        del pi["furnishing"]  # unrecognised string: keep existing value
+            self.property_info.update(pi)
 
 
 

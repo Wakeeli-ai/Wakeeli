@@ -211,6 +211,24 @@ ENFORCEMENT_RULES: dict = {
             r"\b\d{8}\b",
         ],
     },
+
+    # Rule 14: Never ask 'what do you think' (blocks the prompt cue leaking into replies)
+    "NEVER_WHAT_DO_YOU_THINK": {
+        "soft": False,
+        "patterns": [
+            r"(?i)what do you think",
+        ],
+    },
+
+    # Rule 15: Never reproduce listing text in LLM output.
+    # When _direct_parts injects listings, the LLM should only generate an opener
+    # and closer, not re-write the listing details. Soft rule: strip, don't retry.
+    "NEVER_REPRODUCE_LISTING": {
+        "soft": True,
+        "patterns": [
+            r"(?m)^\d+\.\s+.{20,}(?:\$|USD|usd|\d{2,},\d{3})",
+        ],
+    },
 }
 
 

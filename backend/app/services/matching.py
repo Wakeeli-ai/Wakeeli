@@ -11,6 +11,30 @@ from app.services.geography import (
     DISTRICT_NAMES,
 )
 
+# Monthly rent amounts above this threshold are almost certainly purchase budgets
+RENT_BUY_BUDGET_THRESHOLD = 10_000
+
+
+def check_budget_sanity(listing_type, budget_max=None, budget_min=None):
+    """
+    Checks whether the given budget is consistent with the stated listing_type.
+
+    If listing_type is 'rent' but the budget exceeds the monthly rent threshold,
+    the budget almost certainly belongs to a purchase, not a rental.
+
+    Returns a dict:
+      corrected_type  - suggested listing_type to use instead, or None if no issue
+      needs_clarification - True when the caller should ask the user to confirm
+    """
+    budget_ref = budget_max if budget_max is not None else budget_min
+    if budget_ref is None:
+        return {"corrected_type": None, "needs_clarification": False}
+
+    if listing_type == "rent" and budget_ref > RENT_BUY_BUDGET_THRESHOLD:
+        return {"corrected_type": "buy", "needs_clarification": True}
+
+    return {"corrected_type": None, "needs_clarification": False}
+
 def search_listings(db: Session, filters: dict):
     query = db.query(Listing).filter(Listing.is_available == True)
 
@@ -47,8 +71,11 @@ def search_listings(db: Session, filters: dict):
         else:
             query = query.filter(Listing.bedrooms == bedrooms_val)
 
-    if filters.get("furnishing"):
-        query = query.filter(Listing.furnishing.ilike(f"%{filters['furnishing']}%"))
+    furnished_val = filters.get("furnishing")
+    if furnished_val is True:
+        query = query.filter(Listing.furnishing.ilike("furnished"))
+    elif furnished_val is False:
+        query = query.filter(Listing.furnishing.ilike("unfurnished"))
 
     listing_type = filters.get("listing_type")
     budget_max = filters.get("budget_max")
@@ -65,21 +92,21 @@ def search_listings(db: Session, filters: dict):
         if budget_min is not None:
             query = query.filter(Listing.rent_price >= budget_min)
     else:
-        # If listing_type isn't provided, match either sale or rent price
-        if budget_max is not None:
-            query = query.filter(
-                or_(
-                    Listing.sale_price <= budget_max,
-                    Listing.rent_price <= budget_max
-                )
-            )
-        if budget_min is not None:
-            query = query.filter(
-                or_(
-                    Listing.sale_price >= budget_min,
-                    Listing.rent_price >= budget_min
-                )
-            )
+        # listing_type not set: infer intent from budget magnitude.
+        # A budget above the rent threshold is treated as a purchase budget;
+        # anything at or below it is treated as a monthly rent budget.
+        budget_ref = budget_max if budget_max is not None else budget_min
+        if budget_ref is not None:
+            if budget_ref > RENT_BUY_BUDGET_THRESHOLD:
+                if budget_max is not None:
+                    query = query.filter(Listing.sale_price <= budget_max)
+                if budget_min is not None:
+                    query = query.filter(Listing.sale_price >= budget_min)
+            else:
+                if budget_max is not None:
+                    query = query.filter(Listing.rent_price <= budget_max)
+                if budget_min is not None:
+                    query = query.filter(Listing.rent_price >= budget_min)
 
     # Order by price (budget closeness) and recency
     # For MVP, just order by created_at desc

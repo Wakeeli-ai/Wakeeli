@@ -569,6 +569,94 @@ body {
   padding-left: 2px;
 }
 
+/* ---- Calendar Tracker Section ---- */
+.cal-tracker-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cal-tracker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cal-tracker-person {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cal-tracker-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cal-tracker-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.cal-tracker-stat-val {
+  font-family: 'SF Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cal-tracker-stat-lbl {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cal-tracker-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.cal-tracker-dots {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.cal-tracker-dots::-webkit-scrollbar {
+  display: none;
+}
+
+.cal-tracker-cell {
+  width: 32px;
+  min-width: 32px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.cal-tracker-day {
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* ---- Consistency name cell ---- */
 .cons-name-cell {
   flex-direction: column;
@@ -915,7 +1003,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:27 AM BEY</div>
+    <div class="header-gentime">Updated<br>9:44 AM BEY</div>
   </div>
 </header>
 
@@ -1183,6 +1271,29 @@ body {
         No data
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Fox Calendar Submission Tracker -->
+<div class="section-label">Calendar Tracker</div>
+<div class="section-sublabel">Fox daily submission log</div>
+<div class="heat-section">
+  <div class="glass-card heat-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
+<div class="cal-tracker-layout">
+  <div class="cal-tracker-header">
+    <div class="cal-tracker-person" style="color:#8B5CF6">Fox</div>
+    <div class="cal-tracker-stats">
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#8B5CF6">0</span><span class="cal-tracker-stat-lbl"> day streak</span></span>
+      <span class="cal-tracker-divider"></span>
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#8B5CF6">0/14 days</span><span class="cal-tracker-stat-lbl"> submitted</span></span>
+    </div>
+  </div>
+  <div class="cal-tracker-dots"><div class="cal-tracker-cell" title="May 10: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">10</span></div><div class="cal-tracker-cell" title="May 11: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">11</span></div><div class="cal-tracker-cell" title="May 12: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">12</span></div><div class="cal-tracker-cell" title="May 13: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">13</span></div><div class="cal-tracker-cell" title="May 14: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">14</span></div><div class="cal-tracker-cell" title="May 15: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">15</span></div><div class="cal-tracker-cell" title="May 16: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">16</span></div><div class="cal-tracker-cell" title="May 17: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">17</span></div><div class="cal-tracker-cell" title="May 18: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">18</span></div><div class="cal-tracker-cell" title="May 19: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">19</span></div><div class="cal-tracker-cell" title="May 20: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">20</span></div><div class="cal-tracker-cell" title="May 21: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">21</span></div><div class="cal-tracker-cell" title="May 22: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">22</span></div><div class="cal-tracker-cell" title="May 23: Not submitted" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">23</span></div></div>
+  <div class="heat-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(52,199,89,0.80)"></div>Submitted</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(255,59,48,0.65)"></div>Not submitted</div>
+  </div>
+</div>
   </div>
 </div>
 

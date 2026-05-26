@@ -705,6 +705,248 @@ body {
   animation-delay: 620ms;
 }
 
+/* ---- Team Battle Section ---- */
+.battle-status-line {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.team-battle-grid {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.battle-card {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 16px;
+  padding: 14px 11px;
+  position: relative;
+  overflow: hidden;
+}
+
+.battle-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.5px;
+  background: var(--team-color, rgba(255,255,255,0.2));
+  opacity: 0.75;
+}
+
+.battle-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 100% 50% at 50% 0%, var(--team-glow, transparent), transparent 80%);
+  pointer-events: none;
+}
+
+.battle-card-winning {
+  border-color: var(--team-color);
+  box-shadow: 0 0 0 1px var(--team-color), 0 4px 20px var(--team-glow);
+}
+
+.battle-team-name {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.battle-team-score {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.battle-score-unit {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: rgba(255,255,255,0.4);
+  margin-left: 2px;
+}
+
+.battle-members {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.battle-member-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+}
+
+.battle-member-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.battle-member-name {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.battle-member-pts {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+.battle-pts-group {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+}
+
+.battle-pts-num {
+  font-family: 'SF Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.battle-pts-lbl {
+  font-size: 7px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.battle-pts-sep {
+  font-size: 8px;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.battle-pts-total {
+  font-family: 'SF Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.battle-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  padding: 0 1px;
+  align-self: center;
+}
+
+.battle-ledger {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.battle-ledger-header {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.battle-ledger-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.battle-ledger-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.battle-ledger-month {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 26px;
+}
+
+.battle-ledger-warmup-tag {
+  font-size: 7.5px;
+  font-weight: 700;
+  background: rgba(255,159,10,0.12);
+  color: #FF9F0A;
+  border: 1px solid rgba(255,159,10,0.22);
+  border-radius: 4px;
+  padding: 1px 4px;
+  letter-spacing: 0.4px;
+}
+
+.battle-ledger-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+}
+
+.battle-ledger-score {
+  font-family: 'SF Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.battle-ledger-sep {
+  font-size: 7.5px;
+  color: var(--text-dim);
+}
+
+.battle-ledger-leader {
+  font-size: 8.5px;
+  font-weight: 600;
+}
+
+.battle-ledger-pending {
+  color: var(--text-dim);
+  font-size: 9.5px;
+}
+
+.battle-ledger-warmup-note {
+  font-size: 8px;
+  color: rgba(255,159,10,0.55);
+  font-style: italic;
+  padding-left: 1px;
+  margin-top: -3px;
+}
+
+.battle-ledger-future-row {
+  opacity: 0.5;
+}
+
 /* ---- Footer ---- */
 .footer {
   text-align: center;
@@ -1026,7 +1268,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>9:15 AM BEY</div>
+    <div class="header-gentime">Updated<br>5:54 PM BEY</div>
   </div>
 </header>
 
@@ -1355,6 +1597,15 @@ body {
     <div class="legend-item"><div class="legend-dot" style="background:rgba(255,59,48,0.65)"></div>Missed</div>
   </div>
 
+  </div>
+</div>
+
+<!-- Team Battle -->
+<div class="section-label">Team Battle</div>
+<div class="section-sublabel">Stallions vs Grizzlies &middot; Monthly scoring from May 23</div>
+<div class="heat-section">
+  <div class="glass-card heat-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
+<div class="battle-status-line"><span style="color:#F59E0B">Stallions lead</span><span style="color:rgba(255,255,255,0.3)"> +4.3</span></div><div class="team-battle-grid"><div class="battle-card battle-card-winning" style="--team-color:#F59E0B;--team-glow:rgba(245,158,11,0.15)"><div class="battle-team-name" style="color:#F59E0B">Stallions</div><div class="battle-team-score" style="color:#F59E0B">62.0<span class="battle-score-unit">pts</span></div><div class="battle-members"><div class="battle-member-row"><span class="battle-member-name" style="color:#8B5CF6">Fox</span><div class="battle-member-pts"><span class="battle-pts-group"><span class="battle-pts-num">6</span><span class="battle-pts-lbl">goal</span></span><span class="battle-pts-sep">+</span><span class="battle-pts-group"><span class="battle-pts-num">29.1</span><span class="battle-pts-lbl">sleep</span></span><span class="battle-pts-sep">=</span><span class="battle-pts-total">35.1</span></div></div><div class="battle-member-divider"></div><div class="battle-member-row"><span class="battle-member-name" style="color:#00C2B7">AJ</span><div class="battle-member-pts"><span class="battle-pts-group"><span class="battle-pts-num">2</span><span class="battle-pts-lbl">goal</span></span><span class="battle-pts-sep">+</span><span class="battle-pts-group"><span class="battle-pts-num">24.9</span><span class="battle-pts-lbl">sleep</span></span><span class="battle-pts-sep">=</span><span class="battle-pts-total">26.9</span></div></div></div></div><div class="battle-vs">VS</div><div class="battle-card" style="--team-color:#22C55E;--team-glow:rgba(34,197,94,0.15)"><div class="battle-team-name" style="color:#22C55E">Grizzlies</div><div class="battle-team-score" style="color:#22C55E">57.7<span class="battle-score-unit">pts</span></div><div class="battle-members"><div class="battle-member-row"><span class="battle-member-name" style="color:#FF5252">Liam</span><div class="battle-member-pts"><span class="battle-pts-group"><span class="battle-pts-num">6</span><span class="battle-pts-lbl">goal</span></span><span class="battle-pts-sep">+</span><span class="battle-pts-group"><span class="battle-pts-num">25.2</span><span class="battle-pts-lbl">sleep</span></span><span class="battle-pts-sep">=</span><span class="battle-pts-total">31.2</span></div></div><div class="battle-member-divider"></div><div class="battle-member-row"><span class="battle-member-name" style="color:#FF9F0A">Jamy</span><div class="battle-member-pts"><span class="battle-pts-group"><span class="battle-pts-num">0</span><span class="battle-pts-lbl">goal</span></span><span class="battle-pts-sep">+</span><span class="battle-pts-group"><span class="battle-pts-num">26.5</span><span class="battle-pts-lbl">sleep</span></span><span class="battle-pts-sep">=</span><span class="battle-pts-total">26.5</span></div></div></div></div></div><div class="battle-ledger"><div class="battle-ledger-header">Month Ledger</div><div class="battle-ledger-row"><div class="battle-ledger-left"><span class="battle-ledger-month">May</span><span class="battle-ledger-warmup-tag">WARMUP</span></div><div class="battle-ledger-right"><span class="battle-ledger-score" style="color:#F59E0B">62.0</span><span class="battle-ledger-sep">vs</span><span class="battle-ledger-score" style="color:#22C55E">57.7</span><span class="battle-ledger-leader"><span style="color:#F59E0B">Stallions lead</span><span style="color:rgba(255,255,255,0.3)"> +4.3</span></span></div></div><div class="battle-ledger-warmup-note">May winner gets +5 added to June starting score</div><div class="battle-ledger-row battle-ledger-future-row"><div class="battle-ledger-left"><span class="battle-ledger-month">Jun</span></div><div class="battle-ledger-right"><span class="battle-ledger-pending">Starts Jun 1</span></div></div><div class="battle-ledger-row battle-ledger-future-row"><div class="battle-ledger-left"><span class="battle-ledger-month">Jul</span></div><div class="battle-ledger-right"><span class="battle-ledger-pending">--</span></div></div></div>
   </div>
 </div>
 

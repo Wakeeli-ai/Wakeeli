@@ -61,21 +61,28 @@ body {
   color: var(--text-dim);
   margin-top: 3px;
 }
-.section-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-dim);
+.person-section {
+  margin-bottom: 10px;
+}
+.person-header {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 9px;
+  margin-bottom: 14px;
   padding-left: 2px;
+}
+.person-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 28px 0;
 }
 .chart-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   padding: 18px 16px 16px;
-  margin-bottom: 26px;
+  margin-bottom: 14px;
   position: relative;
   overflow: hidden;
 }
@@ -100,31 +107,12 @@ body {
 .chart-wrap {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 180px;
 }
 .optimal-note {
   font-size: 10px;
   color: rgba(52,199,89,0.55);
   margin-top: 8px;
-}
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 13px;
-}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
 }
 .footer {
   text-align: center;
@@ -142,61 +130,113 @@ body {
 
 <div class="page-header">
   <div class="page-title">TREND ANALYSIS</div>
-  <div class="page-sub">June 3, 2026 &middot; 8:42 AM</div>
+  <div class="page-sub">June 3, 2026 &middot; 8:47 AM</div>
 </div>
 
-<div class="section-label">Sleep Duration</div>
-<div class="chart-card">
-  <div class="chart-title">Duration Trend</div>
-  <div class="chart-sub">Hours slept per night &middot; full history since Apr 11</div>
-  <div class="chart-wrap"><canvas id="chartDuration"></canvas></div>
-  <div class="optimal-note">&#9646; Green band = optimal zone (6.5 &ndash; 8.5h)</div>
-  <div class="legend" id="legendDuration"></div>
+<div class="person-section">
+  <div class="person-header" style="color:#C41E3A">Fox</div>
+  <div class="chart-card">
+    <div class="chart-title">Duration Trend</div>
+    <div class="chart-sub">Hours slept per night &middot; last 14 nights</div>
+    <div class="chart-wrap"><canvas id="chartFoxDuration"></canvas></div>
+    <div class="optimal-note">&#9646; Green band = optimal zone (6.5 to 8.5h)</div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Quality Score</div>
+    <div class="chart-sub">4-pillar score (0-100) &middot; last 14 nights &middot; higher is better</div>
+    <div class="chart-wrap"><canvas id="chartFoxQuality"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">June Goal Pts</div>
+    <div class="chart-sub">Cumulative goal hits &middot; since Jun 1</div>
+    <div class="chart-wrap"><canvas id="chartFoxGoals"></canvas></div>
+  </div>
 </div>
 
-<div class="section-label">Sleep Quality</div>
-<div class="chart-card">
-  <div class="chart-title">Quality Score Trend</div>
-  <div class="chart-sub">4-pillar score (0-100) &middot; full history since Apr 11 &middot; higher is better</div>
-  <div class="chart-wrap"><canvas id="chartQuality"></canvas></div>
-  <div class="legend" id="legendQuality"></div>
+<div class="person-divider"></div>
+
+<div class="person-section">
+  <div class="person-header" style="color:#00C2B7">AJ</div>
+  <div class="chart-card">
+    <div class="chart-title">Duration Trend</div>
+    <div class="chart-sub">Hours slept per night &middot; last 14 nights</div>
+    <div class="chart-wrap"><canvas id="chartAJDuration"></canvas></div>
+    <div class="optimal-note" style="color:rgba(0,194,183,0.60)">&#9646; Green band = AJ optimal zone (5.5 to 7h)</div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Quality Score</div>
+    <div class="chart-sub">4-pillar score (0-100) &middot; last 14 nights &middot; higher is better</div>
+    <div class="chart-wrap"><canvas id="chartAJQuality"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">June Goal Pts</div>
+    <div class="chart-sub">Cumulative goal hits &middot; since Jun 1</div>
+    <div class="chart-wrap"><canvas id="chartAJGoals"></canvas></div>
+  </div>
 </div>
 
-<div class="section-label">Goal Tracker &middot; Since May 23</div>
-<div class="chart-card">
-  <div class="chart-title">Cumulative Goal Hits</div>
-  <div class="chart-sub">Running total of days goal was met &middot; since May 23</div>
-  <div class="chart-wrap"><canvas id="chartGoals"></canvas></div>
-  <div class="legend" id="legendGoals"></div>
+<div class="person-divider"></div>
+
+<div class="person-section">
+  <div class="person-header" style="color:#7C3AED">Liam</div>
+  <div class="chart-card">
+    <div class="chart-title">Duration Trend</div>
+    <div class="chart-sub">Hours slept per night &middot; last 14 nights</div>
+    <div class="chart-wrap"><canvas id="chartLiamDuration"></canvas></div>
+    <div class="optimal-note">&#9646; Green band = optimal zone (6.5 to 8.5h)</div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Quality Score</div>
+    <div class="chart-sub">4-pillar score (0-100) &middot; last 14 nights &middot; higher is better</div>
+    <div class="chart-wrap"><canvas id="chartLiamQuality"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">June Goal Pts</div>
+    <div class="chart-sub">Cumulative goal hits &middot; since Jun 1</div>
+    <div class="chart-wrap"><canvas id="chartLiamGoals"></canvas></div>
+  </div>
+</div>
+
+<div class="person-divider"></div>
+
+<div class="person-section">
+  <div class="person-header" style="color:#FF9F0A">Jamy</div>
+  <div class="chart-card">
+    <div class="chart-title">Duration Trend</div>
+    <div class="chart-sub">Hours slept per night &middot; last 14 nights</div>
+    <div class="chart-wrap"><canvas id="chartJamyDuration"></canvas></div>
+    <div class="optimal-note">&#9646; Green band = optimal zone (6.5 to 8.5h)</div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Quality Score</div>
+    <div class="chart-sub">4-pillar score (0-100) &middot; last 14 nights &middot; higher is better</div>
+    <div class="chart-wrap"><canvas id="chartJamyQuality"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">June Goal Pts</div>
+    <div class="chart-sub">Cumulative goal hits &middot; since Jun 1</div>
+    <div class="chart-wrap"><canvas id="chartJamyGoals"></canvas></div>
+  </div>
 </div>
 
 <div class="footer">Beirut time &middot; Real data only</div>
 
 <script>
-var CHART_DATA = {"duration": {"labels": ["11 Apr", "12 Apr", "13 Apr", "14 Apr", "15 Apr", "16 Apr", "17 Apr", "18 Apr", "19 Apr", "20 Apr", "21 Apr", "22 Apr", "23 Apr", "24 Apr", "25 Apr", "26 Apr", "27 Apr", "28 Apr", "29 Apr", "30 Apr", "1 May", "2 May", "3 May", "4 May", "5 May", "6 May", "7 May", "8 May", "9 May", "10 May", "11 May", "12 May", "13 May", "14 May", "15 May", "16 May", "17 May", "18 May", "19 May", "20 May", "21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "datasets": [{"label": "Fox", "data": [null, 4.71, 5.25, 6.85, 6.77, 7.0, 7.58, 7.25, 7.08, 6.8, 5.8, 8.0, 6.72, 6.17, null, null, 4.08, 7.67, 6.03, 7.58, 6.5, 6.03, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 6.0, 7.17, 6.5, 6.33, 7.42, 7.0, 6.58, 7.0, 7.33, null, 7.0, 5.0, 7.25, 7.0, 7.75], "color": "#C41E3A"}, {"label": "AJ", "data": [null, 7.83, 6.83, 6.37, 6.73, 5.95, 5.38, 6.87, 9.0, 5.32, 9.25, 5.97, 6.92, 8.1, 6.83, null, 5.25, 8.18, 5.12, 8.77, 5.33, 5.72, 7.62, 4.95, 6.82, 6.02, 4.67, null, null, null, 7.68, 7.77, 10.51, 9.1, 5.37, 4.83, 6.0, 10.42, 7.68, 5.83, 7.17, 8.68, 5.97, 7.98, 5.32, null, 7.25, 5.95, 9.0, null, 5.0, 6.82, 5.25, 6.33], "color": "#00C2B7"}, {"label": "Liam", "data": [null, 7.53, 9.2, 9.47, 8.88, 8.43, 9.23, 8.13, 8.13, 9.52, 6.03, 9.48, 9.12, 8.57, null, null, 10.0, 7.17, 9.65, 8.08, 8.25, 7.83, 10.5, 8.58, 6.58, 8.52, 7.48, 8.58, 7.88, 7.15, 6.75, 7.53, 7.9, 7.9, 7.67, 5.5, 5.5, 12.0, 7.98, 6.48, 8.93, 6.25, null, 5.0, 6.0, 7.13, 8.0, 7.6, 9.0, 7.83, 9.83, 7.9, 6.2, 8.08], "color": "#7C3AED"}, {"label": "Jamy", "data": [8.5, 6.5, 8.18, 8.27, 8.38, 8.42, 7.73, 7.85, 8.38, 7.15, 7.77, 8.4, 8.08, 8.2, 6.33, null, 8.0, 7.72, 7.98, 7.93, 7.83, 7.83, 7.27, 8.07, 7.97, 8.02, 7.83, 9.23, 7.47, 7.52, null, 8.3, 8.1, 6.67, null, 5.77, 5.5, 8.17, 6.5, 7.0, 7.5, 7.33, null, 7.5, 8.5, 7.67, 8.42, 8.67, 7.0, 8.0, 5.17, 8.0, 7.0, null], "color": "#FF9F0A"}]}, "quality": {"labels": ["11 Apr", "12 Apr", "13 Apr", "14 Apr", "15 Apr", "16 Apr", "17 Apr", "18 Apr", "19 Apr", "20 Apr", "21 Apr", "22 Apr", "23 Apr", "24 Apr", "25 Apr", "26 Apr", "27 Apr", "28 Apr", "29 Apr", "30 Apr", "1 May", "2 May", "3 May", "4 May", "5 May", "6 May", "7 May", "8 May", "9 May", "10 May", "11 May", "12 May", "13 May", "14 May", "15 May", "16 May", "17 May", "18 May", "19 May", "20 May", "21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "datasets": [{"label": "Fox", "data": [null, 64.2, 67.0, 80.2, 93.7, 76.4, 75.5, 82.6, 80.1, 76.4, 83.3, 79.8, 88.4, 67.2, null, null, 61.2, 63.0, 78.8, 82.3, 88.0, 64.1, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 79.2, 54.5, 68.7, 83.4, 57.4, 76.3, 90.6, 88.9, 66.7, null, 57.4, 63.7, 88.7, 85.1, 66.3], "color": "#C41E3A"}, {"label": "AJ", "data": [null, 60.1, 80.8, 85.1, 78.2, 87.5, 67.5, 73.4, 38.8, 71.9, 53.2, 79.6, 97.0, 57.4, 53.8, null, 65.2, 77.8, 63.2, 66.2, 80.8, 56.0, 64.0, 68.3, 86.7, 52.1, 56.6, null, null, null, 37.0, 57.9, 17.4, 53.3, 45.0, 83.7, 59.9, 30.0, 70.5, 62.4, 47.8, 37.0, 85.0, 39.1, 53.2, null, 92.3, 74.6, 27.8, null, 61.9, 79.1, 67.9, 59.3], "color": "#00C2B7"}, {"label": "Liam", "data": [null, 39.2, 71.4, 66.9, 71.8, 75.5, 59.7, 69.4, 56.2, 46.4, 76.4, 66.5, 57.9, 37.0, null, null, 42.4, 56.2, 59.6, 83.7, 87.6, 79.5, 13.2, 74.2, 69.3, 79.0, 74.0, 76.6, 77.5, 80.3, 83.1, 80.6, 83.2, 76.4, 79.7, 70.8, 54.2, 24.6, 82.5, 71.8, 69.2, 57.5, null, 34.2, 75.0, 75.3, 73.3, 75.0, 61.4, 68.1, 26.0, 68.1, 73.3, 61.5], "color": "#7C3AED"}, {"label": "Jamy", "data": [50.0, 78.7, 87.2, 88.1, 85.2, 85.2, 71.2, 68.4, 75.2, 74.1, 84.2, 87.6, 85.4, 75.1, 60.6, null, 77.6, 84.1, 85.8, 85.8, 84.5, 69.0, 73.8, 85.2, 84.0, 86.2, 83.6, 67.7, 86.3, 64.7, null, 84.0, 78.4, 65.4, null, 73.2, 69.0, 75.6, 89.5, 69.6, 44.4, 48.0, null, 63.8, 41.6, 72.3, 85.8, 62.6, 56.9, 75.4, 70.4, 77.1, 64.5, null], "color": "#FF9F0A"}]}, "goals": {"labels": ["23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "datasets": [{"label": "Fox", "data": [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "color": "#C41E3A"}, {"label": "AJ", "data": [0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 4], "color": "#00C2B7"}, {"label": "Liam", "data": [0, 1, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6], "color": "#7C3AED"}, {"label": "Jamy", "data": [0, 0, 0, 1, 2, 2, 3, 3, 3, 3, 3, 3], "color": "#FF9F0A"}]}};
+var CHART_DATA = {"persons": ["Fox", "AJ", "Liam", "Jamy"], "colors": {"Fox": "#C41E3A", "AJ": "#00C2B7", "Liam": "#7C3AED", "Jamy": "#FF9F0A"}, "data": {"Fox": {"duration": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "data": [7.17, 6.5, 6.33, 7.42, 7.0, 6.58, 7.0, 7.33, null, 7.0, 5.0, 7.25, 7.0, 7.75]}, "quality": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "data": [54.5, 68.7, 83.4, 57.4, 76.3, 90.6, 88.9, 66.7, null, 57.4, 63.7, 88.7, 85.1, 66.3]}, "goals": {"labels": ["1 Jun", "2 Jun", "3 Jun"], "data": [1, 2, 3]}}, "AJ": {"duration": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "data": [7.17, 8.68, 5.97, 7.98, 5.32, null, 7.25, 5.95, 9.0, null, 5.0, 6.82, 5.25, 6.33]}, "quality": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "data": [47.8, 37.0, 85.0, 39.1, 53.2, null, 92.3, 74.6, 27.8, null, 61.9, 79.1, 67.9, 59.3]}, "goals": {"labels": ["1 Jun", "2 Jun", "3 Jun"], "data": [0, 0, 1]}}, "Liam": {"duration": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "data": [8.93, 6.25, null, 5.0, 6.0, 7.13, 8.0, 7.6, 9.0, 7.83, 9.83, 7.9, 6.2, 8.08]}, "quality": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "data": [69.2, 57.5, null, 34.2, 75.0, 75.3, 73.3, 75.0, 61.4, 68.1, 26.0, 68.1, 73.3, 61.5]}, "goals": {"labels": ["1 Jun", "2 Jun", "3 Jun"], "data": [1, 1, 1]}}, "Jamy": {"duration": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "data": [7.5, 7.33, null, 7.5, 8.5, 7.67, 8.42, 8.67, 7.0, 8.0, 5.17, 8.0, 7.0, null]}, "quality": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "data": [44.4, 48.0, null, 63.8, 41.6, 72.3, 85.8, 62.6, 56.9, 75.4, 70.4, 77.1, 64.5, null]}, "goals": {"labels": ["1 Jun", "2 Jun", "3 Jun"], "data": [0, 0, 0]}}}};
 
 Chart.defaults.color = 'rgba(255,255,255,0.38)';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif";
 Chart.defaults.font.size = 10;
 
-function makeDatasets(raw) {
-  return raw.datasets.map(function(ds) {
-    return {
-      label: ds.label,
-      data: ds.data,
-      borderColor: ds.color,
-      backgroundColor: 'transparent',
-      borderWidth: 2,
-      pointRadius: 3,
-      pointHoverRadius: 6,
-      pointBackgroundColor: ds.color,
-      pointBorderColor: 'transparent',
-      tension: 0.4,
-      spanGaps: true,
-    };
-  });
-}
+var tooltipDefaults = {
+  backgroundColor: 'rgba(18,18,18,0.96)',
+  borderColor: 'rgba(255,255,255,0.10)',
+  borderWidth: 1,
+  titleColor: 'rgba(255,255,255,0.70)',
+  bodyColor: 'rgba(255,255,255,0.55)',
+  padding: 10,
+};
 
 function makeScales(yMin, yMax, tickCb) {
   var yAxis = {
@@ -214,120 +254,111 @@ function makeScales(yMin, yMax, tickCb) {
   };
 }
 
-function buildLegend(containerId, rawDatasets) {
-  var el = document.getElementById(containerId);
-  if (!el) return;
-  rawDatasets.forEach(function(ds) {
-    var item = document.createElement('div');
-    item.className = 'legend-item';
-    item.innerHTML = '<div class="legend-dot" style="background:' + ds.color + '"></div>' + ds.label;
-    el.appendChild(item);
-  });
+function makeSingleDataset(labels, data, color) {
+  return {
+    labels: labels,
+    datasets: [{
+      data: data,
+      borderColor: color,
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      pointBackgroundColor: color,
+      pointBorderColor: 'transparent',
+      tension: 0.4,
+      spanGaps: true,
+    }]
+  };
 }
 
-var tooltipDefaults = {
-  backgroundColor: 'rgba(18,18,18,0.96)',
-  borderColor: 'rgba(255,255,255,0.10)',
-  borderWidth: 1,
-  titleColor: 'rgba(255,255,255,0.70)',
-  bodyColor: 'rgba(255,255,255,0.55)',
-  padding: 10,
-};
+CHART_DATA.persons.forEach(function(person) {
+  var color = CHART_DATA.colors[person];
+  var pd = CHART_DATA.data[person];
 
-/* ---- Chart 1: Duration ---- */
-new Chart(document.getElementById('chartDuration'), {
-  type: 'line',
-  data: {
-    labels: CHART_DATA.duration.labels,
-    datasets: makeDatasets(CHART_DATA.duration),
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { display: false },
-      tooltip: Object.assign({}, tooltipDefaults, {
-        callbacks: {
-          label: function(ctx) {
-            if (ctx.parsed.y === null || ctx.parsed.y === undefined) return ctx.dataset.label + ': --';
-            var h = Math.floor(ctx.parsed.y);
-            var m = Math.round((ctx.parsed.y - h) * 60);
-            return ctx.dataset.label + ': ' + h + 'h' + (m ? ' ' + m + 'm' : '');
-          }
-        }
-      }),
-      annotation: {
-        annotations: {
-          optimalZone: {
-            type: 'box',
-            yMin: 6.5,
-            yMax: 8.5,
-            backgroundColor: 'rgba(52,199,89,0.07)',
-            borderColor: 'rgba(52,199,89,0.22)',
-            borderWidth: 1,
-          }
-        }
-      }
-    },
-    scales: makeScales(0, 12, function(v) { return v + 'h'; }),
-  },
-});
-buildLegend('legendDuration', CHART_DATA.duration.datasets);
+  var durZoneMin = (person === 'AJ') ? 5.5 : 6.5;
+  var durZoneMax = (person === 'AJ') ? 7.0 : 8.5;
 
-/* ---- Chart 2: Quality ---- */
-new Chart(document.getElementById('chartQuality'), {
-  type: 'line',
-  data: {
-    labels: CHART_DATA.quality.labels,
-    datasets: makeDatasets(CHART_DATA.quality),
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { display: false },
-      tooltip: Object.assign({}, tooltipDefaults, {
-        callbacks: {
-          label: function(ctx) {
-            if (ctx.parsed.y === null || ctx.parsed.y === undefined) return ctx.dataset.label + ': --';
-            return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1);
+  new Chart(document.getElementById('chart' + person + 'Duration'), {
+    type: 'line',
+    data: makeSingleDataset(pd.duration.labels, pd.duration.data, color),
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: Object.assign({}, tooltipDefaults, {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.parsed.y === null || ctx.parsed.y === undefined) return '--';
+              var h = Math.floor(ctx.parsed.y);
+              var m = Math.round((ctx.parsed.y - h) * 60);
+              return h + 'h' + (m ? ' ' + m + 'm' : '');
+            }
+          }
+        }),
+        annotation: {
+          annotations: {
+            optimalZone: {
+              type: 'box',
+              yMin: durZoneMin,
+              yMax: durZoneMax,
+              backgroundColor: 'rgba(52,199,89,0.07)',
+              borderColor: 'rgba(52,199,89,0.22)',
+              borderWidth: 1,
+            }
           }
         }
-      }),
+      },
+      scales: makeScales(0, 12, function(v) { return v + 'h'; }),
     },
-    scales: makeScales(0, 100, function(v) { return v; }),
-  },
-});
-buildLegend('legendQuality', CHART_DATA.quality.datasets);
+  });
 
-/* ---- Chart 3: Goals ---- */
-new Chart(document.getElementById('chartGoals'), {
-  type: 'line',
-  data: {
-    labels: CHART_DATA.goals.labels,
-    datasets: makeDatasets(CHART_DATA.goals),
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { display: false },
-      tooltip: Object.assign({}, tooltipDefaults, {
-        callbacks: {
-          label: function(ctx) {
-            if (ctx.parsed.y === null || ctx.parsed.y === undefined) return ctx.dataset.label + ': --';
-            return ctx.dataset.label + ': ' + Math.round(ctx.parsed.y) + ' hits';
+  new Chart(document.getElementById('chart' + person + 'Quality'), {
+    type: 'line',
+    data: makeSingleDataset(pd.quality.labels, pd.quality.data, color),
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: Object.assign({}, tooltipDefaults, {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.parsed.y === null || ctx.parsed.y === undefined) return '--';
+              return ctx.parsed.y.toFixed(1);
+            }
           }
-        }
-      }),
+        }),
+      },
+      scales: makeScales(0, 100, function(v) { return v; }),
     },
-    scales: makeScales(0, null, function(v) { return v; }),
-  },
+  });
+
+  new Chart(document.getElementById('chart' + person + 'Goals'), {
+    type: 'line',
+    data: makeSingleDataset(pd.goals.labels, pd.goals.data, color),
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: Object.assign({}, tooltipDefaults, {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.parsed.y === null || ctx.parsed.y === undefined) return '--';
+              return Math.round(ctx.parsed.y) + ' pts';
+            }
+          }
+        }),
+      },
+      scales: makeScales(0, null, function(v) { return v; }),
+    },
+  });
 });
-buildLegend('legendGoals', CHART_DATA.goals.datasets);
 </script>
 
 </body>

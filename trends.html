@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sleep Trends</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128200;</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+:root {
+  --bg: #000000;
+  --card-bg: rgba(255,255,255,0.05);
+  --card-border: rgba(255,255,255,0.08);
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255,255,255,0.50);
+  --text-dim: rgba(255,255,255,0.25);
+  --radius: 20px;
+  --pad: 16px;
+}
+html { background: var(--bg); scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI',
+               Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  padding: 20px var(--pad) 56px;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 22px;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--text-primary); }
+.back-chevron { font-size: 16px; line-height: 1; }
+.page-header { margin-bottom: 28px; }
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+.page-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 9px;
+  padding-left: 2px;
+}
+.chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 18px 16px 16px;
+  margin-bottom: 26px;
+  position: relative;
+  overflow: hidden;
+}
+.chart-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.5px;
+  background: rgba(255,255,255,0.13);
+}
+.chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.chart-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+.optimal-note {
+  font-size: 10px;
+  color: rgba(52,199,89,0.55);
+  margin-top: 8px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 13px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 20px;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">
+  <span class="back-chevron">&#8249;</span> Dashboard
+</a>
+
+<div class="page-header">
+  <div class="page-title">TREND ANALYSIS</div>
+  <div class="page-sub">June 3, 2026 &middot; 8:24 AM</div>
+</div>
+
+<div class="section-label">Sleep Duration</div>
+<div class="chart-card">
+  <div class="chart-title">Duration Trend</div>
+  <div class="chart-sub">Hours slept per night &middot; last 14 days</div>
+  <div class="chart-wrap"><canvas id="chartDuration"></canvas></div>
+  <div class="optimal-note">&#9646; Green band = optimal zone (6.5 &ndash; 8.5h)</div>
+  <div class="legend" id="legendDuration"></div>
+</div>
+
+<div class="section-label">Sleep Quality</div>
+<div class="chart-card">
+  <div class="chart-title">Quality Score Trend</div>
+  <div class="chart-sub">4-pillar score (0-100) &middot; last 14 days &middot; higher is better</div>
+  <div class="chart-wrap"><canvas id="chartQuality"></canvas></div>
+  <div class="legend" id="legendQuality"></div>
+</div>
+
+<div class="section-label">Goal Tracker &middot; June</div>
+<div class="chart-card">
+  <div class="chart-title">Cumulative Goal Points</div>
+  <div class="chart-sub">Running total &middot; 2 pts/day met + streak bonuses &middot; June only</div>
+  <div class="chart-wrap"><canvas id="chartGoals"></canvas></div>
+  <div class="legend" id="legendGoals"></div>
+</div>
+
+<div class="footer">Beirut time &middot; Real data only</div>
+
+<script>
+var CHART_DATA = {"duration": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "datasets": [{"label": "Fox", "data": [7.17, 6.5, 6.33, 7.42, 7.0, 6.58, 7.0, 7.33, null, 7.0, 5.0, 7.25, 7.0, 7.75], "color": "#C41E3A"}, {"label": "AJ", "data": [7.17, 8.68, 5.97, 7.98, 5.32, null, 7.25, 5.95, 9.0, null, 5.0, 6.82, 5.25, 6.33], "color": "#00C2B7"}, {"label": "Liam", "data": [8.93, 6.25, null, 5.0, 6.0, 7.13, 8.0, 7.6, 9.0, 7.83, 9.83, 7.9, 6.2, 8.08], "color": "#7C3AED"}, {"label": "Jamy", "data": [7.5, 7.33, null, 7.5, 8.5, 7.67, 8.42, 8.67, 7.0, 8.0, 5.17, 8.0, 7.0, null], "color": "#FF9F0A"}]}, "quality": {"labels": ["21 May", "22 May", "23 May", "24 May", "25 May", "26 May", "27 May", "28 May", "29 May", "30 May", "31 May", "1 Jun", "2 Jun", "3 Jun"], "datasets": [{"label": "Fox", "data": [58.7, 68.7, 83.4, 57.4, 76.3, 90.6, 88.9, 66.7, null, 57.4, 63.7, 88.7, 85.1, 66.3], "color": "#C41E3A"}, {"label": "AJ", "data": [61.7, 37.0, 85.0, 39.1, 53.2, null, 92.3, 74.6, 27.8, null, 61.9, 79.1, 67.9, 59.3], "color": "#00C2B7"}, {"label": "Liam", "data": [83.8, 57.5, null, 34.2, 75.0, 75.3, 73.3, 75.0, 61.4, 68.1, 26.0, 68.1, 73.3, 61.5], "color": "#7C3AED"}, {"label": "Jamy", "data": [55.5, 48.0, null, 63.8, 41.6, 72.3, 85.8, 62.6, 56.9, 75.4, 70.4, 77.1, 64.5, null], "color": "#FF9F0A"}]}, "goals": {"labels": ["1", "2", "3"], "datasets": [{"label": "Fox", "data": [2.0, 4.0, 6.0], "color": "#C41E3A"}, {"label": "AJ", "data": [0.0, 0.0, 2.0], "color": "#00C2B7"}, {"label": "Liam", "data": [2.0, 2.0, 2.0], "color": "#7C3AED"}, {"label": "Jamy", "data": [0.0, 0.0, 0.0], "color": "#FF9F0A"}]}};
+
+Chart.defaults.color = 'rgba(255,255,255,0.38)';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif";
+Chart.defaults.font.size = 10;
+
+function makeDatasets(raw) {
+  return raw.datasets.map(function(ds) {
+    return {
+      label: ds.label,
+      data: ds.data,
+      borderColor: ds.color,
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      pointBackgroundColor: ds.color,
+      pointBorderColor: 'transparent',
+      tension: 0.4,
+      spanGaps: false,
+    };
+  });
+}
+
+function makeScales(yMin, yMax, tickCb) {
+  var yAxis = {
+    min: yMin,
+    grid: { color: 'rgba(255,255,255,0.05)' },
+    ticks: { color: 'rgba(255,255,255,0.38)', callback: tickCb, maxTicksLimit: 6 },
+  };
+  if (yMax !== null) yAxis.max = yMax;
+  return {
+    x: {
+      grid: { color: 'rgba(255,255,255,0.04)' },
+      ticks: { color: 'rgba(255,255,255,0.38)', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+    },
+    y: yAxis,
+  };
+}
+
+function buildLegend(containerId, rawDatasets) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  rawDatasets.forEach(function(ds) {
+    var item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = '<div class="legend-dot" style="background:' + ds.color + '"></div>' + ds.label;
+    el.appendChild(item);
+  });
+}
+
+var tooltipDefaults = {
+  backgroundColor: 'rgba(18,18,18,0.96)',
+  borderColor: 'rgba(255,255,255,0.10)',
+  borderWidth: 1,
+  titleColor: 'rgba(255,255,255,0.70)',
+  bodyColor: 'rgba(255,255,255,0.55)',
+  padding: 10,
+};
+
+/* ---- Chart 1: Duration ---- */
+new Chart(document.getElementById('chartDuration'), {
+  type: 'line',
+  data: {
+    labels: CHART_DATA.duration.labels,
+    datasets: makeDatasets(CHART_DATA.duration),
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: Object.assign({}, tooltipDefaults, {
+        callbacks: {
+          label: function(ctx) {
+            if (ctx.parsed.y === null || ctx.parsed.y === undefined) return ctx.dataset.label + ': --';
+            var h = Math.floor(ctx.parsed.y);
+            var m = Math.round((ctx.parsed.y - h) * 60);
+            return ctx.dataset.label + ': ' + h + 'h' + (m ? ' ' + m + 'm' : '');
+          }
+        }
+      }),
+      annotation: {
+        annotations: {
+          optimalZone: {
+            type: 'box',
+            yMin: 6.5,
+            yMax: 8.5,
+            backgroundColor: 'rgba(52,199,89,0.07)',
+            borderColor: 'rgba(52,199,89,0.22)',
+            borderWidth: 1,
+          }
+        }
+      }
+    },
+    scales: makeScales(0, 12, function(v) { return v + 'h'; }),
+  },
+});
+buildLegend('legendDuration', CHART_DATA.duration.datasets);
+
+/* ---- Chart 2: Quality ---- */
+new Chart(document.getElementById('chartQuality'), {
+  type: 'line',
+  data: {
+    labels: CHART_DATA.quality.labels,
+    datasets: makeDatasets(CHART_DATA.quality),
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: Object.assign({}, tooltipDefaults, {
+        callbacks: {
+          label: function(ctx) {
+            if (ctx.parsed.y === null || ctx.parsed.y === undefined) return ctx.dataset.label + ': --';
+            return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1);
+          }
+        }
+      }),
+    },
+    scales: makeScales(0, 100, function(v) { return v; }),
+  },
+});
+buildLegend('legendQuality', CHART_DATA.quality.datasets);
+
+/* ---- Chart 3: Goals ---- */
+new Chart(document.getElementById('chartGoals'), {
+  type: 'line',
+  data: {
+    labels: CHART_DATA.goals.labels,
+    datasets: makeDatasets(CHART_DATA.goals),
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: Object.assign({}, tooltipDefaults, {
+        callbacks: {
+          label: function(ctx) {
+            if (ctx.parsed.y === null || ctx.parsed.y === undefined) return ctx.dataset.label + ': --';
+            return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + ' pts';
+          }
+        }
+      }),
+    },
+    scales: makeScales(0, null, function(v) { return v + 'pt'; }),
+  },
+});
+buildLegend('legendGoals', CHART_DATA.goals.datasets);
+</script>
+
+</body>
+</html>

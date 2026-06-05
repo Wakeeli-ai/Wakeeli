@@ -1066,13 +1066,26 @@ async def demo_chat(request: DemoChatRequest):
     session = _sessions[session_id]
     session_meta = _sessions.setdefault(session_id + "__meta__", {})
 
-    # Post-handoff silence: scan conversation history directly.
+    # Post-handoff silence: DUAL CHECK - flag + history scan with broad indicators.
     # Once handoff fires, Karen goes completely silent. No AI call, no response.
-    # BUILD_TAG: handoff-scan-v2
-    _handoff_check = ["connected you with our agent", "connecting you with one of our agents", "going to have one of our agents"]
+    # BUILD_TAG: handoff-dual-v1
+    # Agent names only ever appear in handoff messages, so they are reliable indicators.
+    _handoff_indicators = [
+        "connected you with our agent",
+        "connecting you with one of our agents",
+        "going to have one of our agents",
+        "i'll be connecting you with",
+        "rami khalil",
+        "maya haddad",
+        "ziad abou jaoude",
+    ]
+    # Check 1: flag set on a previous response (fast path)
+    if session_meta.get('handoff_fired'):
+        return DemoChatResponse(messages=[], stage="handoff")
+    # Check 2: scan history directly (catches cases where flag was missed)
     _prior_assistant = [m for m in session if m.get("role") == "assistant"]
     _handoff_fired_check = any(
-        any(phrase in m.get("content", "").lower() for phrase in _handoff_check)
+        any(phrase in m.get("content", "").lower() for phrase in _handoff_indicators)
         for m in _prior_assistant
     )
     if _handoff_fired_check:
@@ -1217,13 +1230,18 @@ async def demo_chat(request: DemoChatRequest):
 
     messages = _strip_intro(messages)
 
-    # Set handoff flag in session_meta for reliable post-handoff silence on future messages
-    _handoff_phrases = [
+    # Set handoff flag in session_meta for reliable post-handoff silence on future messages.
+    # Must use the same broad indicators as the check above.
+    _handoff_phrases_broad = [
         'connected you with our agent',
         'connecting you with one of our agents',
         'going to have one of our agents',
+        "i'll be connecting you with",
+        'rami khalil',
+        'maya haddad',
+        'ziad abou jaoude',
     ]
-    if any(phrase in ' '.join(messages).lower() for phrase in _handoff_phrases):
+    if any(phrase in ' '.join(messages).lower() for phrase in _handoff_phrases_broad):
         session_meta['handoff_fired'] = True
 
     # Code-level greeting enforcement: first Karen response always starts with Hello!

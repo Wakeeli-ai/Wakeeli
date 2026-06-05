@@ -818,7 +818,7 @@ def _fetch_property_by_id(property_id: str) -> dict | None:
         return None
 
     try:
-        conn = psycopg2.connect(database_url)
+        conn = psycopg2.connect(database_url, connect_timeout=10)
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(
             """
@@ -864,7 +864,7 @@ def _query_supabase_listings(criteria: dict) -> list:
         return []
 
     try:
-        conn = psycopg2.connect(database_url)
+        conn = psycopg2.connect(database_url, connect_timeout=10)
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         conditions = ["client_id = %s", "status = 'available'"]

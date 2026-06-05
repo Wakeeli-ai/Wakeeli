@@ -1059,15 +1059,16 @@ async def demo_chat(request: DemoChatRequest):
     mode = request.mode if request.mode in ("handoff", "booking") else "handoff"
     session_id = request.session_id or "demo-default"
 
-    # Retrieve or initialise session history
+    # Retrieve or initialise session history and meta
     if session_id not in _sessions:
         _sessions[session_id] = []
 
     session = _sessions[session_id]
+    session_meta = _sessions.setdefault(session_id + "__meta__", {})
 
-    # FIX 1: Post-handoff silence.
-    # Once handoff fires Karen goes completely silent. No AI call, no response.
-    if _is_handoff_fired(session):
+    # Post-handoff silence: flag-based, 100% reliable.
+    # Once handoff fires, Karen goes completely silent. No AI call, no response.
+    if session_meta.get('handoff_fired'):
         return DemoChatResponse(messages=[], stage="handoff")
 
     # Append the incoming user message
@@ -1077,7 +1078,6 @@ async def demo_chat(request: DemoChatRequest):
 
     # Determine listings to use: live DB if criteria are ready, else DEMO_LISTINGS fallback.
     # Re-query on every message until we have live results so criteria changes are respected.
-    session_meta = _sessions.setdefault(session_id + "__meta__", {})
 
     # A1 flow: on first user message, extract property ID from URL and fetch details from DB.
     user_messages = [m for m in history if m.get("role") == "user"]
@@ -1209,6 +1209,15 @@ async def demo_chat(request: DemoChatRequest):
         return cleaned if cleaned else msgs
 
     messages = _strip_intro(messages)
+
+    # Set handoff flag in session_meta for reliable post-handoff silence on future messages
+    _handoff_phrases = [
+        'connected you with our agent',
+        'connecting you with one of our agents',
+        'going to have one of our agents',
+    ]
+    if any(phrase in ' '.join(messages).lower() for phrase in _handoff_phrases):
+        session_meta['handoff_fired'] = True
 
     # Code-level greeting enforcement: first Karen response always starts with Hello!
     user_messages = [m for m in history if m.get("role") == "user"]

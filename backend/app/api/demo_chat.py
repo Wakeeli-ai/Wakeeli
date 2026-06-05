@@ -1036,6 +1036,12 @@ class DemoChatResponse(BaseModel):
     stage: str
 
 
+@router.get("/api/demo/version", tags=["Demo"])
+async def demo_version():
+    """Returns the current build tag for deployment verification."""
+    return {"build": "handoff-dual-v1", "session_count": len([k for k in _sessions if not k.endswith("__meta__")])}
+
+
 @router.post("/api/demo/chat", response_model=DemoChatResponse, tags=["Demo"])
 async def demo_chat(request: DemoChatRequest):
     """

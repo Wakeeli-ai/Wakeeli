@@ -1068,12 +1068,14 @@ async def demo_chat(request: DemoChatRequest):
 
     # Post-handoff silence: scan conversation history directly.
     # Once handoff fires, Karen goes completely silent. No AI call, no response.
+    # BUILD_TAG: handoff-scan-v2
     _handoff_check = ["connected you with our agent", "connecting you with one of our agents", "going to have one of our agents"]
-    if any(
+    _prior_assistant = [m for m in session if m.get("role") == "assistant"]
+    _handoff_fired_check = any(
         any(phrase in m.get("content", "").lower() for phrase in _handoff_check)
-        for m in session
-        if m.get("role") == "assistant"
-    ):
+        for m in _prior_assistant
+    )
+    if _handoff_fired_check:
         return DemoChatResponse(messages=[], stage="handoff")
 
     # Append the incoming user message

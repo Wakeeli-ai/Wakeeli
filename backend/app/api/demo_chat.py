@@ -992,9 +992,9 @@ def _detect_buy_rent_intent(history: List[dict]) -> str | None:
 def _is_handoff_fired(history: List[dict]) -> bool:
     """Return True if the handoff message has already been sent in this conversation."""
     handoff_signals = [
-        "i've connected you with our agent",
-        "i'm going to have one of our agents",
-        "i'll be connecting you with one of our agents",
+        "connected you with our agent",
+        "going to have one of our agents",
+        "connecting you with one of our agents",
     ]
     for msg in history:
         if msg.get("role") == "assistant":
@@ -1092,7 +1092,12 @@ async def demo_chat(request: DemoChatRequest):
             except Exception as exc:
                 logger.warning(f"[demo_chat] A1 property lookup failed: {exc}")
 
-    if "db_listings" not in session_meta:
+    # Skip criteria extraction on the name turn in A1 flow.
+    # The second user message is just the lead's name; Haiku extraction here causes HTTP 500.
+    assistant_messages = [m for m in history if m.get("role") == "assistant"]
+    is_name_turn = "a1_property" in session_meta and len(assistant_messages) == 1
+
+    if "db_listings" not in session_meta and not is_name_turn:
         try:
             criteria = await asyncio.to_thread(_extract_criteria, history)
 

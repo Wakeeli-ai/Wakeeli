@@ -1066,9 +1066,14 @@ async def demo_chat(request: DemoChatRequest):
     session = _sessions[session_id]
     session_meta = _sessions.setdefault(session_id + "__meta__", {})
 
-    # Post-handoff silence: flag-based, 100% reliable.
+    # Post-handoff silence: scan conversation history directly.
     # Once handoff fires, Karen goes completely silent. No AI call, no response.
-    if session_meta.get('handoff_fired'):
+    _handoff_check = ["connected you with our agent", "connecting you with one of our agents", "going to have one of our agents"]
+    if any(
+        any(phrase in m.get("content", "").lower() for phrase in _handoff_check)
+        for m in session
+        if m.get("role") == "assistant"
+    ):
         return DemoChatResponse(messages=[], stage="handoff")
 
     # Append the incoming user message

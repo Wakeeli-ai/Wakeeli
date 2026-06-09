@@ -627,15 +627,8 @@ body {
 .cal-tracker-dots {
   display: flex;
   gap: 4px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-
-.cal-tracker-dots::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  align-content: flex-start;
 }
 
 .cal-tracker-cell {
@@ -1501,7 +1494,7 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <div class="header-gentime">Updated<br>12:59 AM BEY</div>
+    <div class="header-gentime">Updated<br>1:05 AM BEY</div>
   </div>
 </header>
 

@@ -304,6 +304,10 @@ def _generate_reply_inner(action, user_message, db, conversation, conversation_i
         requirements = property_info
         if conversation is not None:
             conversation.user_requirements = requirements
+            conversation.budget_min = session.property_info.get('budget_min')
+            conversation.budget_max = session.property_info.get('budget_max')
+            conversation.timeline = session.property_info.get('timeline')
+            conversation.urgency = None
 
         agent = find_best_agent(db, requirements)
         if agent and conversation is not None:
@@ -342,6 +346,10 @@ Important behavior rules:
             requirements = property_info
             if conversation is not None:
                 conversation.user_requirements = requirements
+                conversation.budget_min = session.property_info.get('budget_min')
+                conversation.budget_max = session.property_info.get('budget_max')
+                conversation.timeline = session.property_info.get('timeline')
+                conversation.urgency = None
 
             agent = find_best_agent(db, requirements)
             if agent:
@@ -532,6 +540,14 @@ Use ||| to separate your parts.
 
                         else:
                             alt_results = recommend_alternatives(db, session.property_info)
+                            # Studio compatibility check: if user requested a studio but
+                            # all alternatives have bedrooms != 0, treat as empty.
+                            _corr_is_studio = (
+                                session.property_info.get("bedrooms") == 0
+                                or (session.property_info.get("property_type") or "").lower() == "studio"
+                            )
+                            if _corr_is_studio and alt_results and all(r.bedrooms != 0 for r in alt_results):
+                                alt_results = []
                             if alt_results:
                                 session.listings_shown = True
                                 alt_to_show = alt_results[:5]
@@ -564,6 +580,14 @@ Do NOT reveal there are zero results. Connect to agent: 'Let me connect you with
                             # 'sure' as a booking confirmation.
                             alt_results = recommend_alternatives(db, session.property_info)
                             session.show_alternatives = False
+                            # Studio compatibility check: if user requested a studio but
+                            # all alternatives have bedrooms != 0, treat as empty.
+                            _conf_is_studio = (
+                                session.property_info.get("bedrooms") == 0
+                                or (session.property_info.get("property_type") or "").lower() == "studio"
+                            )
+                            if _conf_is_studio and alt_results and all(r.bedrooms != 0 for r in alt_results):
+                                alt_results = []
                             if alt_results:
                                 session.listings_shown = True
                                 alt_to_show = alt_results[:5]
@@ -709,6 +733,15 @@ Use ||| to separate your parts.
 
                     else:
                         alt_results = recommend_alternatives(db, property_info)
+                        # Studio compatibility check: if user requested a studio but
+                        # all alternatives have bedrooms != 0, treat as empty so the
+                        # zero-results path fires and the silent agent handoff triggers.
+                        _main_is_studio = (
+                            property_info.get("bedrooms") == 0
+                            or (property_info.get("property_type") or "").lower() == "studio"
+                        )
+                        if _main_is_studio and alt_results and all(r.bedrooms != 0 for r in alt_results):
+                            alt_results = []
                         if alt_results:
                             session.listings_shown = True
                             alt_to_show = alt_results[:5]
@@ -788,7 +821,7 @@ Something went wrong while searching.
 Ask the user politely to try again or re-share their preferences.
 """
 
-    elif action == "more_info_needed":
+    elif action in ("qualification", "more_info_needed"):
         classification = state.get("classification")
         has_name = state.get("user_info", {}).get("name")
         bare_greeting = state.get("bare_greeting", False)
@@ -1529,7 +1562,7 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         _name_not_in_reply = not _NAME_IN_REPLY.search(_reply_joined)
         _name_count_reasonable = session.name_ask_count <= 2
         if (
-            action in ("more_info_needed", "collect_property_info")
+            action in ("qualification", "more_info_needed", "collect_property_info")
             and _name_missing
             and _name_count_increased
             and _name_count_reasonable
@@ -1546,7 +1579,7 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
         _furnished_not_in_reply = not _FURNISHED_IN_REPLY.search(_reply_joined)
         _is_rent = session.property_info.get("listing_type") == "rent"
         if (
-            action == "more_info_needed"
+            action in ("qualification", "more_info_needed")
             and _is_rent
             and _furnished_missing
             and _furnished_never_asked

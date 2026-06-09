@@ -95,11 +95,17 @@ def recommend_alternatives(db: Session, requirements: dict):
     location = requirements.get("location")
     bedrooms = requirements.get("bedrooms")
 
-    # Strategy 1: same location + listing_type, drop budget and bedrooms
+    # Strategy 1: same location + listing_type, drop budget and bedrooms.
+    # Exception: studio requests (bedrooms == 0) must keep the bedrooms filter
+    # so we never return a 1BR or 2BR as an "alternative" to a studio.
     if location:
         filters1 = {"location": location}
         if listing_type:
             filters1["listing_type"] = listing_type
+        _prop_type = (requirements.get("property_type") or "").lower()
+        _is_studio_req = (bedrooms == 0) or (_prop_type == "studio")
+        if _is_studio_req:
+            filters1["bedrooms"] = 0
         results = search_listings(db, filters1)
         if results:
             return results

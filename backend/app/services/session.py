@@ -7,10 +7,11 @@ CLASSIFICATION_PRIORITY = {
 
 STAGES = {
     1: "intent_detection",
-    2: "collect_property_info",
-    3: "process_property_request",
-    4: "handoff_or_finish",
-    5: "more_info_needed"
+    2: "qualification",
+    3: "collect_property_info",
+    4: "process_property_request",
+    5: "handoff_or_finish",
+    6: "more_info_needed"
 }
 
 class SessionState:
@@ -97,27 +98,27 @@ class SessionState:
         # 1. OFF TOPIC (highest priority)
         # ---------------------------
         if self.classification == "OFF_TOPIC":
-            self.stage = 4
+            self.stage = 5  # handoff_or_finish
             return
 
         # ---------------------------
         # 2. LISTINGS ALREADY SHOWN: always stay in process_property_request
         #    so follow-up messages (unsure, questions, booking confirmations)
         #    are handled in the right action branch, not bounced back to
-        #    more_info_needed which would ask qualifying questions again.
+        #    qualification which would ask qualifying questions again.
         # ---------------------------
         if self.listings_shown:
-            self.stage = 3
+            self.stage = 4  # process_property_request
             return
 
         # ---------------------------
-        # 3. PROPERTY LINK PROVIDED
+        # 3. PROPERTY LINK PROVIDED (A1 flow)
         # ---------------------------
         if link_or_id:
             if not name:
-                self.stage = 2  # ask for name
+                self.stage = 3  # collect_property_info: ask for name
             else:
-                self.stage = 3  # process request
+                self.stage = 4  # process_property_request
             return
 
         # ---------------------------
@@ -132,29 +133,29 @@ class SessionState:
 
         if listing_type and _search_score >= 2:
             if not name:
-                self.stage = 5
+                self.stage = 2  # qualification: collect name before processing
             else:
-                self.stage = 3
+                self.stage = 4  # process_property_request
             return
 
         # ---------------------------
         # 5. VAGUE PROPERTY REQUEST
         # ---------------------------
         if self.classification == "A2":
-            self.stage = 2
+            self.stage = 3  # collect_property_info
             return
 
         # ---------------------------
-        # 6. GENERAL CONVERSATION
+        # 6. GENERAL CONVERSATION (B lead, not enough info yet)
         # ---------------------------
         if self.classification == "B":
-            self.stage = 5
+            self.stage = 2  # qualification
             return
 
         # ---------------------------
         # DEFAULT FALLBACK
         # ---------------------------
-        self.stage = 2
+        self.stage = 6  # more_info_needed
 
 
 

@@ -75,6 +75,11 @@ class Conversation(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    budget_min = Column(Float, nullable=True)
+    budget_max = Column(Float, nullable=True)
+    timeline = Column(String(100), nullable=True)
+    urgency = Column(String(50), nullable=True)
+
     agent = relationship("Agent")
     messages = relationship("Message", back_populates="conversation")
 

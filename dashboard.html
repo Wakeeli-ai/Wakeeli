@@ -1,0 +1,2504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sleep Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+<style>
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --bg:            #000000;
+  --card-bg:       rgba(255,255,255,0.05);
+  --card-border:   rgba(255,255,255,0.08);
+  --text-primary:  #FFFFFF;
+  --text-secondary: rgba(255,255,255,0.50);
+  --text-dim:      rgba(255,255,255,0.25);
+  --radius:        20px;
+  --pad:           16px;
+  --gap:           12px;
+  --green:         #34C759;
+  --amber:         #FF9F0A;
+  --red:           #FF3B30;
+}
+
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI',
+               Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  padding: var(--pad);
+  padding-top: 20px;
+  padding-bottom: 48px;
+  max-width: 430px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+/* ---- Glass card base ---- */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.5px;
+  background: var(--accent, rgba(255,255,255,0.2));
+  opacity: 0.85;
+}
+
+/* Hide flat border on sleeping cards (ECG replaces it) */
+.glass-card.is-sleeping::before {
+  opacity: 0;
+}
+
+.glass-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 100% 60% at 50% 0%, var(--glow, transparent), transparent 80%);
+  pointer-events: none;
+}
+
+/* ---- ECG canvas heartbeat ---- */
+.ecg-canvas-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 35px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+  border-radius: 20px 20px 0 0;
+  background: #000;
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+
+.ecg-canvas {
+  display: block;
+  width: 100%;
+  height: 35px;
+}
+
+.person-card.is-sleeping {
+  padding-top: 50px;
+}
+
+/* ---- Header ---- */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.moon-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.header-title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.header-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  font-weight: 400;
+}
+
+.header-right {
+  text-align: right;
+}
+
+.header-gentime {
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+/* ---- Section label ---- */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+/* ---- Person cards ---- */
+.persons-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  margin-bottom: 28px;
+}
+
+.person-card {
+  padding: 20px;
+  opacity: 0;
+  animation: fadeSlideUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  transition: transform 0.2s ease;
+}
+
+.person-card:active {
+  transform: scale(0.985);
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.card-identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dot-pulse,
+.dot-idle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: block;
+}
+
+.dot-pulse {
+  animation: pulseAnim 2s ease-in-out infinite;
+}
+
+@keyframes pulseAnim {
+  0%,100% { opacity: 1; transform: scale(1);    }
+  50%      { opacity: 0.35; transform: scale(0.7); }
+}
+
+.dot-idle {
+  opacity: 0.35;
+}
+
+.card-name {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+.card-status {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* Hero number */
+.hero-number {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 54px;
+  font-weight: 700;
+  letter-spacing: -2.5px;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.hero-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 18px;
+}
+
+.no-data-label {
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
+
+.val-green     { color: #FF6B9D; }
+.val-darkgreen { color: #1E8449; }
+.val-amber     { color: var(--amber); }
+.val-red       { color: var(--red);   }
+.val-empty     { color: rgba(255,255,255,0.2); }
+
+/* Stat row */
+.stat-row {
+  display: flex;
+  align-items: stretch;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.stat-item {
+  flex: 1;
+  padding: 11px 6px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 5px;
+}
+
+.stat-val {
+  display: block;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.stat-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.07);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* Sparkline */
+.sparkline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spark-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.spark-chart {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* ---- Leaderboard ---- */
+.leaderboard-section {
+  margin-bottom: 28px;
+}
+
+.leader-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 20px;
+  margin-bottom: 10px;
+  animation: fadeSlideUp 0.5s ease forwards;
+  animation-delay: 380ms;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.leader-rank {
+  flex-shrink: 0;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: 'SF Mono', monospace;
+  flex-shrink: 0;
+}
+
+.rank-badge.sm {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+
+.leader-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.leader-name {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.leader-hero {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.leader-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.lb-others {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  animation: fadeSlideUp 0.5s ease forwards;
+  animation-delay: 460ms;
+  opacity: 0;
+}
+
+.lb-card {
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.lb-name {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.lb-avg {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  line-height: 1;
+}
+
+.lb-sub {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* ---- Heat strip ---- */
+.heat-section {
+  margin-bottom: 28px;
+}
+
+.heat-card {
+  padding: 18px 16px;
+  animation: fadeSlideUp 0.5s ease forwards;
+  animation-delay: 540ms;
+  opacity: 0;
+}
+
+.heat-layout {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.heat-names {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.heat-name {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.heat-scroll {
+  flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.heat-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.heat-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.heat-row:last-child {
+  margin-bottom: 0;
+}
+
+.heat-cell {
+  width: 32px;
+  min-width: 32px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 2px;
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+
+.heat-cell:active {
+  transform: scale(0.88);
+}
+
+.heat-val {
+  font-family: 'SF Mono', monospace;
+  font-size: 7.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  line-height: 1;
+}
+
+.heat-day {
+  font-size: 8.5px;
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Heat legend */
+.heat-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ---- Section sublabel ---- */
+.section-sublabel {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: -6px;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+/* ---- Calendar Tracker Section ---- */
+.cal-tracker-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cal-tracker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cal-tracker-person {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cal-tracker-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cal-tracker-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.cal-tracker-stat-val {
+  font-family: 'SF Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cal-tracker-stat-lbl {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cal-tracker-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.cal-tracker-dots {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+.cal-tracker-cell {
+  width: 32px;
+  min-width: 32px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.cal-tracker-day {
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@media (min-width: 769px) {
+  .cal-tracker-cell {
+    width: 52px;
+    min-width: 52px;
+    height: 60px;
+    border-radius: 12px;
+  }
+  .cal-tracker-dots {
+    gap: 7px;
+  }
+  .cal-tracker-day {
+    font-size: 14px;
+  }
+  .hustler-day-badge {
+    font-size: 18px !important;
+  }
+  .cal-tracker-person {
+    font-size: 13px;
+  }
+  .cal-tracker-stat-val {
+    font-size: 17px;
+  }
+  .cal-tracker-stat-lbl {
+    font-size: 12px;
+  }
+  .goal-tracker-goal-label {
+    font-size: 10px;
+  }
+}
+
+/* ---- Goal Tracker rows ---- */
+.goal-tracker-person-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.goal-tracker-goal-label {
+  font-size: 7px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 1;
+}
+
+.goal-tracker-row-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 8px 0;
+}
+
+/* ---- Consistency name cell ---- */
+.cons-name-cell {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.cons-name-text {
+  line-height: 1;
+}
+
+.cons-avg-badge {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 7px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.30);
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.consistency-card {
+  animation-delay: 620ms;
+}
+
+/* ---- Team Battle Section ---- */
+.battle-status-line {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.team-battle-grid {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.battle-card {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 16px;
+  padding: 14px 11px;
+  position: relative;
+  overflow: hidden;
+}
+
+.battle-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.5px;
+  background: var(--team-color, rgba(255,255,255,0.2));
+  opacity: 0.75;
+}
+
+.battle-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 100% 50% at 50% 0%, var(--team-glow, transparent), transparent 80%);
+  pointer-events: none;
+}
+
+.battle-card-winning {
+  border-color: var(--team-color);
+  box-shadow: 0 0 0 1px var(--team-color), 0 4px 20px var(--team-glow);
+}
+
+.battle-card-clickable {
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.battle-card-clickable:active {
+  transform: scale(0.97);
+  background: rgba(255,255,255,0.08);
+}
+
+.battle-tap-hint {
+  font-size: 7.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.22);
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.battle-team-name {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.battle-team-score {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.battle-score-unit {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: rgba(255,255,255,0.4);
+  margin-left: 2px;
+}
+
+.battle-members {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.battle-member-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+}
+
+.battle-member-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.battle-member-name {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.battle-member-pts {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+.battle-pts-group {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+}
+
+.battle-pts-num {
+  font-family: 'SF Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.battle-pts-lbl {
+  font-size: 7px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.battle-pts-sep {
+  font-size: 8px;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.battle-pts-total {
+  font-family: 'SF Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.battle-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  padding: 0 1px;
+  align-self: center;
+}
+
+.battle-ledger {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.battle-ledger-header {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.battle-ledger-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.battle-ledger-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.battle-ledger-month {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 26px;
+}
+
+.battle-ledger-warmup-tag {
+  font-size: 7.5px;
+  font-weight: 700;
+  background: rgba(255,159,10,0.12);
+  color: #FF9F0A;
+  border: 1px solid rgba(255,159,10,0.22);
+  border-radius: 4px;
+  padding: 1px 4px;
+  letter-spacing: 0.4px;
+}
+
+.battle-ledger-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+}
+
+.battle-ledger-score {
+  font-family: 'SF Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.battle-ledger-sep {
+  font-size: 7.5px;
+  color: var(--text-dim);
+}
+
+.battle-ledger-leader {
+  font-size: 8.5px;
+  font-weight: 600;
+}
+
+.battle-ledger-pending {
+  color: var(--text-dim);
+  font-size: 9.5px;
+}
+
+.battle-ledger-warmup-note {
+  font-size: 8px;
+  color: rgba(255,159,10,0.55);
+  font-style: italic;
+  padding-left: 1px;
+  margin-top: -3px;
+}
+
+.battle-ledger-future-row {
+  opacity: 0.5;
+}
+
+.battle-ledger-active-row {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.battle-ledger-winner {
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 4px;
+  letter-spacing: 0.01em;
+}
+
+.battle-warmup-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.battle-warmup-badge-icon {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #FFD700;
+  background: rgba(255,215,0,0.12);
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.battle-warmup-badge-bonus {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,215,0,0.8);
+  letter-spacing: 0.03em;
+}
+
+.battle-bonus-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.battle-bonus-label {
+  font-size: 10px;
+  color: rgba(255,215,0,0.65);
+  font-style: italic;
+}
+
+.battle-bonus-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFD700;
+}
+
+/* ---- Team Insights Modal ---- */
+.team-modal-bg {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.team-modal-bg.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.team-modal-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: 84vh;
+  overflow-y: auto;
+  background: rgba(12,12,22,0.98);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding: 20px 18px 40px;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.team-modal-bg.show .team-modal-card {
+  transform: translateY(0);
+}
+@media (min-width: 768px) {
+  .team-modal-bg {
+    align-items: center;
+    padding: 24px;
+  }
+  .team-modal-card {
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 20px;
+    transform: scale(0.93);
+    transition: transform 0.22s ease, opacity 0.22s ease;
+    max-width: 420px;
+  }
+  .team-modal-bg.show .team-modal-card {
+    transform: scale(1);
+  }
+}
+.team-modal-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.team-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.ti-section {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.ti-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.ti-section-label {
+  font-size: 7.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: rgba(255,255,255,0.28);
+  margin-bottom: 10px;
+}
+.ti-member-block {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.ti-member-block:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.ti-member-name {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 5px;
+}
+.ti-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+.ti-row:last-child { margin-bottom: 0; }
+.ti-lbl {
+  font-size: 7.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.28);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+.ti-val {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.82);
+  text-align: right;
+}
+.ti-up   { color: #34C759; }
+.ti-down { color: #FF3B30; }
+.ti-flat { color: rgba(255,255,255,0.40); }
+.ti-proj-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+}
+.ti-h2h-block {
+  display: flex;
+  flex-direction: column;
+}
+.ti-h2h-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.ti-h2h-row:last-child { border-bottom: none; }
+.ti-h2h-cat {
+  font-size: 7.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.28);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.ti-h2h-result {
+  font-family: 'SF Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ---- Footer ---- */
+.footer {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+  margin-top: 24px;
+}
+
+/* ---- Calendar archive link ---- */
+.calendar-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 28px;
+  animation: fadeSlideUp 0.5s ease forwards;
+  animation-delay: 700ms;
+  opacity: 0;
+}
+.cal-link-inner {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.cal-link-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1.5px;
+  background: rgba(255,255,255,0.18);
+  opacity: 0.85;
+}
+.calendar-link:active .cal-link-inner {
+  background: rgba(255,255,255,0.09);
+  transform: scale(0.985);
+}
+.cal-link-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.cal-link-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.cal-link-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  margin-bottom: 2px;
+}
+.cal-link-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.cal-link-chevron {
+  font-size: 24px;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+/* ---- Scrollbar global ---- */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* ---- Cell detail popup ---- */
+.cell-popup {
+  position: fixed;
+  width: 164px;
+  background: rgba(12,12,22,0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 14px;
+  padding: 11px 13px;
+  z-index: 9999;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.70), 0 2px 8px rgba(0,0,0,0.45);
+  opacity: 0;
+  transform: scale(0.88) translateY(5px);
+  transition: opacity 0.17s ease, transform 0.17s ease;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cell-popup.popup-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.popup-person {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+.popup-date-row {
+  font-size: 9px;
+  color: rgba(255,255,255,0.38);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.popup-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin-bottom: 8px;
+}
+.popup-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.popup-stat:last-child {
+  margin-bottom: 0;
+}
+.popup-lbl {
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.32);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+.popup-v {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.86);
+  text-align: right;
+}
+.popup-v.clr-green        { color: #34C759; }
+.popup-v.clr-cinderella   { color: #FF6B9D; }
+.popup-v.clr-darkgreen    { color: #1E8449; }
+.popup-v.clr-blue         { color: #3B82F6; }
+.popup-v.clr-amber        { color: #FF9F0A; }
+.popup-v.clr-red          { color: #FF3B30; }
+
+/* ==============================================
+   Responsive: tablet 768px+ and desktop 1024px+
+   ============================================== */
+
+@media (min-width: 768px) {
+  body {
+    max-width: 800px;
+    padding: 28px 24px 72px;
+  }
+  .header { margin-bottom: 34px; }
+  .header-title { font-size: 22px; }
+  .header-date  { font-size: 13px; }
+  .moon-icon    { font-size: 28px; }
+
+  .persons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .hero-number { font-size: 58px; }
+
+  .leader-card { padding: 26px 24px; }
+  .leader-hero { font-size: 42px; }
+
+  .heat-card { padding: 20px 18px; }
+
+  .cal-link-inner { padding: 22px 26px; }
+  .cal-link-title { font-size: 16px; }
+}
+
+@media (min-width: 1024px) {
+  body {
+    max-width: 1200px;
+    padding: 44px 60px 96px;
+  }
+  .header {
+    margin-bottom: 44px;
+    align-items: center;
+  }
+  .header-title { font-size: 28px; letter-spacing: -0.8px; }
+  .header-date  { font-size: 14px; margin-top: 4px; }
+  .header-gentime { font-size: 12px; }
+  .moon-icon    { font-size: 32px; }
+
+  .section-label {
+    font-size: 13px;
+    letter-spacing: 1.2px;
+    margin-bottom: 14px;
+  }
+  .section-sublabel { font-size: 10px; margin-bottom: 12px; }
+
+  .persons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 44px;
+  }
+  .hero-number {
+    font-size: 72px;
+    letter-spacing: -3.5px;
+  }
+  .hero-label   { font-size: 11px; margin-bottom: 22px; }
+  .card-name    { font-size: 14px; letter-spacing: 1.5px; }
+  .card-status  { font-size: 13px; }
+  .stat-label   { font-size: 10px; }
+  .stat-val     { font-size: 14px; }
+  .stat-item    { padding: 14px 8px; }
+  .spark-label  { font-size: 10px; }
+
+  .leaderboard-section {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 44px;
+  }
+  .leader-card {
+    flex: 1;
+    margin-bottom: 0;
+    padding: 28px 24px;
+  }
+  .lb-others {
+    flex: 2.2;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .leader-hero  { font-size: 50px; letter-spacing: -2px; }
+  .leader-name  { font-size: 13px; letter-spacing: 1.5px; }
+  .leader-sub   { font-size: 11px; }
+  .lb-avg       { font-size: 26px; }
+  .rank-badge   { width: 44px; height: 44px; font-size: 18px; }
+
+  .heat-section { margin-bottom: 44px; }
+  .heat-card    { padding: 24px 20px; }
+  .heat-layout  { gap: 10px; }
+  .heat-names   { gap: 8px; padding-top: 3px; }
+  .heat-name    { height: 54px; font-size: 10px; letter-spacing: 0.8px; }
+  .heat-row     { gap: 6px; }
+  .heat-cell {
+    width: 52px;
+    min-width: 52px;
+    height: 54px;
+    border-radius: 10px;
+  }
+  .heat-val { font-size: 9px; }
+  .heat-day { font-size: 10.5px; }
+  .heat-legend {
+    margin-top: 20px;
+    padding-top: 14px;
+    gap: 20px;
+  }
+  .legend-item { font-size: 10px; }
+  .legend-dot  { width: 12px; height: 12px; }
+
+  .calendar-link    { margin-bottom: 44px; }
+  .cal-link-inner   { padding: 28px 36px; }
+  .cal-link-title   { font-size: 19px; }
+  .cal-link-sub     { font-size: 13px; }
+  .cal-link-icon    { font-size: 30px; }
+  .cal-link-chevron { font-size: 32px; }
+
+  .footer { font-size: 12px; margin-top: 36px; }
+
+}
+
+/* Desktop quote: hidden on mobile, shown on desktop */
+.desktop-quote {
+  display: none;
+  text-align: center;
+  padding: 20px 24px 12px;
+  margin: 0 0 8px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  color: #ffffff;
+  font-style: italic;
+  letter-spacing: 0.3px;
+  line-height: 1.6;
+}
+
+.desktop-quote .quote-mark {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 64px;
+  line-height: 0;
+  vertical-align: -18px;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.quote-author {
+  margin-top: 14px;
+  font-size: 13px;
+  font-style: normal;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+@media (min-width: 1024px) {
+  .desktop-quote { display: block; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <span class="moon-icon">🌙</span>
+    <div>
+      <div class="header-title">Sleep Tracker</div>
+      <div class="header-date">June 22, 2026</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-gentime">Updated<br>6:01 PM BEY</div>
+  </div>
+</header>
+
+<!-- Desktop quote -->
+<div class="desktop-quote">
+  <span class="quote-mark">&#x201C;</span>Early to bed... makes a man healthy, wealthy, and wise<span class="quote-mark">&#x201D;</span>
+  <div class="quote-author">Benjamin Franklin</div>
+</div>
+
+<!-- Person cards -->
+<div class="section-label">Crew Status</div>
+<div class="persons-grid">
+<div class="glass-card person-card" style="--accent:#00C2B7;--glow:rgba(0,194,183,0.18);animation-delay:0ms">
+  
+  <div class="card-top">
+    <div class="card-identity">
+      <span class="dot-idle" style="background:#00C2B7;"></span>
+      <span class="card-name" style="color:#00C2B7">AJ</span>
+    </div>
+    <span class="card-status">Awake</span>
+  </div>
+
+  <div class="hero-number val-amber">6h</div>
+  <div class="hero-label">last night</div>
+
+  <div class="stat-row">
+    <div class="stat-item">
+      <span class="stat-label">Slept</span>
+      <span class="stat-val">3:30&nbsp;AM</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-label">Woke</span>
+      <span class="stat-val">9:30&nbsp;AM</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-label">7d Avg</span>
+      <span class="stat-val">7h&nbsp;02m</span>
+    </div>
+  </div>
+
+  <div class="sparkline-row">
+    <span class="spark-label">7 days</span>
+    <div class="spark-chart"><svg width="93" height="38" viewBox="0 0 93 38" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="7.6" width="9" height="30.4" rx="2.5" fill="#1E8449" opacity="1"/><rect x="14" y="15.8" width="9" height="22.2" rx="2.5" fill="#FF9F0A" opacity="1"/><rect x="28" y="6.3" width="9" height="31.7" rx="2.5" fill="#1E8449" opacity="1"/><rect x="42" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/><rect x="56" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/><rect x="70" y="15.2" width="9" height="22.8" rx="2.5" fill="#FF9F0A" opacity="1"/><rect x="84" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/></svg></div>
+  </div>
+</div>
+<div class="glass-card person-card" style="--accent:#7C3AED;--glow:rgba(124,58,237,0.18);animation-delay:90ms">
+  
+  <div class="card-top">
+    <div class="card-identity">
+      <span class="dot-idle" style="background:#7C3AED;"></span>
+      <span class="card-name" style="color:#7C3AED">Liam</span>
+    </div>
+    <span class="card-status">Awake</span>
+  </div>
+
+  <div class="hero-number val-darkgreen">7h</div>
+  <div class="hero-label">last night</div>
+
+  <div class="stat-row">
+    <div class="stat-item">
+      <span class="stat-label">Slept</span>
+      <span class="stat-val">12:00&nbsp;AM</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-label">Woke</span>
+      <span class="stat-val">7:00&nbsp;AM</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-label">7d Avg</span>
+      <span class="stat-val">8h&nbsp;26m</span>
+    </div>
+  </div>
+
+  <div class="sparkline-row">
+    <span class="spark-label">7 days</span>
+    <div class="spark-chart"><svg width="93" height="38" viewBox="0 0 93 38" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="1.0" width="9" height="37.0" rx="2.5" fill="#FF3B30" opacity="1"/><rect x="14" y="4.8" width="9" height="33.2" rx="2.5" fill="#FF6B9D" opacity="1"/><rect x="28" y="8.9" width="9" height="29.1" rx="2.5" fill="#1E8449" opacity="1"/><rect x="42" y="11.4" width="9" height="26.6" rx="2.5" fill="#1E8449" opacity="1"/><rect x="56" y="3.8" width="9" height="34.2" rx="2.5" fill="#FF9F0A" opacity="1"/><rect x="70" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/><rect x="84" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/></svg></div>
+  </div>
+</div>
+<div class="glass-card person-card" style="--accent:#C41E3A;--glow:rgba(196,30,58,0.18);animation-delay:180ms">
+  
+  <div class="card-top">
+    <div class="card-identity">
+      <span class="dot-idle" style="background:#C41E3A;"></span>
+      <span class="card-name" style="color:#C41E3A">Fox</span>
+    </div>
+    <span class="card-status">Awake</span>
+  </div>
+
+  <div class="hero-number val-darkgreen">6h&nbsp;30m</div>
+  <div class="hero-label">last night</div>
+
+  <div class="stat-row">
+    <div class="stat-item">
+      <span class="stat-label">Slept</span>
+      <span class="stat-val">12:00&nbsp;AM</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-label">Woke</span>
+      <span class="stat-val">6:30&nbsp;AM</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-label">7d Avg</span>
+      <span class="stat-val">6h&nbsp;13m</span>
+    </div>
+  </div>
+
+  <div class="sparkline-row">
+    <span class="spark-label">7 days</span>
+    <div class="spark-chart"><svg width="93" height="38" viewBox="0 0 93 38" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="11.4" width="9" height="26.6" rx="2.5" fill="#1E8449" opacity="1"/><rect x="14" y="19.3" width="9" height="18.7" rx="2.5" fill="#FF3B30" opacity="1"/><rect x="28" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/><rect x="42" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/><rect x="56" y="13.6" width="9" height="24.4" rx="2.5" fill="#FF9F0A" opacity="1"/><rect x="70" y="13.3" width="9" height="24.7" rx="2.5" fill="#1E8449" opacity="1"/><rect x="84" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/></svg></div>
+  </div>
+</div>
+<div class="glass-card person-card" style="--accent:#FF9F0A;--glow:rgba(255,159,10,0.18);animation-delay:270ms">
+  
+  <div class="card-top">
+    <div class="card-identity">
+      <span class="dot-idle" style="background:#FF9F0A;"></span>
+      <span class="card-name" style="color:#FF9F0A">Jamy</span>
+    </div>
+    <span class="card-status">Awake</span>
+  </div>
+
+  <div class="hero-number val-darkgreen">7h</div>
+  <div class="hero-label">last night</div>
+
+  <div class="stat-row">
+    <div class="stat-item">
+      <span class="stat-label">Slept</span>
+      <span class="stat-val">3:00&nbsp;AM</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-label">Woke</span>
+      <span class="stat-val">10:00&nbsp;AM</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-label">7d Avg</span>
+      <span class="stat-val">6h&nbsp;46m</span>
+    </div>
+  </div>
+
+  <div class="sparkline-row">
+    <span class="spark-label">7 days</span>
+    <div class="spark-chart"><svg width="93" height="38" viewBox="0 0 93 38" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="10.8" width="9" height="27.2" rx="2.5" fill="#1E8449" opacity="1"/><rect x="14" y="22.2" width="9" height="15.8" rx="2.5" fill="#FF3B30" opacity="1"/><rect x="28" y="7.0" width="9" height="31.0" rx="2.5" fill="#1E8449" opacity="1"/><rect x="42" y="10.1" width="9" height="27.9" rx="2.5" fill="#1E8449" opacity="1"/><rect x="56" y="11.4" width="9" height="26.6" rx="2.5" fill="#1E8449" opacity="1"/><rect x="70" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/><rect x="84" y="36.0" width="9" height="2.0" rx="2.5" fill="rgba(255,255,255,0.08)" opacity="0.25"/></svg></div>
+  </div>
+</div>
+</div>
+
+<!-- Leaderboard -->
+<div class="section-label">Leaderboard</div>
+<div class="leaderboard-section">
+<div class="glass-card leader-card" style="--accent:#00C2B7;--glow:rgba(0,194,183,0.18)" data-popup-type="rank" data-person="AJ" data-color="#00C2B7" data-rank="1" data-duration-score="44" data-timing-score="12" data-combined-score="28.2" data-nights="61" data-best-night="10h 25m (May 18)" data-worst-night="4h 40m (May 7)">
+  <div class="leader-rank">
+    <span class="rank-badge" style="background:#FFD700;color:#000">1</span>
+  </div>
+  <div class="leader-body">
+    <span class="leader-name" style="color:#00C2B7">AJ</span>
+    <div class="leader-hero val-darkgreen">7h&nbsp;02m</div>
+    <div class="leader-sub">7-day average</div>
+  </div>
+</div>
+<div class="lb-others"><div class="glass-card lb-card" style="--accent:#7C3AED;--glow:rgba(124,58,237,0.18)" data-popup-type="rank" data-person="Liam" data-color="#7C3AED" data-rank="2" data-duration-score="24" data-timing-score="41" data-combined-score="32.8" data-nights="67" data-best-night="12h (May 18)" data-worst-night="5h (May 24)"><span class="rank-badge sm" style="background:#C0C0C0;color:#000">2</span><span class="lb-name" style="color:#7C3AED">Liam</span><div class="lb-avg val-darkgreen">8h&nbsp;26m</div><div class="lb-sub">7d avg</div></div><div class="glass-card lb-card" style="--accent:#C41E3A;--glow:rgba(196,30,58,0.18)" data-popup-type="rank" data-person="Fox" data-color="#C41E3A" data-rank="3" data-duration-score="16" data-timing-score="107" data-combined-score="61.2" data-nights="48" data-best-night="8h 35m (Jun 7)" data-worst-night="4h 05m (Apr 27)"><span class="rank-badge sm" style="background:#CD7F32;color:#000">3</span><span class="lb-name" style="color:#C41E3A">Fox</span><div class="lb-avg val-amber">6h&nbsp;13m</div><div class="lb-sub">7d avg</div></div><div class="glass-card lb-card" style="--accent:#FF9F0A;--glow:rgba(255,159,10,0.18)" data-popup-type="rank" data-person="Jamy" data-color="#FF9F0A" data-rank="4" data-duration-score="15" data-timing-score="120" data-combined-score="67.5" data-nights="67" data-best-night="9h 14m (May 8)" data-worst-night="4h 10m (Jun 17)"><span class="rank-badge sm" style="background:rgba(255,255,255,0.2);color:#fff">4</span><span class="lb-name" style="color:#FF9F0A">Jamy</span><div class="lb-avg val-darkgreen">6h&nbsp;46m</div><div class="lb-sub">7d avg</div></div></div>
+</div>
+
+<!-- 14-day heat map -->
+<div class="section-label">14-Day Sleep Map</div>
+<div class="section-sublabel">Sleep Quality Measure 1</div>
+<div class="heat-section">
+  <div class="glass-card heat-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
+<div class="heat-layout">
+  <div class="heat-names"><div class="heat-name" style="color:#C41E3A">Fox</div><div class="heat-name" style="color:#00C2B7">AJ</div><div class="heat-name" style="color:#7C3AED">Liam</div><div class="heat-name" style="color:#FF9F0A">Jamy</div></div>
+  <div class="heat-scroll">
+    <div class="heat-row"><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 9: 7h" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 9" data-sleep="1:30 AM" data-wake="8:30 AM" data-hours="7h" data-indicator="darkgreen"><span class="heat-val">7.0h</span><span class="heat-day">9</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 10: 7h" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 10" data-sleep="1:30 AM" data-wake="8:30 AM" data-hours="7h" data-indicator="darkgreen"><span class="heat-val">7.0h</span><span class="heat-day">10</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 11: No data" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 11" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">11</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 12: 7h 15m" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 12" data-sleep="12:00 AM" data-wake="7:15 AM" data-hours="7h 15m" data-indicator="darkgreen"><span class="heat-val">7.2h</span><span class="heat-day">12</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 13: 7h 05m" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 13" data-sleep="12:10 AM" data-wake="7:15 AM" data-hours="7h 05m" data-indicator="darkgreen"><span class="heat-val">7.1h</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(249,115,22,0.55);border-color:rgba(249,115,22,0.65);" title="Jun 14: 6h" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 14" data-sleep="4:00 AM" data-wake="10:00 AM" data-hours="6h" data-indicator="orange"><span class="heat-val">6.0h</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(249,115,22,0.55);border-color:rgba(249,115,22,0.65);" title="Jun 15: 5h 45m" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 15" data-sleep="1:45 AM" data-wake="7:30 AM" data-hours="5h 45m" data-indicator="orange"><span class="heat-val">5.8h</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 16: No data" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 16" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 17: 7h" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 17" data-sleep="1:30 AM" data-wake="8:30 AM" data-hours="7h" data-indicator="darkgreen"><span class="heat-val">7.0h</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(239,68,68,0.55);border-color:rgba(239,68,68,0.65);" title="Jun 18: 4h 55m" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 18" data-sleep="2:15 AM" data-wake="7:10 AM" data-hours="4h 55m" data-indicator="red"><span class="heat-val">4.9h</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 19: No data" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 19" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 20: No data" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 20" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(249,115,22,0.55);border-color:rgba(249,115,22,0.65);" title="Jun 21: 6h 25m" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 21" data-sleep="2:20 AM" data-wake="8:45 AM" data-hours="6h 25m" data-indicator="orange"><span class="heat-val">6.4h</span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 22: 6h 30m" data-popup-type="m1" data-person="Fox" data-color="#C41E3A" data-date="Jun 22" data-sleep="12:00 AM" data-wake="6:30 AM" data-hours="6h 30m" data-indicator="darkgreen"><span class="heat-val">6.5h</span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 9: No data" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 9" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">9</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 10: No data" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 10" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">10</span></div><div class="heat-cell" style="background:rgba(255,107,157,0.62);border-color:rgba(255,107,157,0.75);" title="Jun 11: 8h 11m" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 11" data-sleep="1:00 AM" data-wake="9:11 AM" data-hours="8h 11m" data-indicator="orange"><span class="heat-val">8.2h</span><span class="heat-day">11</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 12: 5h 47m" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 12" data-sleep="1:20 AM" data-wake="7:07 AM" data-hours="5h 47m" data-indicator="green"><span class="heat-val">5.8h</span><span class="heat-day">12</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 13: 5h 30m" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 13" data-sleep="10:55 PM" data-wake="4:25 AM" data-hours="5h 30m" data-indicator="green" data-office-time="5:20 AM" data-office-goal="7:00 AM" data-office-delta="-1h 40m" data-office-late="false"><span class="heat-val">5.5h</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 14: No data" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 14" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 15: 6h 40m" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 15" data-sleep="12:20 AM" data-wake="7:00 AM" data-hours="6h 40m" data-indicator="green"><span class="heat-val">6.7h</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(249,115,22,0.55);border-color:rgba(249,115,22,0.65);" title="Jun 16: 5h 05m" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 16" data-sleep="12:30 AM" data-wake="5:35 AM" data-hours="5h 05m" data-indicator="orange" data-office-time="6:25 AM" data-office-goal="7:00 AM" data-office-delta="-35m" data-office-late="false"><span class="heat-val">5.1h</span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(255,107,157,0.62);border-color:rgba(255,107,157,0.75);" title="Jun 17: 8h" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 17" data-sleep="12:30 AM" data-wake="8:30 AM" data-hours="8h" data-indicator="orange" data-office-time="9:53 AM" data-office-goal="7:00 AM" data-office-delta="+2h 53m" data-office-late="true"><span class="heat-val">8.0h</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 18: 5h 50m" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 18" data-sleep="12:00 AM" data-wake="5:50 AM" data-hours="5h 50m" data-indicator="green" data-office-time="6:50 AM" data-office-goal="7:00 AM" data-office-delta="-10m" data-office-late="false"><span class="heat-val">5.8h</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(255,107,157,0.62);border-color:rgba(255,107,157,0.75);" title="Jun 19: 8h 20m" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 19" data-sleep="12:10 AM" data-wake="8:30 AM" data-hours="8h 20m" data-indicator="orange"><span class="heat-val">8.3h</span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 20: No data" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 20" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 21: No data" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 21" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(34,197,94,0.72);border-color:rgba(34,197,94,0.88);" title="Jun 22: 6h" data-popup-type="m1" data-person="AJ" data-color="#00C2B7" data-date="Jun 22" data-sleep="3:30 AM" data-wake="9:30 AM" data-hours="6h" data-indicator="green"><span class="heat-val">6.0h</span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 9: 7h" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 9" data-sleep="1:00 AM" data-wake="8:00 AM" data-hours="7h" data-indicator="darkgreen"><span class="heat-val">7.0h</span><span class="heat-day">9</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 10: 7h 14m" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 10" data-sleep="12:00 AM" data-wake="7:14 AM" data-hours="7h 14m" data-indicator="darkgreen"><span class="heat-val">7.2h</span><span class="heat-day">10</span></div><div class="heat-cell" style="background:rgba(255,107,157,0.62);border-color:rgba(255,107,157,0.75);" title="Jun 11: 8h 45m" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 11" data-sleep="1:00 AM" data-wake="9:45 AM" data-hours="8h 45m" data-indicator="cinderella"><span class="heat-val">8.8h</span><span class="heat-day">11</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 12: 7h 50m" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 12" data-sleep="11:30 PM" data-wake="7:20 AM" data-hours="7h 50m" data-indicator="darkgreen"><span class="heat-val">7.8h</span><span class="heat-day">12</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 13: 8h" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 13" data-sleep="12:00 AM" data-wake="8:00 AM" data-hours="8h" data-indicator="darkgreen"><span class="heat-val">8.0h</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 14: 7h 50m" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 14" data-sleep="12:30 AM" data-wake="8:20 AM" data-hours="7h 50m" data-indicator="darkgreen"><span class="heat-val">7.8h</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 15: 7h" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 15" data-sleep="1:00 AM" data-wake="8:00 AM" data-hours="7h" data-indicator="darkgreen"><span class="heat-val">7.0h</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 16: 7h 30m" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 16" data-sleep="1:00 AM" data-wake="8:30 AM" data-hours="7h 30m" data-indicator="darkgreen"><span class="heat-val">7.5h</span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);" title="Jun 17: 9h 45m" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 17" data-sleep="11:00 PM" data-wake="8:45 AM" data-hours="9h 45m" data-indicator="red"><span class="heat-val">9.8h</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(255,107,157,0.62);border-color:rgba(255,107,157,0.75);" title="Jun 18: 8h 45m" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 18" data-sleep="12:00 AM" data-wake="8:45 AM" data-hours="8h 45m" data-indicator="cinderella"><span class="heat-val">8.8h</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 19: 7h 39m" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 19" data-sleep="11:30 PM" data-wake="7:09 AM" data-hours="7h 39m" data-indicator="darkgreen"><span class="heat-val">7.7h</span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.55);border-color:rgba(255,159,10,0.65);" title="Jun 20: 9h" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 20" data-sleep="12:10 AM" data-wake="7:10 AM" data-hours="9h" data-indicator="orange"><span class="heat-val">9.0h</span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 21: 7h" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 21" data-sleep="12:00 AM" data-wake="7:00 AM" data-hours="7h" data-indicator="darkgreen"><span class="heat-val">7.0h</span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 22: No data" data-popup-type="m1" data-person="Liam" data-color="#7C3AED" data-date="Jun 22" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 9: 8h" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 9" data-sleep="2:00 AM" data-wake="10:00 AM" data-hours="8h" data-indicator="darkgreen"><span class="heat-val">8.0h</span><span class="heat-day">9</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 10: 7h" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 10" data-sleep="2:00 AM" data-wake="9:00 AM" data-hours="7h" data-indicator="darkgreen"><span class="heat-val">7.0h</span><span class="heat-day">10</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 11: 7h 10m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 11" data-sleep="1:20 AM" data-wake="8:30 AM" data-hours="7h 10m" data-indicator="darkgreen"><span class="heat-val">7.2h</span><span class="heat-day">11</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 12: 7h 30m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 12" data-sleep="1:30 AM" data-wake="9:00 AM" data-hours="7h 30m" data-indicator="darkgreen"><span class="heat-val">7.5h</span><span class="heat-day">12</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 13: 7h 50m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 13" data-sleep="1:00 AM" data-wake="8:50 AM" data-hours="7h 50m" data-indicator="darkgreen"><span class="heat-val">7.8h</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 14: 7h 15m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 14" data-sleep="2:15 AM" data-wake="9:30 AM" data-hours="7h 15m" data-indicator="darkgreen"><span class="heat-val">7.2h</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.55);border-color:rgba(255,159,10,0.65);" title="Jun 15: 6h 15m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 15" data-sleep="3:45 AM" data-wake="10:00 AM" data-hours="6h 15m" data-indicator="orange"><span class="heat-val">6.2h</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 16: No data" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 16" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 17: 7h 10m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 17" data-sleep="11:30 PM" data-wake="3:40 AM" data-hours="7h 10m" data-indicator="darkgreen"><span class="heat-val">7.2h</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);" title="Jun 18: 4h 10m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 18" data-sleep="11:30 PM" data-wake="3:40 AM" data-hours="4h 10m" data-indicator="red"><span class="heat-val">4.2h</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 19: 8h 10m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 19" data-sleep="12:50 AM" data-wake="9:00 AM" data-hours="8h 10m" data-indicator="darkgreen"><span class="heat-val">8.2h</span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 20: 7h 20m" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 20" data-sleep="2:10 AM" data-wake="9:30 AM" data-hours="7h 20m" data-indicator="darkgreen"><span class="heat-val">7.3h</span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(30,132,73,0.72);border-color:rgba(30,132,73,0.88);" title="Jun 21: 7h" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 21" data-sleep="3:00 AM" data-wake="10:00 AM" data-hours="7h" data-indicator="darkgreen"><span class="heat-val">7.0h</span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);" title="Jun 22: No data" data-popup-type="m1" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 22" data-sleep="--" data-wake="--" data-hours="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">22</span></div></div>
+  </div>
+</div>
+    <div class="heat-legend">
+      <div style="font-size:9px;opacity:0.45;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;padding-left:2px">Fox</div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(34,197,94,0.88)"></div>
+        6.5-8.0h optimal
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(59,130,246,0.75)"></div>
+        8.0-8.9h above ideal
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,107,157,0.75)"></div>
+        9h+ cinderella
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(249,115,22,0.65)"></div>
+        5.5-6.4h okay
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(239,68,68,0.65)"></div>
+        Under 5.5h red
+      </div>
+    </div>
+    <div class="heat-legend" style="margin-top:6px">
+      <div style="font-size:9px;opacity:0.45;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;padding-left:2px">Liam / Jamy</div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(30,132,73,0.88)"></div>
+        6.5-8.5h optimal
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,107,157,0.75)"></div>
+        8.5-9h cinderella
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,159,10,0.65)"></div>
+        5-6.5h / 9-9.5h okay
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,59,48,0.65)"></div>
+        Under 5h / 9.5h+ red
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,255,255,0.08)"></div>
+        No data
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 10-day consistency map -->
+<div class="section-label">10-Day Consistency Map</div>
+<div class="section-sublabel">Sleep Quality Measure 2</div>
+<div class="heat-section">
+  <div class="glass-card heat-card consistency-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
+<div class="heat-layout">
+  <div class="heat-names"><div class="heat-name cons-name-cell" style="color:#C41E3A"><span class="cons-name-text">Fox</span><span class="cons-avg-badge">Avg:1h47m</span></div><div class="heat-name cons-name-cell" style="color:#00C2B7"><span class="cons-name-text">AJ</span><span class="cons-avg-badge">Avg:12m</span></div><div class="heat-name cons-name-cell" style="color:#7C3AED"><span class="cons-name-text">Liam</span><span class="cons-avg-badge">Avg:41m</span></div><div class="heat-name cons-name-cell" style="color:#FF9F0A"><span class="cons-name-text">Jamy</span><span class="cons-avg-badge">Avg:2h</span></div></div>
+  <div class="heat-scroll">
+    <div class="heat-row"><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 13: First data point, no previous night" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 13" data-bedtime="4:00 AM" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.80);border-color:rgba(255,59,48,0.9);" title="Jun 14: Slept at 1:45 AM, prev night 4:00 AM, delta: 2h 15min" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 14" data-bedtime="1:45 AM" data-prev-bedtime="4:00 AM" data-delta="+2h15m" data-indicator="red"><span class="heat-val">+2h15m</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 15: No sleep data for this night" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 15" data-bedtime="--" data-prev-bedtime="1:45 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 16: No previous night to compare" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 16" data-bedtime="1:30 AM" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 17: Slept at 2:15 AM, prev night 1:30 AM, delta: 45 min" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 17" data-bedtime="2:15 AM" data-prev-bedtime="1:30 AM" data-delta="+45m" data-indicator="green"><span class="heat-val">+45m</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 18: No sleep data for this night" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 18" data-bedtime="--" data-prev-bedtime="2:15 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 19: No data" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 19" data-bedtime="--" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 20: No previous night to compare" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 20" data-bedtime="2:20 AM" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.80);border-color:rgba(255,59,48,0.9);" title="Jun 21: Slept at 12:00 AM, prev night 2:20 AM, delta: 2h 20min" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 21" data-bedtime="12:00 AM" data-prev-bedtime="2:20 AM" data-delta="+2h20m" data-indicator="red"><span class="heat-val">+2h20m</span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 22: No sleep data for this night" data-popup-type="m2" data-person="Fox" data-color="#C41E3A" data-date="Jun 22" data-bedtime="--" data-prev-bedtime="12:00 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 13: First data point, no previous night" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 13" data-bedtime="--" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 14: No previous night to compare" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 14" data-bedtime="12:20 AM" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 15: Slept at 12:30 AM, prev night 12:20 AM, delta: 10 min" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 15" data-bedtime="12:30 AM" data-prev-bedtime="12:20 AM" data-delta="+10m" data-indicator="green"><span class="heat-val">+10m</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 16: Slept at 12:30 AM, prev night 12:30 AM, delta: 0 min" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 16" data-bedtime="12:30 AM" data-prev-bedtime="12:30 AM" data-delta="+0m" data-indicator="green"><span class="heat-val">+0m</span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 17: Slept at 12:00 AM, prev night 12:30 AM, delta: 30 min" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 17" data-bedtime="12:00 AM" data-prev-bedtime="12:30 AM" data-delta="+30m" data-indicator="green"><span class="heat-val">+30m</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 18: Slept at 12:10 AM, prev night 12:00 AM, delta: 10 min" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 18" data-bedtime="12:10 AM" data-prev-bedtime="12:00 AM" data-delta="+10m" data-indicator="green"><span class="heat-val">+10m</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 19: No sleep data for this night" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 19" data-bedtime="--" data-prev-bedtime="12:10 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 20: No data" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 20" data-bedtime="--" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 21: No previous night to compare" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 21" data-bedtime="3:30 AM" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 22: No sleep data for this night" data-popup-type="m2" data-person="AJ" data-color="#00C2B7" data-date="Jun 22" data-bedtime="--" data-prev-bedtime="3:30 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 13: First data point, no previous night" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 13" data-bedtime="12:30 AM" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 14: Slept at 1:00 AM, prev night 12:30 AM, delta: 30 min" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 14" data-bedtime="1:00 AM" data-prev-bedtime="12:30 AM" data-delta="+30m" data-indicator="green"><span class="heat-val">+30m</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 15: Slept at 1:00 AM, prev night 1:00 AM, delta: 0 min" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 15" data-bedtime="1:00 AM" data-prev-bedtime="1:00 AM" data-delta="+0m" data-indicator="green"><span class="heat-val">+0m</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.80);border-color:rgba(255,59,48,0.9);" title="Jun 16: Slept at 11:00 PM, prev night 1:00 AM, delta: 2h" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 16" data-bedtime="11:00 PM" data-prev-bedtime="1:00 AM" data-delta="+2h" data-indicator="red"><span class="heat-val">+2h</span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 17: Slept at 12:00 AM, prev night 11:00 PM, delta: 1h" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 17" data-bedtime="12:00 AM" data-prev-bedtime="11:00 PM" data-delta="+1h" data-indicator="green"><span class="heat-val">+1h</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 18: Slept at 11:30 PM, prev night 12:00 AM, delta: 30 min" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 18" data-bedtime="11:30 PM" data-prev-bedtime="12:00 AM" data-delta="+30m" data-indicator="green"><span class="heat-val">+30m</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 19: Slept at 12:10 AM, prev night 11:30 PM, delta: 40 min" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 19" data-bedtime="12:10 AM" data-prev-bedtime="11:30 PM" data-delta="+40m" data-indicator="green"><span class="heat-val">+40m</span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 20: Slept at 12:00 AM, prev night 12:10 AM, delta: 10 min" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 20" data-bedtime="12:00 AM" data-prev-bedtime="12:10 AM" data-delta="+10m" data-indicator="green"><span class="heat-val">+10m</span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 21: No sleep data for this night" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 21" data-bedtime="--" data-prev-bedtime="12:00 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 22: No data" data-popup-type="m2" data-person="Liam" data-color="#7C3AED" data-date="Jun 22" data-bedtime="--" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 13: First data point, no previous night" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 13" data-bedtime="2:15 AM" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 14: Slept at 3:45 AM, prev night 2:15 AM, delta: 1h 30min" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 14" data-bedtime="3:45 AM" data-prev-bedtime="2:15 AM" data-delta="+1h30m" data-indicator="orange"><span class="heat-val">+1h30m</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 15: No sleep data for this night" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 15" data-bedtime="--" data-prev-bedtime="3:45 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 16: No previous night to compare" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 16" data-bedtime="4:30 AM" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.80);border-color:rgba(255,59,48,0.9);" title="Jun 17: Slept at 11:30 PM, prev night 4:30 AM, delta: 5h" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 17" data-bedtime="11:30 PM" data-prev-bedtime="4:30 AM" data-delta="+5h" data-indicator="red"><span class="heat-val">+5h</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 18: Slept at 12:50 AM, prev night 11:30 PM, delta: 1h 20min" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 18" data-bedtime="12:50 AM" data-prev-bedtime="11:30 PM" data-delta="+1h20m" data-indicator="orange"><span class="heat-val">+1h20m</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 19: Slept at 2:10 AM, prev night 12:50 AM, delta: 1h 20min" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 19" data-bedtime="2:10 AM" data-prev-bedtime="12:50 AM" data-delta="+1h20m" data-indicator="orange"><span class="heat-val">+1h20m</span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 20: Slept at 3:00 AM, prev night 2:10 AM, delta: 50 min" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 20" data-bedtime="3:00 AM" data-prev-bedtime="2:10 AM" data-delta="+50m" data-indicator="green"><span class="heat-val">+50m</span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 21: No sleep data for this night" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 21" data-bedtime="--" data-prev-bedtime="3:00 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 22: No data" data-popup-type="m2" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 22" data-bedtime="--" data-prev-bedtime="--" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">22</span></div></div>
+  </div>
+</div>
+    <div class="heat-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(52,199,89,0.80)"></div>
+        Within 75m
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,159,10,0.80)"></div>
+        75-100m
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,59,48,0.80)"></div>
+        Over 100m
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,255,255,0.10)"></div>
+        No data
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 10-day wake consistency map -->
+<div class="section-label">10-Day Wake Consistency Map</div>
+<div class="section-sublabel">Sleep Quality Measure 3</div>
+<div class="heat-section">
+  <div class="glass-card heat-card consistency-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
+<div class="heat-layout">
+  <div class="heat-names"><div class="heat-name cons-name-cell" style="color:#C41E3A"><span class="cons-name-text">Fox</span><span class="cons-avg-badge">Avg 7:44AM</span></div><div class="heat-name cons-name-cell" style="color:#00C2B7"><span class="cons-name-text">AJ</span><span class="cons-avg-badge">Avg 7:14AM</span></div><div class="heat-name cons-name-cell" style="color:#7C3AED"><span class="cons-name-text">Liam</span><span class="cons-avg-badge">Avg 8:24AM</span></div><div class="heat-name cons-name-cell" style="color:#FF9F0A"><span class="cons-name-text">Jamy</span><span class="cons-avg-badge">Avg 8:36AM</span></div></div>
+  <div class="heat-scroll">
+    <div class="heat-row"><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 13: Woke at 7:15 AM, avg 7:44 AM, delta: 29 min" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 13" data-waketime="7:15 AM" data-avg-wake="7:44 AM" data-delta="+29m" data-indicator="green"><span class="heat-val">+29m</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.80);border-color:rgba(255,59,48,0.9);" title="Jun 14: Woke at 10:00 AM, avg 7:44 AM, delta: 2h 16min" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 14" data-waketime="10:00 AM" data-avg-wake="7:44 AM" data-delta="+2h16m" data-indicator="red"><span class="heat-val">+2h16m</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 15: Woke at 7:30 AM, avg 7:44 AM, delta: 14 min" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 15" data-waketime="7:30 AM" data-avg-wake="7:44 AM" data-delta="+14m" data-indicator="green"><span class="heat-val">+14m</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 16: No data" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 16" data-waketime="--" data-avg-wake="7:44 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 17: Woke at 8:30 AM, avg 7:44 AM, delta: 46 min" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 17" data-waketime="8:30 AM" data-avg-wake="7:44 AM" data-delta="+46m" data-indicator="green"><span class="heat-val">+46m</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 18: Woke at 7:10 AM, avg 7:44 AM, delta: 34 min" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 18" data-waketime="7:10 AM" data-avg-wake="7:44 AM" data-delta="+34m" data-indicator="green"><span class="heat-val">+34m</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 19: No data" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 19" data-waketime="--" data-avg-wake="7:44 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 20: No data" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 20" data-waketime="--" data-avg-wake="7:44 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 21: Woke at 8:45 AM, avg 7:44 AM, delta: 1h 1min" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 21" data-waketime="8:45 AM" data-avg-wake="7:44 AM" data-delta="+1h1m" data-indicator="green"><span class="heat-val">+1h1m</span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 22: Woke at 6:30 AM, avg 7:44 AM, delta: 1h 14min" data-popup-type="m3" data-person="Fox" data-color="#C41E3A" data-date="Jun 22" data-waketime="6:30 AM" data-avg-wake="7:44 AM" data-delta="+1h14m" data-indicator="green"><span class="heat-val">+1h14m</span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(255,59,48,0.80);border-color:rgba(255,59,48,0.9);" title="Jun 13: Woke at 4:25 AM, avg 7:14 AM, delta: 2h 49min" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 13" data-waketime="4:25 AM" data-avg-wake="7:14 AM" data-delta="+2h49m" data-indicator="red"><span class="heat-val">+2h49m</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 14: No data" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 14" data-waketime="--" data-avg-wake="7:14 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 15: Woke at 7:00 AM, avg 7:14 AM, delta: 14 min" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 15" data-waketime="7:00 AM" data-avg-wake="7:14 AM" data-delta="+14m" data-indicator="green"><span class="heat-val">+14m</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 16: Woke at 5:35 AM, avg 7:14 AM, delta: 1h 39min" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 16" data-waketime="5:35 AM" data-avg-wake="7:14 AM" data-delta="+1h39m" data-indicator="orange"><span class="heat-val">+1h39m</span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 17: Woke at 8:30 AM, avg 7:14 AM, delta: 1h 16min" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 17" data-waketime="8:30 AM" data-avg-wake="7:14 AM" data-delta="+1h16m" data-indicator="orange"><span class="heat-val">+1h16m</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 18: Woke at 5:50 AM, avg 7:14 AM, delta: 1h 24min" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 18" data-waketime="5:50 AM" data-avg-wake="7:14 AM" data-delta="+1h24m" data-indicator="orange"><span class="heat-val">+1h24m</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 19: Woke at 8:30 AM, avg 7:14 AM, delta: 1h 16min" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 19" data-waketime="8:30 AM" data-avg-wake="7:14 AM" data-delta="+1h16m" data-indicator="orange"><span class="heat-val">+1h16m</span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 20: No data" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 20" data-waketime="--" data-avg-wake="7:14 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 21: No data" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 21" data-waketime="--" data-avg-wake="7:14 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.80);border-color:rgba(255,59,48,0.9);" title="Jun 22: Woke at 9:30 AM, avg 7:14 AM, delta: 2h 16min" data-popup-type="m3" data-person="AJ" data-color="#00C2B7" data-date="Jun 22" data-waketime="9:30 AM" data-avg-wake="7:14 AM" data-delta="+2h16m" data-indicator="red"><span class="heat-val">+2h16m</span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 13: Woke at 8:00 AM, avg 8:24 AM, delta: 24 min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 13" data-waketime="8:00 AM" data-avg-wake="8:24 AM" data-delta="+24m" data-indicator="green"><span class="heat-val">+24m</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 14: Woke at 8:20 AM, avg 8:24 AM, delta: 4 min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 14" data-waketime="8:20 AM" data-avg-wake="8:24 AM" data-delta="+4m" data-indicator="green"><span class="heat-val">+4m</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 15: Woke at 8:00 AM, avg 8:24 AM, delta: 24 min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 15" data-waketime="8:00 AM" data-avg-wake="8:24 AM" data-delta="+24m" data-indicator="green"><span class="heat-val">+24m</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 16: Woke at 8:30 AM, avg 8:24 AM, delta: 6 min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 16" data-waketime="8:30 AM" data-avg-wake="8:24 AM" data-delta="+6m" data-indicator="green"><span class="heat-val">+6m</span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 17: Woke at 8:45 AM, avg 8:24 AM, delta: 21 min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 17" data-waketime="8:45 AM" data-avg-wake="8:24 AM" data-delta="+21m" data-indicator="green"><span class="heat-val">+21m</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 18: Woke at 8:45 AM, avg 8:24 AM, delta: 21 min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 18" data-waketime="8:45 AM" data-avg-wake="8:24 AM" data-delta="+21m" data-indicator="green"><span class="heat-val">+21m</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 19: Woke at 7:09 AM, avg 8:24 AM, delta: 1h 15min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 19" data-waketime="7:09 AM" data-avg-wake="8:24 AM" data-delta="+1h15m" data-indicator="green"><span class="heat-val">+1h15m</span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 20: Woke at 9:10 AM, avg 8:24 AM, delta: 46 min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 20" data-waketime="9:10 AM" data-avg-wake="8:24 AM" data-delta="+46m" data-indicator="green"><span class="heat-val">+46m</span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 21: Woke at 7:00 AM, avg 8:24 AM, delta: 1h 24min" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 21" data-waketime="7:00 AM" data-avg-wake="8:24 AM" data-delta="+1h24m" data-indicator="orange"><span class="heat-val">+1h24m</span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 22: No data" data-popup-type="m3" data-person="Liam" data-color="#7C3AED" data-date="Jun 22" data-waketime="--" data-avg-wake="8:24 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">22</span></div></div><div class="heat-row"><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 13: Woke at 8:50 AM, avg 8:36 AM, delta: 14 min" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 13" data-waketime="8:50 AM" data-avg-wake="8:36 AM" data-delta="+14m" data-indicator="green"><span class="heat-val">+14m</span><span class="heat-day">13</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 14: Woke at 9:30 AM, avg 8:36 AM, delta: 54 min" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 14" data-waketime="9:30 AM" data-avg-wake="8:36 AM" data-delta="+54m" data-indicator="green"><span class="heat-val">+54m</span><span class="heat-day">14</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 15: Woke at 10:00 AM, avg 8:36 AM, delta: 1h 24min" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 15" data-waketime="10:00 AM" data-avg-wake="8:36 AM" data-delta="+1h24m" data-indicator="orange"><span class="heat-val">+1h24m</span><span class="heat-day">15</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 16: No data" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 16" data-waketime="--" data-avg-wake="8:36 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">16</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 17: Woke at 7:30 AM, avg 8:36 AM, delta: 1h 6min" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 17" data-waketime="7:30 AM" data-avg-wake="8:36 AM" data-delta="+1h6m" data-indicator="green"><span class="heat-val">+1h6m</span><span class="heat-day">17</span></div><div class="heat-cell" style="background:rgba(255,59,48,0.80);border-color:rgba(255,59,48,0.9);" title="Jun 18: Woke at 3:40 AM, avg 8:36 AM, delta: 4h 56min" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 18" data-waketime="3:40 AM" data-avg-wake="8:36 AM" data-delta="+4h56m" data-indicator="red"><span class="heat-val">+4h56m</span><span class="heat-day">18</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 19: Woke at 9:00 AM, avg 8:36 AM, delta: 24 min" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 19" data-waketime="9:00 AM" data-avg-wake="8:36 AM" data-delta="+24m" data-indicator="green"><span class="heat-val">+24m</span><span class="heat-day">19</span></div><div class="heat-cell" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.9);" title="Jun 20: Woke at 9:30 AM, avg 8:36 AM, delta: 54 min" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 20" data-waketime="9:30 AM" data-avg-wake="8:36 AM" data-delta="+54m" data-indicator="green"><span class="heat-val">+54m</span><span class="heat-day">20</span></div><div class="heat-cell" style="background:rgba(255,159,10,0.80);border-color:rgba(255,159,10,0.9);" title="Jun 21: Woke at 10:00 AM, avg 8:36 AM, delta: 1h 24min" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 21" data-waketime="10:00 AM" data-avg-wake="8:36 AM" data-delta="+1h24m" data-indicator="orange"><span class="heat-val">+1h24m</span><span class="heat-day">21</span></div><div class="heat-cell" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.07);" title="Jun 22: No data" data-popup-type="m3" data-person="Jamy" data-color="#FF9F0A" data-date="Jun 22" data-waketime="--" data-avg-wake="8:36 AM" data-delta="--" data-indicator="empty"><span class="heat-val"></span><span class="heat-day">22</span></div></div>
+  </div>
+</div>
+    <div class="heat-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(52,199,89,0.80)"></div>
+        Within 75m
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,159,10,0.80)"></div>
+        75-100m
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,59,48,0.80)"></div>
+        Over 100m
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(255,255,255,0.10)"></div>
+        No data
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Goal Trackers -->
+<div class="section-label">Goal Trackers</div>
+<div class="section-sublabel">Personal daily targets from June 1</div>
+<div class="heat-section">
+  <div class="glass-card heat-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
+<div class="cal-tracker-layout">
+  <div class="cal-tracker-header">
+    <div class="goal-tracker-person-col"><span class="cal-tracker-person" style="color:#C41E3A">Fox</span><span class="goal-tracker-goal-label">CALENDAR SUBMITTED DAILY</span></div>
+    <div class="cal-tracker-stats">
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#C41E3A">1</span><span class="cal-tracker-stat-lbl"> streak</span></span>
+      <span class="cal-tracker-divider"></span>
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#C41E3A">20/22</span><span class="cal-tracker-stat-lbl"> met</span></span>
+    </div>
+  </div>
+  <div class="cal-tracker-dots"><div class="cal-tracker-cell" title="Jun 1: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">1</span></div><div class="cal-tracker-cell" title="Jun 2: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">2</span></div><div class="cal-tracker-cell" title="Jun 3: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">3</span></div><div class="cal-tracker-cell" title="Jun 4: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">4</span></div><div class="cal-tracker-cell" title="Jun 5: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">5</span></div><div class="cal-tracker-cell" title="Jun 6: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">6</span></div><div class="cal-tracker-cell" title="Jun 7: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">7</span></div><div class="cal-tracker-cell" title="Jun 8: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">8</span></div><div class="cal-tracker-cell" title="Jun 9: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">9</span></div><div class="cal-tracker-cell" title="Jun 10: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">10</span></div><div class="cal-tracker-cell" title="Jun 11: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">11</span></div><div class="cal-tracker-cell" title="Jun 12: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">12</span></div><div class="cal-tracker-cell" title="Jun 13: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">13</span></div><div class="cal-tracker-cell" title="Jun 14: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">14</span></div><div class="cal-tracker-cell" title="Jun 15: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">15</span></div><div class="cal-tracker-cell" title="Jun 16: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">16</span></div><div class="cal-tracker-cell" title="Jun 17: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">17</span></div><div class="cal-tracker-cell" title="Jun 18: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">18</span></div><div class="cal-tracker-cell" title="Jun 19: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">19</span></div><div class="cal-tracker-cell" title="Jun 20: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">20</span></div><div class="cal-tracker-cell" title="Jun 21: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">21</span></div></div>
+</div>
+<div class="goal-tracker-row-divider"></div>
+<div class="cal-tracker-layout">
+  <div class="cal-tracker-header">
+    <div class="goal-tracker-person-col"><span class="cal-tracker-person" style="color:#00C2B7">AJ</span><span class="goal-tracker-goal-label">OFFICE BY 7AM MON-SAT + ANY TIME SUN</span></div>
+    <div class="cal-tracker-stats">
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#00C2B7">0</span><span class="cal-tracker-stat-lbl"> streak</span></span>
+      <span class="cal-tracker-divider"></span>
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#00C2B7">6/22</span><span class="cal-tracker-stat-lbl"> met</span></span>
+    </div>
+  </div>
+  <div class="cal-tracker-dots"><div class="cal-tracker-cell" title="Jun 1: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">1</span></div><div class="cal-tracker-cell" title="Jun 2: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">2</span></div><div class="cal-tracker-cell" title="Jun 3: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">3</span></div><div class="cal-tracker-cell" title="Jun 4: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">4</span></div><div class="cal-tracker-cell" title="Jun 5: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">5</span></div><div class="cal-tracker-cell" title="Jun 6: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">6</span></div><div class="cal-tracker-cell" title="Jun 7: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">7</span></div><div class="cal-tracker-cell" title="Jun 8: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">8</span></div><div class="cal-tracker-cell" title="Jun 9: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">9</span></div><div class="cal-tracker-cell" title="Jun 10: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">10</span></div><div class="cal-tracker-cell" title="Jun 11: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">11</span></div><div class="cal-tracker-cell" title="Jun 12: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">12</span></div><div class="cal-tracker-cell" title="Jun 13: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">13</span></div><div class="cal-tracker-cell" title="Jun 14: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">14</span></div><div class="cal-tracker-cell" title="Jun 15: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">15</span></div><div class="cal-tracker-cell" title="Jun 16: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">16</span></div><div class="cal-tracker-cell" title="Jun 17: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">17</span></div><div class="cal-tracker-cell" title="Jun 18: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">18</span></div><div class="cal-tracker-cell" title="Jun 19: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">19</span></div><div class="cal-tracker-cell" title="Jun 20: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">20</span></div><div class="cal-tracker-cell" title="Jun 21: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">21</span></div></div>
+</div>
+<div class="goal-tracker-row-divider"></div>
+<div class="cal-tracker-layout">
+  <div class="cal-tracker-header">
+    <div class="goal-tracker-person-col"><span class="cal-tracker-person" style="color:#7C3AED">Liam</span><span class="goal-tracker-goal-label">WAKE BEFORE 7:30AM DAILY</span></div>
+    <div class="cal-tracker-stats">
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#7C3AED">3</span><span class="cal-tracker-stat-lbl"> streak</span></span>
+      <span class="cal-tracker-divider"></span>
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#7C3AED">8/22</span><span class="cal-tracker-stat-lbl"> met</span></span>
+    </div>
+  </div>
+  <div class="cal-tracker-dots"><div class="cal-tracker-cell" title="Jun 1: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">1</span></div><div class="cal-tracker-cell" title="Jun 2: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">2</span></div><div class="cal-tracker-cell" title="Jun 3: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">3</span></div><div class="cal-tracker-cell" title="Jun 4: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">4</span></div><div class="cal-tracker-cell" title="Jun 5: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">5</span></div><div class="cal-tracker-cell" title="Jun 6: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">6</span></div><div class="cal-tracker-cell" title="Jun 7: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">7</span></div><div class="cal-tracker-cell" title="Jun 8: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">8</span></div><div class="cal-tracker-cell" title="Jun 9: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">9</span></div><div class="cal-tracker-cell" title="Jun 10: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">10</span></div><div class="cal-tracker-cell" title="Jun 11: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">11</span></div><div class="cal-tracker-cell" title="Jun 12: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">12</span></div><div class="cal-tracker-cell" title="Jun 13: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">13</span></div><div class="cal-tracker-cell" title="Jun 14: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">14</span></div><div class="cal-tracker-cell" title="Jun 15: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">15</span></div><div class="cal-tracker-cell" title="Jun 16: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">16</span></div><div class="cal-tracker-cell" title="Jun 17: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">17</span></div><div class="cal-tracker-cell" title="Jun 18: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">18</span></div><div class="cal-tracker-cell" title="Jun 19: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">19</span></div><div class="cal-tracker-cell" title="Jun 20: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">20</span></div><div class="cal-tracker-cell" title="Jun 21: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">21</span></div></div>
+</div>
+<div class="goal-tracker-row-divider"></div>
+<div class="cal-tracker-layout">
+  <div class="cal-tracker-header">
+    <div class="goal-tracker-person-col"><span class="cal-tracker-person" style="color:#FF9F0A">Jamy</span><span class="goal-tracker-goal-label">DAILY ABS SUBMISSION</span></div>
+    <div class="cal-tracker-stats">
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#FF9F0A">0</span><span class="cal-tracker-stat-lbl"> streak</span></span>
+      <span class="cal-tracker-divider"></span>
+      <span class="cal-tracker-stat"><span class="cal-tracker-stat-val" style="color:#FF9F0A">9/22</span><span class="cal-tracker-stat-lbl"> met</span></span>
+    </div>
+  </div>
+  <div class="cal-tracker-dots"><div class="cal-tracker-cell" title="Jun 1: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">1</span></div><div class="cal-tracker-cell" title="Jun 2: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">2</span></div><div class="cal-tracker-cell" title="Jun 3: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">3</span></div><div class="cal-tracker-cell" title="Jun 4: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">4</span></div><div class="cal-tracker-cell" title="Jun 5: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">5</span></div><div class="cal-tracker-cell" title="Jun 6: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">6</span></div><div class="cal-tracker-cell" title="Jun 7: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">7</span></div><div class="cal-tracker-cell" title="Jun 8: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">8</span></div><div class="cal-tracker-cell" title="Jun 9: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">9</span></div><div class="cal-tracker-cell" title="Jun 10: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">10</span></div><div class="cal-tracker-cell" title="Jun 11: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">11</span></div><div class="cal-tracker-cell" title="Jun 12: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">12</span></div><div class="cal-tracker-cell" title="Jun 13: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">13</span></div><div class="cal-tracker-cell" title="Jun 14: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">14</span></div><div class="cal-tracker-cell" title="Jun 15: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">15</span></div><div class="cal-tracker-cell" title="Jun 16: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">16</span></div><div class="cal-tracker-cell" title="Jun 17: Met" style="background:rgba(52,199,89,0.80);border-color:rgba(52,199,89,0.90);"><span class="cal-tracker-day" style="color:rgba(52,199,89,0.9)">17</span></div><div class="cal-tracker-cell" title="Jun 18: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">18</span></div><div class="cal-tracker-cell" title="Jun 19: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">19</span></div><div class="cal-tracker-cell" title="Jun 20: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">20</span></div><div class="cal-tracker-cell" title="Jun 21: Missed" style="background:rgba(255,59,48,0.55);border-color:rgba(255,59,48,0.65);"><span class="cal-tracker-day" style="color:rgba(255,59,48,0.7)">21</span></div></div>
+</div>
+  <div class="heat-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(52,199,89,0.80)"></div>Goal met</div>
+    <div class="legend-item"><div class="legend-dot hustler-legend-dot" style="background:rgba(255,215,0,0.15);border:1.5px solid rgba(255,215,0,0.75);color:#FFD700;font-weight:800;font-size:9px;display:flex;align-items:center;justify-content:center">H</div>Hustler day</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(255,59,48,0.65)"></div>Missed</div>
+  </div>
+
+  </div>
+</div>
+
+<!-- Team Battle -->
+<div class="section-label">Team Battle</div>
+<div class="section-sublabel">Stallions vs Grizzlies &middot; Monthly scoring from May 23</div>
+<div class="heat-section">
+  <div class="glass-card heat-card" style="--accent:rgba(255,255,255,0.12);--glow:transparent">
+<div class="battle-status-line"><span style="color:#8B9BAE">Stallions lead</span><span style="color:rgba(255,255,255,0.3)"> +25.8</span></div><div class="team-battle-grid"><div class="battle-card battle-card-clickable battle-card-winning" style="--team-color:#8B9BAE;--team-glow:rgba(139,155,174,0.15)" onclick="openTeamModal(this)" data-insights='{"teamName": "Stallions", "teamColor": "#8B9BAE", "members": [{"name": "Fox", "color": "#C41E3A", "weakestDay": "Sat", "contribution": 67.4, "trendThis": 6, "trendLast": 7, "trendDir": "down", "avgMissFmt": "55m", "sleepDebtFmt": "3h 10m"}, {"name": "AJ", "color": "#00C2B7", "weakestDay": "Fri", "contribution": 27.6, "trendThis": 2, "trendLast": 2, "trendDir": "flat", "avgMissFmt": "1h 08m", "sleepDebtFmt": "2h 10m"}], "projected": 136.2, "hhGoalWin": true, "hhGoalPts": 62, "hhSleepWin": false, "hhSleepPts": 32.9}'><div class="battle-warmup-badge"><span class="battle-warmup-badge-icon">WARMUP WINNER</span><span class="battle-warmup-badge-bonus">+5 bonus</span></div><div class="battle-team-name" style="color:#8B9BAE">Stallions</div><div class="battle-team-score" style="color:#8B9BAE">99.9<span class="battle-score-unit">pts</span></div><div class="battle-tap-hint">Tap for insights</div><div class="battle-members"><div class="battle-member-row"><span class="battle-member-name" style="color:#C41E3A">Fox</span><div class="battle-member-pts"><span class="battle-pts-group"><span class="battle-pts-num">50</span><span class="battle-pts-lbl">goal</span></span><span class="battle-pts-sep">+</span><span class="battle-pts-group"><span class="battle-pts-num">17.3</span><span class="battle-pts-lbl">sleep</span></span><span class="battle-pts-sep">=</span><span class="battle-pts-total">67.3</span></div></div><div class="battle-member-divider"></div><div class="battle-member-row"><span class="battle-member-name" style="color:#00C2B7">AJ</span><div class="battle-member-pts"><span class="battle-pts-group"><span class="battle-pts-num">12</span><span class="battle-pts-lbl">goal</span></span><span class="battle-pts-sep">+</span><span class="battle-pts-group"><span class="battle-pts-num">15.6</span><span class="battle-pts-lbl">sleep</span></span><span class="battle-pts-sep">=</span><span class="battle-pts-total">27.6</span></div></div><div class="battle-bonus-row"><span class="battle-bonus-label">Warmup bonus</span><span class="battle-bonus-value" style="color:#8B9BAE">+5</span></div></div></div><div class="battle-vs">VS</div><div class="battle-card battle-card-clickable" style="--team-color:#22C55E;--team-glow:rgba(34,197,94,0.15)" onclick="openTeamModal(this)" data-insights='{"teamName": "Grizzlies", "teamColor": "#22C55E", "members": [{"name": "Liam", "color": "#7C3AED", "weakestDay": "Wed", "contribution": 50.1, "trendThis": 3, "trendLast": 2, "trendDir": "up", "avgMissFmt": "57m", "sleepDebtFmt": "0h"}, {"name": "Jamy", "color": "#FF9F0A", "weakestDay": "Mon", "contribution": 49.9, "trendThis": 2, "trendLast": 4, "trendDir": "down", "avgMissFmt": "1h 11m", "sleepDebtFmt": "2h 50m"}], "projected": 101.0, "hhGoalWin": false, "hhGoalPts": 34, "hhSleepWin": true, "hhSleepPts": 40.1}'><div class="battle-team-name" style="color:#22C55E">Grizzlies</div><div class="battle-team-score" style="color:#22C55E">74.1<span class="battle-score-unit">pts</span></div><div class="battle-tap-hint">Tap for insights</div><div class="battle-members"><div class="battle-member-row"><span class="battle-member-name" style="color:#7C3AED">Liam</span><div class="battle-member-pts"><span class="battle-pts-group"><span class="battle-pts-num">16</span><span class="battle-pts-lbl">goal</span></span><span class="battle-pts-sep">+</span><span class="battle-pts-group"><span class="battle-pts-num">21.1</span><span class="battle-pts-lbl">sleep</span></span><span class="battle-pts-sep">=</span><span class="battle-pts-total">37.1</span></div></div><div class="battle-member-divider"></div><div class="battle-member-row"><span class="battle-member-name" style="color:#FF9F0A">Jamy</span><div class="battle-member-pts"><span class="battle-pts-group"><span class="battle-pts-num">18</span><span class="battle-pts-lbl">goal</span></span><span class="battle-pts-sep">+</span><span class="battle-pts-group"><span class="battle-pts-num">19.0</span><span class="battle-pts-lbl">sleep</span></span><span class="battle-pts-sep">=</span><span class="battle-pts-total">37.0</span></div></div></div></div></div><div class="battle-ledger"><div class="battle-ledger-header">Month Ledger</div><div class="battle-ledger-row"><div class="battle-ledger-left"><span class="battle-ledger-month">May</span><span class="battle-ledger-warmup-tag">WARMUP</span></div><div class="battle-ledger-right"><span class="battle-ledger-score" style="color:#8B9BAE">84.6</span><span class="battle-ledger-sep">vs</span><span class="battle-ledger-score" style="color:#22C55E">68.8</span><span class="battle-ledger-leader"><span class="battle-ledger-winner" style="color:#8B9BAE">Stallions won</span></span></div></div><div class="battle-ledger-warmup-note">May winner carries +5 into June. Stallions won.</div><div class="battle-ledger-row battle-ledger-active-row"><div class="battle-ledger-left"><span class="battle-ledger-month">Jun</span></div><div class="battle-ledger-right"><span class="battle-ledger-score" style="color:#8B9BAE">99.9</span><span class="battle-ledger-sep">vs</span><span class="battle-ledger-score" style="color:#22C55E">74.1</span><span class="battle-ledger-leader"><span style="color:#8B9BAE">Stallions lead</span><span style="color:rgba(255,255,255,0.3)"> +25.8</span></span></div></div><div class="battle-ledger-row battle-ledger-future-row"><div class="battle-ledger-left"><span class="battle-ledger-month">Jul</span></div><div class="battle-ledger-right"><span class="battle-ledger-pending">--</span></div></div></div>
+  </div>
+</div>
+
+<!-- AJ custom sleep scale -->
+<div style="margin:0 0 28px 0;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+    <span style="font-size:11px;font-weight:700;letter-spacing:2px;color:#00C2B7;text-transform:uppercase;">AJ Sleep Scale</span>
+    <span style="height:1px;flex:1;background:rgba(0,194,183,0.18);"></span>
+  </div>
+  <div style="background:rgba(0,194,183,0.06);border:1px solid rgba(0,194,183,0.18);border-radius:12px;padding:14px 18px;display:inline-block;min-width:260px;">
+    <table style="border-collapse:collapse;font-size:12px;color:rgba(255,255,255,0.85);width:100%;">
+      <thead>
+        <tr style="color:#00C2B7;font-size:11px;letter-spacing:1px;text-transform:uppercase;">
+          <th style="text-align:left;padding:3px 10px 6px 0;font-weight:600;">Duration</th>
+          <th style="text-align:left;padding:3px 10px 6px 0;font-weight:600;">Rating</th>
+          <th style="text-align:right;padding:3px 0 6px 0;font-weight:600;">Color</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#EF4444;">&lt;5h</td>
+          <td style="padding:4px 10px 4px 0;">Bad</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#EF4444;vertical-align:middle;"></span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#F97316;">5.0-5.4h</td>
+          <td style="padding:4px 10px 4px 0;">Okay</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#F97316;vertical-align:middle;"></span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#22C55E;font-weight:700;">5.5-7.0h</td>
+          <td style="padding:4px 10px 4px 0;font-weight:700;">Optimal</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#22C55E;vertical-align:middle;"></span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#3B82F6;">7.1-7.9h</td>
+          <td style="padding:4px 10px 4px 0;">Above Ideal</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#3B82F6;vertical-align:middle;"></span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#FF6B9D;">8.0h+</td>
+          <td style="padding:4px 10px 4px 0;">Cinderella Zone</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FF6B9D;vertical-align:middle;"></span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,194,183,0.2);font-size:11px;color:rgba(0,194,183,0.7);font-style:italic;">
+      Back-to-back nights under 5h are penalized.
+    </div>
+  </div>
+</div>
+
+<!-- Fox custom sleep scale -->
+<div style="margin:0 0 28px 0;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+    <span style="font-size:11px;font-weight:700;letter-spacing:2px;color:#C41E3A;text-transform:uppercase;">Fox Sleep Scale</span>
+    <span style="height:1px;flex:1;background:rgba(196,30,58,0.18);"></span>
+  </div>
+  <div style="background:rgba(196,30,58,0.06);border:1px solid rgba(196,30,58,0.18);border-radius:12px;padding:14px 18px;display:inline-block;min-width:260px;">
+    <table style="border-collapse:collapse;font-size:12px;color:rgba(255,255,255,0.85);width:100%;">
+      <thead>
+        <tr style="color:#C41E3A;font-size:11px;letter-spacing:1px;text-transform:uppercase;">
+          <th style="text-align:left;padding:3px 10px 6px 0;font-weight:600;">Duration</th>
+          <th style="text-align:left;padding:3px 10px 6px 0;font-weight:600;">Rating</th>
+          <th style="text-align:right;padding:3px 0 6px 0;font-weight:600;">Color</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#EF4444;">&lt;5.5h</td>
+          <td style="padding:4px 10px 4px 0;">Bad</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#EF4444;vertical-align:middle;"></span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#F97316;">5.5-6.4h</td>
+          <td style="padding:4px 10px 4px 0;">Okay</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#F97316;vertical-align:middle;"></span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#22C55E;font-weight:700;">6.5-8.0h</td>
+          <td style="padding:4px 10px 4px 0;font-weight:700;">Optimal</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#22C55E;vertical-align:middle;"></span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#3B82F6;">8.0-8.9h</td>
+          <td style="padding:4px 10px 4px 0;">Above Ideal</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#3B82F6;vertical-align:middle;"></span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:4px 10px 4px 0;color:#FF6B9D;">9.0h+</td>
+          <td style="padding:4px 10px 4px 0;">Cinderella Zone</td>
+          <td style="text-align:right;padding:4px 0;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#FF6B9D;vertical-align:middle;"></span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Calendar archive link -->
+<div class="section-label">History</div>
+<a href="calendar.html" class="calendar-link">
+  <div class="cal-link-inner">
+    <div class="cal-link-left">
+      <span class="cal-link-icon">&#128197;</span>
+      <div>
+        <div class="cal-link-title">Sleep Calendar</div>
+        <div class="cal-link-sub">Full archive &amp; history</div>
+      </div>
+    </div>
+    <span class="cal-link-chevron">&#8250;</span>
+  </div>
+</a>
+
+<a href="trends.html" class="calendar-link" style="margin-top:10px;display:block;">
+  <div class="cal-link-inner">
+    <div class="cal-link-left">
+      <span class="cal-link-icon">&#128200;</span>
+      <div>
+        <div class="cal-link-title">Trend Analysis</div>
+        <div class="cal-link-sub">Score, duration &amp; goals over time</div>
+      </div>
+    </div>
+    <span class="cal-link-chevron">&#8250;</span>
+  </div>
+</a>
+
+<div class="footer">Beirut time &middot; Real data only</div>
+
+<!-- Team Insights Modal -->
+<div class="team-modal-bg" id="team-modal-bg" onclick="closeTeamModal()">
+  <div class="team-modal-card" onclick="event.stopPropagation()">
+    <div class="team-modal-hdr">
+      <span class="team-modal-title" id="team-modal-title"></span>
+      <button class="modal-close" onclick="closeTeamModal()">&#x2715;</button>
+    </div>
+    <div id="team-modal-body"></div>
+  </div>
+</div>
+
+<script>
+/* Real-time ECG heartbeat monitor animation */
+(function() {
+  'use strict';
+  var CYCLE_PX = 125;
+  var SPEED    = 70;
+  var ERASE_W  = 28;
+  var CVS_H    = 35;
+
+  function ecgOffset(phase, amp) {
+    /* Flat lead-in */
+    if (phase < 0.08) return 0;
+    /* P wave: small upward bump */
+    if (phase < 0.20) {
+      var t = (phase - 0.08) / 0.12;
+      return -amp * 0.15 * Math.sin(Math.PI * t);
+    }
+    /* PR flat */
+    if (phase < 0.32) return 0;
+    /* Q dip: small downward notch */
+    if (phase < 0.36) {
+      var t = (phase - 0.32) / 0.04;
+      return amp * 0.12 * Math.sin(Math.PI * t);
+    }
+    /* R spike: the big upward peak */
+    if (phase < 0.44) {
+      var t = (phase - 0.36) / 0.08;
+      return -amp * 0.97 * Math.sin(Math.PI * t);
+    }
+    /* S dip: downward overshoot */
+    if (phase < 0.51) {
+      var t = (phase - 0.44) / 0.07;
+      return amp * 0.30 * Math.sin(Math.PI * t);
+    }
+    /* ST flat */
+    if (phase < 0.62) return 0;
+    /* T wave: rounded upward bump */
+    if (phase < 0.82) {
+      var t = (phase - 0.62) / 0.20;
+      return -amp * 0.30 * Math.sin(Math.PI * t);
+    }
+    /* Flat tail */
+    return 0;
+  }
+
+  function yAt(px, baseline, amp) {
+    var phase = ((px % CYCLE_PX) + CYCLE_PX) % CYCLE_PX / CYCLE_PX;
+    return baseline + ecgOffset(phase, amp);
+  }
+
+  function initCanvas(canvas) {
+    /* Cancel any previous animation loop on this canvas */
+    if (canvas._ecgStop) { canvas._ecgStop(); canvas._ecgStop = null; }
+
+    var color = canvas.dataset.color;
+    var dpr   = window.devicePixelRatio || 1;
+    var rect  = canvas.parentElement.getBoundingClientRect();
+
+    /* If layout not ready yet (e.g. on mobile before first paint), retry next frame */
+    if (rect.width < 10) {
+      requestAnimationFrame(function() { initCanvas(canvas); });
+      return;
+    }
+
+    var cssW  = rect.width;
+    var alive = true;
+    canvas._ecgStop = function() { alive = false; };
+
+    canvas.width  = Math.round(cssW * dpr);
+    canvas.height = Math.round(CVS_H * dpr);
+    canvas.style.width  = cssW + 'px';
+    canvas.style.height = CVS_H + 'px';
+
+    var ctx      = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    var W        = cssW;
+    var H        = CVS_H;
+    var baseline = H * 0.76;
+    var amp      = baseline - 5;
+    var curX     = 0;
+    var lastTs   = null;
+
+    /* Pre-compute waveform path in CSS pixel coords (avoid recalc every frame) */
+    var pts = [];
+    for (var px = 0; px <= W; px += 0.5) {
+      pts.push(px, yAt(px, baseline, amp));
+    }
+
+    function frame(ts) {
+      if (!lastTs) lastTs = ts;
+      var dt   = Math.min((ts - lastTs) / 1000, 0.05);
+      lastTs   = ts;
+      var newX = curX + SPEED * dt;
+
+      if (newX >= W) {
+        newX = newX - W;
+      }
+
+      /* Clear entire canvas -- all coords in CSS pixels, ctx.scale(dpr,dpr)
+         is already applied so no DPR multiplication needed anywhere below */
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, W, H);
+
+      /* Draw faint grid */
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth   = 0.5;
+      [H * 0.28, H * 0.56, H * 0.84].forEach(function(gy) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+      });
+      for (var vx = 0; vx <= W; vx += 20) {
+        ctx.beginPath(); ctx.moveTo(vx, 0); ctx.lineTo(vx, H); ctx.stroke();
+      }
+      ctx.restore();
+
+      /* Draw waveform directly on main canvas inside clip region.
+         Drawing directly (no drawImage / offscreen) eliminates GPU texture
+         resampling that caused blurring on high-DPR mobile devices. The
+         ctx.scale(dpr,dpr) transform already maps CSS coords to device pixels,
+         so lineWidth=1.5 renders at exactly 1.5*dpr physical pixels = crisp. */
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, newX, H);
+      ctx.clip();
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 1.5;
+      ctx.lineJoin    = 'round';
+      ctx.lineCap     = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pts[0], pts[1]);
+      for (var i = 2; i < pts.length; i += 2) {
+        ctx.lineTo(pts[i], pts[i + 1]);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      /* Erase zone just ahead of cursor for sweep effect */
+      var ez = Math.min(ERASE_W, W - newX);
+      if (ez > 0) {
+        var grad = ctx.createLinearGradient(newX, 0, newX + ez, 0);
+        grad.addColorStop(0, 'rgba(0,0,0,0.6)');
+        grad.addColorStop(1, 'rgba(0,0,0,1)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(newX, 0, ez, H);
+      }
+
+      /* Draw cursor dot */
+      var dotY = yAt(newX, baseline, amp);
+      ctx.save();
+      ctx.shadowBlur  = 0;
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle   = color;
+      ctx.beginPath();
+      ctx.arc(newX, dotY, 2.0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      curX = newX;
+      if (alive) requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  function boot() {
+    document.querySelectorAll('.ecg-canvas').forEach(initCanvas);
+  }
+
+  /* Re-init on resize/orientation change so canvas remeasures its width */
+  var _ecgResizeTimer;
+  window.addEventListener('resize', function() {
+    clearTimeout(_ecgResizeTimer);
+    _ecgResizeTimer = setTimeout(function() {
+      document.querySelectorAll('.ecg-canvas').forEach(initCanvas);
+    }, 200);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
+<script>
+(function() {
+  var active = null;
+
+  function colorClass(ind) {
+    if (ind === 'cinderella') return 'clr-cinderella';
+    if (ind === 'darkgreen') return 'clr-darkgreen';
+    if (ind === 'green') return 'clr-green';
+    if (ind === 'blue') return 'clr-blue';
+    if (ind === 'amber' || ind === 'orange') return 'clr-amber';
+    if (ind === 'red') return 'clr-red';
+    return '';
+  }
+
+  function buildPopup(cell) {
+    var el = document.createElement('div');
+    el.className = 'cell-popup';
+
+    var type = cell.dataset.popupType;
+    var person = cell.dataset.person || '';
+    var color = cell.dataset.color || '#fff';
+    var date = cell.dataset.date || '';
+    var ind = cell.dataset.indicator || 'empty';
+    var html = '';
+
+    if (type === 'm1') {
+      var sleep = cell.dataset.sleep || '--';
+      var wake = cell.dataset.wake || '--';
+      var hours = cell.dataset.hours || '--';
+      var officeTime  = cell.dataset.officeTime  || '';
+      var officeGoal  = cell.dataset.officeGoal  || '';
+      var officeDelta = cell.dataset.officeDelta || '';
+      var officeLate  = cell.dataset.officeLate === 'true';
+      var officeHtml = '';
+      if (officeTime) {
+        var officeClr = officeLate ? 'clr-red' : 'clr-green';
+        officeHtml =
+          '<div class="popup-divider" style="margin-top:3px"></div>' +
+          '<div class="popup-stat"><span class="popup-lbl">Office</span><span class="popup-v ' + officeClr + '">' + officeTime + '</span></div>' +
+          '<div class="popup-stat"><span class="popup-lbl">Late by</span><span class="popup-v ' + officeClr + '">' + officeDelta + '</span></div>' +
+          '<div class="popup-stat"><span class="popup-lbl">Goal</span><span class="popup-v" style="color:rgba(255,255,255,0.45)">' + officeGoal + '</span></div>';
+      }
+      html =
+        '<div class="popup-person" style="color:' + color + '">' + person + '</div>' +
+        '<div class="popup-date-row">' + date + '</div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Slept</span><span class="popup-v">' + sleep + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Woke</span><span class="popup-v">' + wake + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Total</span><span class="popup-v ' + colorClass(ind) + '">' + hours + '</span></div>' +
+        officeHtml;
+    } else if (type === 'm2') {
+      var bedtime = cell.dataset.bedtime || '--';
+      var prev = cell.dataset.prevBedtime || '--';
+      var delta = cell.dataset.delta || '--';
+      html =
+        '<div class="popup-person" style="color:' + color + '">' + person + '</div>' +
+        '<div class="popup-date-row">' + date + '</div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Bedtime</span><span class="popup-v">' + bedtime + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Prev night</span><span class="popup-v">' + prev + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Delta</span><span class="popup-v ' + colorClass(ind) + '">' + delta + '</span></div>';
+    } else if (type === 'm3') {
+      var waketime = cell.dataset.waketime || '--';
+      var avgWake = cell.dataset.avgWake || '--';
+      var delta = cell.dataset.delta || '--';
+      html =
+        '<div class="popup-person" style="color:' + color + '">' + person + '</div>' +
+        '<div class="popup-date-row">' + date + '</div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Wake time</span><span class="popup-v">' + waketime + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Avg wake</span><span class="popup-v">' + avgWake + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Delta</span><span class="popup-v ' + colorClass(ind) + '">' + delta + '</span></div>';
+    } else if (type === 'rank') {
+      var rank       = cell.dataset.rank || '--';
+      var durScore   = cell.dataset.durationScore || '--';
+      var timScore   = cell.dataset.timingScore || '--';
+      var combScore  = cell.dataset.combinedScore || '--';
+      var nights     = cell.dataset.nights || '--';
+      var bestNight  = cell.dataset.bestNight || '--';
+      var worstNight = cell.dataset.worstNight || '--';
+      var durFmt   = durScore  === '--' ? '--' : durScore  + ' min';
+      var timFmt   = timScore  === '--' ? '--' : timScore  + ' min';
+      var combFmt  = combScore === '--' ? '--' : combScore + ' min';
+      html =
+        '<div class="popup-person" style="color:' + color + '">' + person + '</div>' +
+        '<div class="popup-date-row">Rank #' + rank + '</div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Duration score</span><span class="popup-v">' + durFmt + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Timing score</span><span class="popup-v">' + timFmt + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Combined</span><span class="popup-v">' + combFmt + '</span></div>' +
+        '<div class="popup-divider"></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Nights tracked</span><span class="popup-v">' + nights + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Best night</span><span class="popup-v clr-darkgreen">' + bestNight + '</span></div>' +
+        '<div class="popup-stat"><span class="popup-lbl">Worst night</span><span class="popup-v clr-red">' + worstNight + '</span></div>';
+    }
+
+    el.innerHTML = html;
+    document.body.appendChild(el);
+
+    var rect = cell.getBoundingClientRect();
+    var pw = (type === 'rank') ? 200 : 164;
+    var ph = (type === 'rank') ? 218 : 132;
+    if (type === 'rank') { el.style.width = pw + 'px'; }
+    var vpw = window.innerWidth;
+    var vph = window.innerHeight;
+
+    var top = rect.bottom + 7;
+    if (top + ph > vph - 8) { top = rect.top - ph - 7; }
+    if (top < 8) { top = 8; }
+
+    var left = rect.left + rect.width / 2 - pw / 2;
+    if (left < 8) { left = 8; }
+    if (left + pw > vpw - 8) { left = vpw - pw - 8; }
+
+    el.style.top = top + 'px';
+    el.style.left = left + 'px';
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        el.classList.add('popup-visible');
+      });
+    });
+
+    return el;
+  }
+
+  function dismiss() {
+    if (active) {
+      var el = active.el;
+      active = null;
+      el.classList.remove('popup-visible');
+      setTimeout(function() {
+        if (el.parentNode) { el.parentNode.removeChild(el); }
+      }, 200);
+    }
+  }
+
+  function findCell(target) {
+    var t = target;
+    while (t && t !== document.body) {
+      if (t.dataset && t.dataset.popupType) { return t; }
+      t = t.parentNode;
+    }
+    return null;
+  }
+
+  function inPopup(target) {
+    var t = target;
+    while (t && t !== document.body) {
+      if (t.classList && t.classList.contains('cell-popup')) { return true; }
+      t = t.parentNode;
+    }
+    return false;
+  }
+
+  document.addEventListener('click', function(e) {
+    var cell = findCell(e.target);
+    if (cell) {
+      if (active && active.cell === cell) {
+        dismiss();
+        return;
+      }
+      dismiss();
+      var el = buildPopup(cell);
+      active = { el: el, cell: cell };
+    } else if (!inPopup(e.target)) {
+      dismiss();
+    }
+  });
+})();
+</script>
+
+<script>
+/* Live sleep timer: updates elapsed time on sleeping person cards every 30s */
+(function() {
+  function fmtElapsed(ms) {
+    var totalMin = Math.floor(ms / 60000);
+    if (totalMin < 0) { totalMin = 0; }
+    var h = Math.floor(totalMin / 60);
+    var m = totalMin % 60;
+    var mm = m < 10 ? '0' + m : '' + m;
+    if (h > 0) { return h + 'h ' + mm + 'm'; }
+    return mm + 'm';
+  }
+
+  function updateTimers() {
+    var now = Date.now();
+    document.querySelectorAll('.live-sleep-timer[data-sleep-ts]').forEach(function(el) {
+      var ts = parseInt(el.getAttribute('data-sleep-ts'), 10);
+      if (!ts) { return; }
+      var elapsed = now - ts;
+      el.textContent = fmtElapsed(elapsed);
+    });
+  }
+
+  function boot() {
+    updateTimers();
+    setInterval(updateTimers, 30000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
+<script>
+/* Scroll heat maps to the right (latest day) on load */
+(function() {
+  function scrollHeatToEnd() {
+    document.querySelectorAll('.heat-scroll').forEach(function(el) {
+      el.scrollLeft = el.scrollWidth;
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scrollHeatToEnd);
+  } else {
+    scrollHeatToEnd();
+  }
+})();
+</script>
+
+<script>
+/* Team Insights Modal */
+function openTeamModal(card) {
+  var raw = card.getAttribute('data-insights');
+  if (!raw) { return; }
+  var ins;
+  try { ins = JSON.parse(raw); } catch(e) { return; }
+
+  var titleEl = document.getElementById('team-modal-title');
+  titleEl.textContent = ins.teamName + ' Insights';
+  titleEl.style.color = ins.teamColor;
+
+  var html = '';
+
+  /* Member breakdown */
+  html += '<div class="ti-section"><div class="ti-section-label">Member Breakdown</div>';
+  for (var i = 0; i < ins.members.length; i++) {
+    var m = ins.members[i];
+    var tCls = m.trendDir === 'up' ? 'ti-up' : (m.trendDir === 'down' ? 'ti-down' : 'ti-flat');
+    var tDelta = m.trendThis - m.trendLast;
+    var tSign = tDelta > 0 ? '+' : '';
+    var trendTxt = m.trendThis + ' hits this wk (' + tSign + tDelta + ' vs last)';
+    html += '<div class="ti-member-block">';
+    html += '<div class="ti-member-name" style="color:' + m.color + '">' + m.name + '</div>';
+    html += '<div class="ti-row"><span class="ti-lbl">Weakest day</span><span class="ti-val">' + m.weakestDay + '</span></div>';
+    html += '<div class="ti-row"><span class="ti-lbl">Score share</span><span class="ti-val">' + m.contribution + '%</span></div>';
+    html += '<div class="ti-row"><span class="ti-lbl">Goal trend (7d)</span><span class="ti-val ' + tCls + '">' + trendTxt + '</span></div>';
+    html += '<div class="ti-row"><span class="ti-lbl">Avg sleep miss</span><span class="ti-val">' + m.avgMissFmt + '</span></div>';
+    html += '<div class="ti-row"><span class="ti-lbl">Sleep debt (7d)</span><span class="ti-val">' + m.sleepDebtFmt + '</span></div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  /* May projection */
+  html += '<div class="ti-section"><div class="ti-section-label">May Projection (warmup)</div>';
+  html += '<div class="ti-proj-row"><span class="ti-lbl">Projected month-end score</span>';
+  html += '<span class="ti-val" style="color:' + ins.teamColor + '">' + ins.projected + ' pts</span></div>';
+  html += '</div>';
+
+  /* Head-to-head by category */
+  html += '<div class="ti-section"><div class="ti-section-label">vs Other Team by Category</div>';
+  html += '<div class="ti-h2h-block">';
+  var goalClr  = ins.hhGoalWin  ? ins.teamColor : 'rgba(255,255,255,0.36)';
+  var sleepClr = ins.hhSleepWin ? ins.teamColor : 'rgba(255,255,255,0.36)';
+  html += '<div class="ti-h2h-row"><span class="ti-h2h-cat">Goal Tracker</span>';
+  html += '<span class="ti-h2h-result" style="color:' + goalClr + '">' + ins.hhGoalPts + ' pts ' + (ins.hhGoalWin ? 'WIN' : 'LOSE') + '</span></div>';
+  html += '<div class="ti-h2h-row"><span class="ti-h2h-cat">Sleep Score</span>';
+  html += '<span class="ti-h2h-result" style="color:' + sleepClr + '">' + ins.hhSleepPts + ' pts ' + (ins.hhSleepWin ? 'WIN' : 'LOSE') + '</span></div>';
+  html += '</div></div>';
+
+  document.getElementById('team-modal-body').innerHTML = html;
+  document.getElementById('team-modal-bg').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTeamModal() {
+  document.getElementById('team-modal-bg').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeTeamModal(); }
+});
+</script>
+
+</body>
+</html>

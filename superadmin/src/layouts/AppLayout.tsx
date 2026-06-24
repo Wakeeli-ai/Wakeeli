@@ -11,7 +11,7 @@ export default function AppLayout() {
   const navigate = useNavigate()
 
   function handleLogout() {
-    localStorage.removeItem('superadmin_authenticated')
+    localStorage.removeItem('sa_auth')
     navigate('/login')
   }
 

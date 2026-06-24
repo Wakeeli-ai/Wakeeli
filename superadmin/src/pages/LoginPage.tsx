@@ -17,10 +17,10 @@ export default function LoginPage() {
 
     setTimeout(() => {
       if (username === 'Fox' && password === 'WakeeliAdmin2026') {
-        localStorage.setItem('superadmin_authenticated', 'true')
+        localStorage.setItem('sa_auth', 'true')
         navigate('/companies')
       } else {
-        setError('Invalid credentials.')
+        setError('Invalid credentials')
         setLoading(false)
       }
     }, 600)

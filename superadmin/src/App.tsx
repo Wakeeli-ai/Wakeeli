@@ -7,7 +7,7 @@ import Settings from './pages/Settings'
 import AppLayout from './layouts/AppLayout'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const authed = localStorage.getItem('superadmin_authenticated') === 'true'
+  const authed = localStorage.getItem('sa_auth') === 'true'
   if (!authed) return <Navigate to="/login" replace />
   return <>{children}</>
 }

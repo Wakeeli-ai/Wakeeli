@@ -1,31 +1,8 @@
 import { useState } from 'react'
-import { Key, Bell, CreditCard, Globe, Shield, ChevronRight, Copy } from 'lucide-react'
-
-const PLANS = [
-  {
-    name: 'Starter',
-    price: 149,
-    color: '#64748b',
-    features: ['2 WhatsApp agents', '100 leads/month', '500 AI conversations', 'Basic analytics', 'Email support'],
-  },
-  {
-    name: 'Professional',
-    price: 599,
-    color: '#2563eb',
-    features: ['5 WhatsApp agents', '500 leads/month', '2,000 AI conversations', 'Advanced analytics', 'Priority support', 'Custom AI training'],
-  },
-  {
-    name: 'Enterprise',
-    price: 1200,
-    color: '#7c3aed',
-    features: ['Unlimited agents', 'Unlimited leads', 'Unlimited conversations', 'Full analytics suite', 'Dedicated support', 'Custom integrations', 'White-label option'],
-  },
-]
-
-const API_KEYS: { name: string; key: string; created: string; lastUsed: string }[] = []
+import { Bell, Globe, Shield, ChevronRight } from 'lucide-react'
 
 export default function Settings() {
-  const [activeSection, setActiveSection] = useState('plans')
+  const [activeSection, setActiveSection] = useState('notifications')
   const [notifications, setNotifications] = useState({
     newCompany: true,
     paymentFailed: true,
@@ -35,8 +12,6 @@ export default function Settings() {
   })
 
   const SECTIONS = [
-    { id: 'plans', icon: <CreditCard size={16} />, label: 'Plan Management' },
-    { id: 'api', icon: <Key size={16} />, label: 'API Keys' },
     { id: 'notifications', icon: <Bell size={16} />, label: 'Notifications' },
     { id: 'platform', icon: <Globe size={16} />, label: 'Platform Settings' },
     { id: 'security', icon: <Shield size={16} />, label: 'Security' },
@@ -75,79 +50,6 @@ export default function Settings() {
 
         {/* Content */}
         <div className="flex-1">
-          {activeSection === 'plans' && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                <h2 className="font-semibold text-slate-900 mb-1">Pricing Tiers</h2>
-                <p className="text-sm text-slate-500 mb-5">Configure subscription plans for client companies.</p>
-                <div className="grid grid-cols-3 gap-4">
-                  {PLANS.map(plan => (
-                    <div key={plan.name} className="rounded-2xl border-2 p-5" style={{ borderColor: plan.color + '40' }}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-3 h-3 rounded-full" style={{ background: plan.color }} />
-                        <span className="font-semibold text-slate-900">{plan.name}</span>
-                      </div>
-                      <p className="text-3xl font-bold mb-0.5" style={{ color: plan.color }}>${plan.price}</p>
-                      <p className="text-xs text-slate-400 mb-4">per month</p>
-                      <ul className="space-y-2">
-                        {plan.features.map(f => (
-                          <li key={f} className="flex items-center gap-2 text-xs text-slate-600">
-                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: plan.color }} />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeSection === 'api' && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="font-semibold text-slate-900 mb-1">API Keys</h2>
-                  <p className="text-sm text-slate-500">Manage platform API credentials.</p>
-                </div>
-                <button className="px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 transition-colors">
-                  Generate New Key
-                </button>
-              </div>
-              {API_KEYS.length > 0 ? (
-                <div className="space-y-3">
-                  {API_KEYS.map(k => (
-                    <div key={k.name} className="border border-slate-200 rounded-xl p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium text-slate-900 text-sm">{k.name}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">Created: {k.created}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                            <Copy size={14} />
-                          </button>
-                          <button className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
-                            Revoke
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-3 flex items-center gap-3">
-                        <code className="flex-1 bg-slate-50 px-3 py-2 rounded-lg text-xs text-slate-700 font-mono">{k.key}</code>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-2">Last used: {k.lastUsed}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-10 text-sm text-slate-400">
-                  No API keys yet. Generate one to get started.
-                </div>
-              )}
-            </div>
-          )}
-
           {activeSection === 'notifications' && (
             <div className="bg-white rounded-2xl border border-slate-200 p-5">
               <h2 className="font-semibold text-slate-900 mb-1">Notification Preferences</h2>

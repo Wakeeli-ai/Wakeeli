@@ -74,9 +74,23 @@ class AgentUser:
         self.is_active = True
 
 
+class SuperAdminUser:
+    """Mock superadmin user object for Fox's owner portal."""
+    def __init__(self):
+        self.id = 2
+        self.username = "Fox"
+        self.email = "fox@wakeeli.com"
+        self.role = "superadmin"
+        self.is_active = True
+
+
 # Built-in agent credentials
 AGENT_USERNAME = "Agent"
 AGENT_PASSWORD = "Agent123"
+
+# Built-in superadmin credentials
+SUPERADMIN_USERNAME = "Fox"
+SUPERADMIN_PASSWORD = "WakeeliAdmin2026"
 
 
 def authenticate_user(db: Session, username: str, password: str) -> User | AdminUser | AgentUser | bool:
@@ -92,6 +106,10 @@ def authenticate_user(db: Session, username: str, password: str) -> User | Admin
     # Check built-in agent credentials
     if username == AGENT_USERNAME and password == AGENT_PASSWORD:
         return AgentUser()
+
+    # Check built-in superadmin credentials
+    if username == SUPERADMIN_USERNAME and password == SUPERADMIN_PASSWORD:
+        return SuperAdminUser()
 
     # Then check database users
     try:
@@ -236,6 +254,15 @@ async def read_users_me(token: str = Depends(oauth2_scheme), db: Session = Depen
                 username=AGENT_USERNAME,
                 email="agent@wakeeli.com",
                 role="agent",
+                is_active=True
+            )
+
+        if username == SUPERADMIN_USERNAME:
+            return UserResponse(
+                id=2,
+                username=SUPERADMIN_USERNAME,
+                email="fox@wakeeli.com",
+                role="superadmin",
                 is_active=True
             )
 

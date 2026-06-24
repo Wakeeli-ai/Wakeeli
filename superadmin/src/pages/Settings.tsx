@@ -22,11 +22,7 @@ const PLANS = [
   },
 ]
 
-const API_KEYS = [
-  { name: 'Production API Key', key: 'wk_prod_xxxxxxxxxxxxxxxx3f9a', created: '2024-01-15', lastUsed: '2 minutes ago' },
-  { name: 'Staging API Key', key: 'wk_stg_xxxxxxxxxxxxxxxx7b2c', created: '2024-03-08', lastUsed: '1 day ago' },
-  { name: 'Webhook Secret', key: 'wh_xxxxxxxxxxxxxxxxxxxx2e4d', created: '2024-01-15', lastUsed: 'Never' },
-]
+const API_KEYS: { name: string; key: string; created: string; lastUsed: string }[] = []
 
 export default function Settings() {
   const [activeSection, setActiveSection] = useState('plans')
@@ -119,30 +115,36 @@ export default function Settings() {
                   Generate New Key
                 </button>
               </div>
-              <div className="space-y-3">
-                {API_KEYS.map(k => (
-                  <div key={k.name} className="border border-slate-200 rounded-xl p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-slate-900 text-sm">{k.name}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Created: {k.created}</p>
+              {API_KEYS.length > 0 ? (
+                <div className="space-y-3">
+                  {API_KEYS.map(k => (
+                    <div key={k.name} className="border border-slate-200 rounded-xl p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-slate-900 text-sm">{k.name}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">Created: {k.created}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                            <Copy size={14} />
+                          </button>
+                          <button className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
+                            Revoke
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                          <Copy size={14} />
-                        </button>
-                        <button className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
-                          Revoke
-                        </button>
+                      <div className="mt-3 flex items-center gap-3">
+                        <code className="flex-1 bg-slate-50 px-3 py-2 rounded-lg text-xs text-slate-700 font-mono">{k.key}</code>
                       </div>
+                      <p className="text-xs text-slate-400 mt-2">Last used: {k.lastUsed}</p>
                     </div>
-                    <div className="mt-3 flex items-center gap-3">
-                      <code className="flex-1 bg-slate-50 px-3 py-2 rounded-lg text-xs text-slate-700 font-mono">{k.key}</code>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-2">Last used: {k.lastUsed}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 text-sm text-slate-400">
+                  No API keys yet. Generate one to get started.
+                </div>
+              )}
             </div>
           )}
 

@@ -27,19 +27,8 @@ const LEAD_STATUS_COLORS: Record<string, string> = {
   lost: 'bg-red-100 text-red-600',
 }
 
-// Per-company overrides for chatbot settings (subset of the full 63-setting defaults)
-const COMPANY_SETTINGS_OVERRIDES: Record<string, Record<string, string | number | boolean | string[]>> = {
-  c1: { bot_display_name: 'Sami', supported_languages: ['english', 'arabic'], currency_display: 'usd' },
-  c2: { bot_display_name: 'Leila', currency_display: 'lbp', working_hours_enabled: true, working_hours_start: '08:00', working_hours_end: '20:00' },
-  c3: { bot_display_name: 'Rami', max_bot_turns_before_handoff: 8, supported_languages: ['english', 'arabic', 'french'] },
-  c4: { currency_display: 'usd' },
-  c5: { bot_display_name: 'Maya', currency_display: 'lbp', working_hours_enabled: true, working_hours_start: '09:00', working_hours_end: '18:00' },
-  c6: { currency_display: 'both', primary_language: 'arabic', arabic_dialect: 'lebanese' },
-  c7: { currency_display: 'usd', max_bot_turns_before_handoff: 4 },
-  c8: { bot_display_name: 'Nour', currency_display: 'lbp', primary_language: 'arabic' },
-  c9: { bot_display_name: 'Karim', currency_display: 'both', max_bot_turns_before_handoff: 10 },
-  c10: { currency_display: 'usd', working_hours_enabled: true, working_hours_start: '10:00', working_hours_end: '22:00' },
-}
+// Per-company overrides for chatbot settings
+const COMPANY_SETTINGS_OVERRIDES: Record<string, Record<string, string | number | boolean | string[]>> = {}
 
 export default function CompanyDetail() {
   const { id } = useParams()

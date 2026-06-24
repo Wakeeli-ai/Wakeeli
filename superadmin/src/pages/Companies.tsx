@@ -159,7 +159,9 @@ export default function Companies() {
 
       {filtered.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-slate-500 text-sm">No companies match your filters.</p>
+          <p className="text-slate-500 text-sm">
+            {COMPANIES.length === 0 ? 'No clients yet.' : 'No companies match your filters.'}
+          </p>
         </div>
       )}
     </div>

@@ -109,9 +109,29 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True, nullable=True)
     hashed_password = Column(String)
-    role = Column(String, default="agent")  # "admin" or "agent"
+    role = Column(String, default="agent")  # "admin", "agent", or "superadmin"
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
+
+    company = relationship("Company", back_populates="users", foreign_keys=[company_id])
+
+
+class Company(Base):
+    __tablename__ = "companies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    agency_name = Column(String, nullable=True)
+    whatsapp_number = Column(String, nullable=True)
+    contact_email = Column(String, nullable=True)
+    plan_tier = Column(String, default="starter")  # starter, professional, enterprise
+    agent_count = Column(Integer, default=1)
+    slug = Column(String, unique=True, index=True)
+    status = Column(String, default="active")  # active, trial, churned
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    users = relationship("User", back_populates="company", foreign_keys="User.company_id")
 
 
 class TokenUsage(Base):

@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import text, inspect
 from app.database import engine, Base
-from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics, demo
+from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics, demo, admin_companies
 from app.models import Listing
 from app.config import settings
 
@@ -22,6 +22,8 @@ try:
                 conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'agent'"))
             if "is_active" not in columns:
                 conn.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE"))
+            if "company_id" not in columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN company_id INTEGER REFERENCES companies(id)"))
 except Exception:
     pass
 
@@ -45,6 +47,7 @@ app.include_router(conversations.router, prefix="/api/conversations", tags=["Con
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(demo.router, prefix="/api/demo", tags=["Demo"])
+app.include_router(admin_companies.router, prefix="/api/admin", tags=["Admin Companies"])
 
 # Backend static files (chat-test and costs-dashboard HTML)
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")

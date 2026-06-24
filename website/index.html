@@ -1,1106 +1,1387 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wakeeli - Convert Every WhatsApp Lead</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            navy: '#1a2744',
-            'navy-dark': '#0f1828',
-            'navy-light': '#243357',
-            'navy-mid': '#1e2f52',
-            accent: '#e63946',
-            'accent-dark': '#c1121f',
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wakeeli | AI-Powered Lead Conversion for Real Estate</title>
+  <meta name="description" content="Wakeeli connects to your WhatsApp and handles every inbound lead 24/7. Qualifies leads, matches listings, books property tours. Your agents only close." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', system-ui, sans-serif; }
-    .gradient-hero {
-      background: linear-gradient(135deg, #0f1828 0%, #1a2744 50%, #1e2f52 100%);
+    /* ===== RESET ===== */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{
+      font-family:'Be Vietnam Pro',system-ui,sans-serif;
+      color:#111111;
+      background:#fff;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
     }
-    .gradient-section {
-      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+
+    /* ===== CSS VARIABLES ===== */
+    :root{
+      --accent:#1a2744;
+      --accent-light:#2a3d66;
+      --red:#e63946;
+      --red-dark:#c1121f;
+      --blue-bright:#0048FF;
+      --text:#111111;
+      --text-muted:#6b7280;
+      --text-soft:#9ca3af;
+      --bg-white:#ffffff;
+      --bg-light:#F7F9FB;
+      --bg-mid:#f0f4f9;
+      --border:#e5e9f2;
+      --radius-sm:10px;
+      --radius-md:20px;
+      --radius-lg:30px;
+      --radius-xl:40px;
+      --shadow-sm:0 2px 12px rgba(26,39,68,.07);
+      --shadow-md:0 8px 32px rgba(26,39,68,.12);
+      --shadow-lg:0 24px 64px rgba(26,39,68,.18);
     }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .tab-btn.active {
-      background-color: #1a2744;
-      color: white;
+
+    /* ===== NAV ===== */
+    #nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      background:rgba(255,255,255,0.92);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(26,39,68,0.06);
+      transition:box-shadow .25s,background .25s;
     }
-    .faq-answer { display: none; }
-    .faq-answer.open { display: block; }
-    .faq-icon { transition: transform 0.2s ease; }
-    .faq-icon.open { transform: rotate(45deg); }
-    .screenshot-placeholder {
-      background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 320px;
-      position: relative;
-      overflow: hidden;
+    #nav.scrolled{
+      background:rgba(255,255,255,0.97);
+      box-shadow:0 2px 24px rgba(0,0,0,0.08);
     }
-    .screenshot-placeholder::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 32px;
-      background: #cbd5e1;
-      border-radius: 12px 12px 0 0;
+    .nav-inner{
+      max-width:1180px;margin:0 auto;padding:0 28px;
+      display:flex;align-items:center;justify-content:space-between;height:72px;
     }
-    .screenshot-placeholder::after {
-      content: '';
-      position: absolute;
-      top: 10px; left: 14px;
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #94a3b8;
-      box-shadow: 18px 0 0 #94a3b8, 36px 0 0 #94a3b8;
+    .nav-logo{
+      text-decoration:none;display:flex;align-items:center;gap:0;flex-shrink:0;
     }
-    .nav-scrolled {
-      background: rgba(15, 24, 40, 0.95) !important;
-      backdrop-filter: blur(12px);
+    .nav-logo span:first-child{font-size:21px;font-weight:900;color:#1a2744;letter-spacing:-.5px;font-family:'Poppins',sans-serif;}
+    .nav-logo span:last-child{font-size:21px;font-weight:900;color:#e63946;letter-spacing:-.5px;font-family:'Poppins',sans-serif;}
+    .nav-links{display:flex;align-items:center;gap:36px;}
+    .nav-link{
+      font-size:14.5px;font-weight:500;color:#4b5563;
+      text-decoration:none;transition:color .15s;
+      white-space:nowrap;
     }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to { opacity: 1; transform: translateY(0); }
+    .nav-link:hover{color:#1a2744;}
+    .nav-actions{display:flex;align-items:center;gap:12px;}
+
+    /* ===== BUTTONS ===== */
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      padding:12px 24px;border-radius:var(--radius-xl);
+      font-weight:600;font-size:14.5px;text-decoration:none;
+      border:none;cursor:pointer;font-family:inherit;
+      transition:all .2s;white-space:nowrap;
     }
-    .animate-fade-up { animation: fadeInUp 0.6s ease forwards; }
-    .pulse-dot {
-      width: 10px; height: 10px;
-      background: #22c55e;
-      border-radius: 50%;
-      display: inline-block;
-      position: relative;
+    .btn-primary{background:#e63946;color:#fff;}
+    .btn-primary:hover{background:#c1121f;transform:translateY(-1px);box-shadow:0 8px 24px rgba(230,57,70,.3);}
+    .btn-primary-lg{padding:15px 36px;font-size:16px;}
+    .btn-outline{background:transparent;color:#1a2744;border:1.5px solid #1a2744;}
+    .btn-outline:hover{background:#1a2744;color:#fff;}
+    .btn-outline-lg{padding:14px 34px;font-size:16px;border-width:1.5px;}
+    .btn-ghost-white{
+      background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);
+      border:1.5px solid rgba(255,255,255,.22);
     }
-    .pulse-dot::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      border-radius: 50%;
-      background: #22c55e;
-      animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    .btn-ghost-white:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.45);}
+    .btn-white-solid{background:#fff;color:#1a2744;}
+    .btn-white-solid:hover{background:#f0f4f9;transform:translateY(-1px);}
+    .btn-white-solid-lg{padding:15px 36px;font-size:16px;}
+
+    /* ===== HIGHLIGHTED TEXT ===== */
+    .highlight{
+      background:linear-gradient(135deg,#e63946 0%,#c1121f 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
     }
-    @keyframes ping {
-      75%, 100% { transform: scale(2); opacity: 0; }
+    .highlight-blue{
+      background:linear-gradient(135deg,#1a2744 0%,#2a4a8a 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
     }
-    .card-hover {
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    /* ===== BADGE / CHIP ===== */
+    .badge{
+      display:inline-flex;align-items:center;gap:7px;
+      background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.18);
+      color:#e63946;padding:6px 16px;border-radius:100px;
+      font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
     }
-    .card-hover:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(26, 39, 68, 0.12);
+    .badge-dot{width:6px;height:6px;border-radius:50%;background:#e63946;display:inline-block;animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+    .badge-dark{background:rgba(230,57,70,.15);border-color:rgba(230,57,70,.28);color:#ff6b74;}
+
+    /* ===== SECTION LABELS ===== */
+    .section-label{
+      display:inline-flex;align-items:center;gap:8px;
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+      color:#1a2744;margin-bottom:18px;
     }
-    .pricing-popular {
-      border: 2px solid #1a2744;
-      position: relative;
+    .section-label::before{
+      content:'';display:block;width:20px;height:2px;background:#e63946;border-radius:2px;
     }
-    .tag-popular {
-      position: absolute;
-      top: -14px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1a2744;
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 4px 16px;
-      border-radius: 999px;
+
+    /* ===== HERO ===== */
+    .hero{
+      padding-top:72px;
+      min-height:100vh;
+      display:flex;align-items:center;
+      background:linear-gradient(160deg,#f8faff 0%,#eef3ff 35%,#fdf0f1 70%,#fff5f5 100%);
+      position:relative;overflow:hidden;
     }
-    .whatsapp-bubble {
-      background: #075e54;
-      color: white;
-      border-radius: 18px 18px 18px 4px;
-      padding: 10px 16px;
-      font-size: 14px;
-      max-width: 240px;
+    .hero::before{
+      content:'';position:absolute;inset:0;
+      background:
+        radial-gradient(ellipse 60% 50% at 75% 40%,rgba(230,57,70,.06) 0%,transparent 70%),
+        radial-gradient(ellipse 40% 60% at 20% 60%,rgba(26,39,68,.04) 0%,transparent 60%);
+      pointer-events:none;
     }
-    .ai-bubble {
-      background: #e9f5fb;
-      color: #1a2744;
-      border-radius: 18px 18px 4px 18px;
-      padding: 10px 16px;
-      font-size: 14px;
-      max-width: 240px;
-      align-self: flex-end;
+    .hero-grid{
+      max-width:1180px;margin:0 auto;padding:80px 28px;
+      display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center;
+    }
+    .hero-eyebrow{margin-bottom:28px;}
+    .hero-h1{
+      font-family:'Poppins',sans-serif;
+      font-size:clamp(2.8rem,5.2vw,4rem);
+      font-weight:900;color:#0a1020;
+      line-height:1.05;letter-spacing:-1.5px;
+      margin-bottom:24px;
+    }
+    .hero-sub{
+      font-size:17.5px;color:#4b5563;line-height:1.8;
+      margin-bottom:40px;max-width:500px;
+    }
+    .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:44px;}
+    .hero-trust{display:flex;gap:26px;flex-wrap:wrap;}
+    .hero-trust-item{
+      display:flex;align-items:center;gap:8px;
+      font-size:13.5px;color:#6b7280;font-weight:500;
+    }
+    .hero-trust-check{
+      width:18px;height:18px;border-radius:50%;
+      background:linear-gradient(135deg,#22c55e,#16a34a);
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;
+    }
+
+    /* ===== PHONE MOCKUP ===== */
+    .phone-wrap{display:flex;justify-content:center;align-items:center;position:relative;}
+    .phone-frame{
+      width:294px;
+      background:linear-gradient(160deg,#1e1e38,#111122);
+      border-radius:52px;padding:10px;
+      box-shadow:
+        0 48px 120px rgba(0,0,0,.4),
+        0 0 0 1px rgba(255,255,255,.07),
+        inset 0 1px 0 rgba(255,255,255,.12);
+      position:relative;flex-shrink:0;
+    }
+    .phone-notch{
+      position:absolute;top:10px;left:50%;
+      transform:translateX(-50%);
+      width:90px;height:9px;
+      background:#0a0a14;border-radius:0 0 14px 14px;z-index:5;
+    }
+    .phone-screen{
+      background:#ece5dd;border-radius:43px;
+      overflow:hidden;display:flex;flex-direction:column;
+      height:540px;
+    }
+    .wa-status{
+      background:#075e54;height:22px;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 16px;
+    }
+    .wa-status span{color:#fff;font-size:10px;font-weight:600;}
+    .wa-header{
+      background:#075e54;padding:10px 14px 12px;
+      display:flex;align-items:center;gap:10px;
+    }
+    .wa-avatar{
+      width:38px;height:38px;border-radius:50%;
+      background:linear-gradient(135deg,#e63946,#c1121f);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-size:13px;font-weight:800;flex-shrink:0;
+    }
+    .wa-name{color:#fff;font-size:14px;font-weight:600;}
+    .wa-sub{color:rgba(255,255,255,.65);font-size:10.5px;}
+    .wa-body{
+      flex:1;overflow:hidden;padding:10px 10px 6px;
+      display:flex;flex-direction:column;gap:7px;
+    }
+    .date-chip{
+      text-align:center;font-size:10px;color:#667781;
+      background:rgba(255,255,255,.55);border-radius:7px;
+      padding:2px 10px;align-self:center;margin-bottom:2px;
+    }
+    .wa-in{
+      background:#fff;border-radius:0 10px 10px 10px;
+      padding:8px 11px;max-width:82%;align-self:flex-start;
+      font-size:11.5px;line-height:1.5;color:#111;
+      box-shadow:0 1px 2px rgba(0,0,0,.09);
+    }
+    .wa-out{
+      background:#d9fdd3;border-radius:10px 0 10px 10px;
+      padding:8px 11px;max-width:82%;align-self:flex-end;
+      font-size:11.5px;line-height:1.5;color:#111;
+      box-shadow:0 1px 2px rgba(0,0,0,.09);
+    }
+    .wa-out.confirmed{background:#e8f8e6;}
+    .bt{font-size:9px;color:#667781;text-align:right;margin-top:3px;}
+    .bt-tick{color:#53bdeb;}
+    .wa-bar{background:#f0f2f5;padding:7px 10px;display:flex;align-items:center;gap:8px;}
+    .wa-input{flex:1;background:#fff;border-radius:24px;padding:6px 14px;font-size:11px;color:#999;}
+    .wa-send{
+      width:32px;height:32px;border-radius:50%;
+      background:#075e54;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    /* Float badges around phone */
+    .float-badge{
+      position:absolute;
+      background:#fff;border-radius:14px;
+      padding:10px 16px;font-size:12px;font-weight:700;
+      box-shadow:0 8px 28px rgba(0,0,0,.15);
+      white-space:nowrap;
+    }
+    .float-badge.red{background:#e63946;color:#fff;box-shadow:0 8px 28px rgba(230,57,70,.4);}
+
+    /* ===== SOCIAL PROOF BAR ===== */
+    .proof-bar{
+      background:#fff;
+      border-top:1px solid var(--border);
+      border-bottom:1px solid var(--border);
+      padding:28px 0;
+    }
+    .proof-label{
+      font-size:11px;font-weight:700;color:#b0b8c4;
+      text-transform:uppercase;letter-spacing:.14em;
+      text-align:center;margin-bottom:18px;
+    }
+    .marquee-wrap{overflow:hidden;}
+    .marquee-track{
+      display:flex;gap:0;
+      animation:marquee 30s linear infinite;
+      width:max-content;
+    }
+    @keyframes marquee{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+    /* ===== STATS ===== */
+    .stats-section{padding:96px 0;}
+    .stats-grid{
+      display:grid;grid-template-columns:repeat(4,1fr);
+      gap:1px;background:var(--border);
+      border-radius:var(--radius-lg);overflow:hidden;
+      border:1px solid var(--border);
+    }
+    .stat-cell{
+      background:#fff;padding:44px 28px;text-align:center;
+    }
+    .stat-num{
+      font-family:'Poppins',sans-serif;
+      font-size:52px;font-weight:900;color:#1a2744;
+      line-height:1;letter-spacing:-2px;
+    }
+    .stat-label{
+      font-size:11px;font-weight:700;color:#e63946;
+      text-transform:uppercase;letter-spacing:.08em;margin:10px 0 6px;
+    }
+    .stat-desc{font-size:13.5px;color:#6b7280;line-height:1.6;}
+
+    /* ===== SECTIONS ===== */
+    .section{padding:96px 0;}
+    .section-dark{
+      padding:96px 0;
+      background:linear-gradient(148deg,#0c1422 0%,#0f1729 45%,#1a2744 100%);
+    }
+    .section-light{padding:96px 0;background:var(--bg-light);}
+    .container{max-width:1180px;margin:0 auto;padding:0 28px;}
+    .section-header{text-align:center;margin-bottom:64px;}
+    .section-h2{
+      font-family:'Poppins',sans-serif;
+      font-size:clamp(2rem,4vw,3rem);font-weight:800;
+      color:#0a1020;letter-spacing:-1px;line-height:1.15;margin-bottom:16px;
+    }
+    .section-h2-white{
+      font-family:'Poppins',sans-serif;
+      font-size:clamp(2rem,4vw,3rem);font-weight:800;
+      color:#fff;letter-spacing:-1px;line-height:1.15;margin-bottom:16px;
+    }
+    .section-sub{font-size:17px;color:#6b7280;max-width:480px;margin:0 auto;line-height:1.75;}
+    .section-sub-white{font-size:17px;color:rgba(255,255,255,.55);max-width:480px;margin:0 auto;line-height:1.75;}
+
+    /* ===== CARDS ===== */
+    .card{
+      background:#fff;border:1px solid var(--border);
+      border-radius:var(--radius-lg);padding:30px 28px;
+      transition:transform .22s,box-shadow .22s,border-color .22s;
+    }
+    .card:hover{
+      transform:translateY(-4px);
+      box-shadow:var(--shadow-md);
+      border-color:#c5d0e8;
+    }
+    .card-dark{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:var(--radius-lg);padding:30px 28px;
+      transition:border-color .2s;
+    }
+    .card-dark:hover{border-color:rgba(255,255,255,.14);}
+    .icon-wrap{
+      width:52px;height:52px;border-radius:16px;
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:20px;font-size:24px;
+    }
+    .icon-wrap-red{background:rgba(230,57,70,.1);}
+    .icon-wrap-navy{background:rgba(26,39,68,.08);}
+    .icon-wrap-dark{background:rgba(230,57,70,.14);}
+    .card-h3{font-size:18px;font-weight:700;color:#0a1020;margin-bottom:10px;line-height:1.3;}
+    .card-h3-white{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;line-height:1.3;}
+    .card-p{font-size:14.5px;color:#6b7280;line-height:1.8;}
+    .card-p-white{font-size:14.5px;color:rgba(255,255,255,.5);line-height:1.8;}
+
+    /* ===== HOW IT WORKS STEPS ===== */
+    .step-num{
+      width:48px;height:48px;border-radius:50%;
+      background:#e63946;color:#fff;
+      font-family:'Poppins',sans-serif;
+      font-size:18px;font-weight:800;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 20px;flex-shrink:0;
+    }
+    .step-connector{
+      position:absolute;top:40px;
+      left:calc(12.5% + 32px);right:calc(12.5% + 32px);
+      height:2px;
+      background:linear-gradient(90deg,#e63946,rgba(26,39,68,.3));
+      border-radius:2px;z-index:0;
+    }
+
+    /* ===== COMPARISON TABLE ===== */
+    .comp-wrap{border-radius:var(--radius-md);overflow:hidden;border:1px solid rgba(255,255,255,.07);}
+    .comp-head{display:grid;grid-template-columns:2fr 1fr 1fr;background:rgba(255,255,255,.03);}
+    .comp-row{display:grid;grid-template-columns:2fr 1fr 1fr;border-top:1px solid rgba(255,255,255,.05);}
+    .comp-row:nth-child(odd){background:rgba(255,255,255,.02);}
+    .comp-cell{padding:18px 24px;font-size:14px;}
+    .comp-win{color:#4ade80;font-weight:700;text-align:center;border-left:1px solid rgba(255,255,255,.05);}
+    .comp-lose{color:rgba(255,255,255,.3);font-size:13px;text-align:center;border-left:1px solid rgba(255,255,255,.05);}
+    .comp-label{color:rgba(255,255,255,.75);font-weight:500;}
+
+    /* ===== PRICING ===== */
+    .pricing-grid{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:22px;align-items:start;
+      max-width:1000px;margin:0 auto;
+    }
+    .price-card{
+      background:#fff;border:1px solid var(--border);
+      border-radius:var(--radius-lg);padding:36px;
+    }
+    .price-card-featured{
+      background:#1a2744;color:#fff;
+      border-radius:var(--radius-lg);padding:36px;
+      box-shadow:0 32px 80px rgba(26,39,68,.35);
+      transform:translateY(-12px);
+      position:relative;z-index:5;
+    }
+    .price-tier{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:18px;}
+    .price-amount{
+      font-family:'Poppins',sans-serif;
+      font-size:52px;font-weight:900;color:#0a1020;
+      line-height:1;margin-bottom:4px;
+    }
+    .price-amount-white{color:#fff;}
+    .price-period{font-size:17px;font-weight:400;}
+    .price-desc{font-size:13px;color:#9ca3af;margin-bottom:30px;margin-top:6px;}
+    .price-check{display:flex;align-items:center;gap:10px;margin-bottom:13px;}
+    .price-feature{font-size:14px;}
+    .price-badge{
+      position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+      background:#e63946;color:#fff;
+      font-size:10.5px;font-weight:700;padding:5px 18px;
+      border-radius:100px;text-transform:uppercase;letter-spacing:.1em;
+      white-space:nowrap;
+    }
+    .price-btn-outline{
+      display:block;text-align:center;padding:13px;
+      border:1.5px solid var(--border);border-radius:100px;
+      font-size:15px;font-weight:600;color:#1a2744;
+      text-decoration:none;transition:all .2s;
+    }
+    .price-btn-outline:hover{background:#1a2744;color:#fff;border-color:#1a2744;}
+
+    /* ===== RESULTS ===== */
+    .result-card{
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius-lg);padding:44px 32px;text-align:center;
+    }
+    .result-num{
+      font-family:'Poppins',sans-serif;
+      font-size:72px;font-weight:900;color:#e63946;
+      line-height:1;letter-spacing:-2px;margin-bottom:12px;
+    }
+    .result-h3{font-size:17px;font-weight:700;color:#fff;margin-bottom:10px;}
+    .result-p{font-size:14px;color:rgba(255,255,255,.45);line-height:1.75;}
+
+    /* ===== TESTIMONIALS ===== */
+    .testimonial-card{
+      background:#fff;border:1px solid var(--border);
+      border-radius:var(--radius-lg);padding:32px;
+    }
+    .testimonial-text{
+      font-size:15.5px;color:#374151;line-height:1.8;
+      margin-bottom:24px;font-style:italic;
+    }
+    .testimonial-author{display:flex;align-items:center;gap:14px;}
+    .testimonial-avatar{
+      width:44px;height:44px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:15px;font-weight:800;color:#fff;flex-shrink:0;
+    }
+    .testimonial-name{font-size:14px;font-weight:700;color:#1a2744;}
+    .testimonial-role{font-size:12.5px;color:#9ca3af;}
+
+    /* ===== FAQ ===== */
+    .faq-item{border-bottom:1px solid #eef0f5;}
+    .faq-q{
+      width:100%;text-align:left;padding:22px 0;
+      display:flex;justify-content:space-between;align-items:center;
+      font-size:16px;font-weight:600;color:#0a1020;
+      background:none;border:none;cursor:pointer;font-family:inherit;gap:16px;
+    }
+    .faq-body{
+      display:none;padding-bottom:24px;
+      font-size:14.5px;color:#6b7280;line-height:1.8;
+    }
+    .faq-body.open{display:block;}
+    .faq-icon{transition:transform .24s;flex-shrink:0;}
+    .faq-icon.open{transform:rotate(45deg);}
+
+    /* ===== FINAL CTA ===== */
+    .cta-section{
+      padding:112px 0;text-align:center;
+      background:linear-gradient(148deg,#0c1422 0%,#0f1729 40%,#1a2744 100%);
+      position:relative;overflow:hidden;
+    }
+    .cta-section::before{
+      content:'';position:absolute;
+      width:600px;height:600px;border-radius:50%;
+      background:radial-gradient(circle,rgba(230,57,70,.12) 0%,transparent 70%);
+      top:50%;left:50%;transform:translate(-50%,-50%);
+      pointer-events:none;
+    }
+    .cta-h2{
+      font-family:'Poppins',sans-serif;
+      font-size:clamp(2.4rem,5vw,3.6rem);
+      font-weight:900;color:#fff;
+      letter-spacing:-1.5px;line-height:1.1;margin-bottom:22px;
+    }
+    .cta-sub{font-size:18px;color:rgba(255,255,255,.55);max-width:520px;margin:0 auto 48px;line-height:1.75;}
+
+    /* ===== FOOTER ===== */
+    footer{background:#060c18;padding:64px 0 32px;border-top:1px solid rgba(255,255,255,.04);}
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:52px;margin-bottom:56px;}
+    .footer-brand-name{display:flex;align-items:center;gap:0;margin-bottom:16px;}
+    .footer-brand-name span:first-child{font-size:19px;font-weight:900;color:#fff;font-family:'Poppins',sans-serif;}
+    .footer-brand-name span:last-child{font-size:19px;font-weight:900;color:#e63946;font-family:'Poppins',sans-serif;}
+    .footer-tagline{font-size:14px;color:rgba(255,255,255,.36);line-height:1.75;max-width:270px;margin-bottom:18px;}
+    .footer-city{font-size:13px;color:rgba(255,255,255,.2);}
+    .footer-col-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.12em;margin-bottom:18px;}
+    .footer-link{
+      display:block;font-size:14px;color:rgba(255,255,255,.38);
+      text-decoration:none;margin-bottom:11px;transition:color .15s;
+    }
+    .footer-link:hover{color:rgba(255,255,255,.72);}
+    .footer-bottom{border-top:1px solid rgba(255,255,255,.05);padding-top:26px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+    .footer-copy{font-size:13px;color:rgba(255,255,255,.2);}
+
+    /* ===== MOBILE MENU ===== */
+    #mobile-nav{display:none;}
+    #mobile-nav.open{display:flex;}
+    #burger{display:none;background:none;border:none;cursor:pointer;padding:4px;}
+
+    /* ===== SCROLL ANIMATIONS ===== */
+    .fade-up{opacity:0;transform:translateY(30px);transition:opacity .65s ease,transform .65s ease;}
+    .fade-up.in{opacity:1;transform:translateY(0);}
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:1100px){
+      .hero-grid{gap:48px;}
+      .stats-grid{grid-template-columns:repeat(2,1fr);}
+    }
+    @media(max-width:900px){
+      .pricing-grid{grid-template-columns:1fr;max-width:440px;}
+      .price-card-featured{transform:none;}
+      .footer-grid{grid-template-columns:1fr 1fr;gap:36px;}
+    }
+    @media(max-width:768px){
+      .hero-grid{grid-template-columns:1fr;gap:56px;}
+      .hero-h1{font-size:clamp(2.4rem,7vw,3.2rem);}
+      .phone-frame{width:264px;}
+      .phone-screen{height:490px;}
+      .comp-head,.comp-row{grid-template-columns:1fr 1fr;}
+      .comp-cell.comp-label{display:none;}
+      .comp-head .comp-cell:first-child{display:none;}
+      .result-num{font-size:56px;}
+      #burger{display:block;}
+      .nav-links,.nav-actions .btn-outline{display:none;}
+    }
+    @media(max-width:640px){
+      .stats-grid{grid-template-columns:1fr 1fr;}
+      .footer-grid{grid-template-columns:1fr;}
+      .hero-ctas{flex-direction:column;}
+      .hero-ctas .btn{text-align:center;justify-content:center;}
     }
   </style>
 </head>
-<body class="bg-white text-gray-900 antialiased">
+<body>
 
-  <!-- NAV -->
-  <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4 px-6 lg:px-12">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <a href="#" class="flex items-center gap-2">
-        <div class="flex items-center">
-          <span class="text-2xl font-black text-white tracking-tight">Wake</span><span class="text-2xl font-black text-accent tracking-tight">eli</span>
-        </div>
-      </a>
-      <div class="hidden md:flex items-center gap-8">
-        <a href="#problem" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">The Problem</a>
-        <a href="#solution" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">How It Works</a>
-        <a href="#features" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">Features</a>
-        <a href="#pricing" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">Pricing</a>
-        <a href="#faq" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">FAQ</a>
-      </div>
-      <div class="hidden md:flex items-center gap-4">
-        <a href="#" class="text-gray-300 hover:text-white text-sm font-medium transition-colors">Sign In</a>
-        <a href="#pricing" class="bg-accent hover:bg-accent-dark text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">Book a Demo</a>
-      </div>
-      <button id="mobile-menu-btn" class="md:hidden text-white p-2">
-        <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-        <svg id="close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+<!-- ===== NAV ===== -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <span>WAKE</span><span>ELI</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="#how" class="nav-link">How It Works</a>
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#pricing" class="nav-link">Pricing</a>
+      <a href="#faq" class="nav-link">FAQ</a>
+    </div>
+
+    <div class="nav-actions">
+      <a href="#demo" class="btn btn-outline" style="padding:10px 20px;font-size:14px;display:none;" id="nav-outline">Log In</a>
+      <a href="#demo" class="btn btn-primary" style="padding:10px 22px;font-size:14px;" id="nav-cta">Book a Demo</a>
+      <button id="burger" onclick="toggleNav()" aria-label="Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a2744" stroke-width="2.2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
         </svg>
       </button>
     </div>
-    <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
-      <div class="flex flex-col gap-4 px-2">
-        <a href="#problem" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">The Problem</a>
-        <a href="#solution" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">How It Works</a>
-        <a href="#features" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">Features</a>
-        <a href="#pricing" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">Pricing</a>
-        <a href="#faq" class="text-gray-300 text-sm font-medium" onclick="closeMobileMenu()">FAQ</a>
-        <a href="#pricing" class="bg-accent text-white text-sm font-semibold px-5 py-2.5 rounded-lg text-center mt-2">Book a Demo</a>
-      </div>
-    </div>
-  </nav>
+  </div>
 
-  <!-- HERO -->
-  <section class="gradient-hero min-h-screen flex items-center pt-20 pb-16 px-6 lg:px-12 overflow-hidden">
-    <div class="max-w-7xl mx-auto w-full">
-      <div class="grid lg:grid-cols-2 gap-12 items-center">
-        <div class="animate-fade-up">
-          <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 mb-6">
-            <span class="pulse-dot"></span>
-            <span class="text-white/90 text-xs font-medium ml-1">AI responses in under 3 seconds</span>
-          </div>
-          <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
-            Every missed<br>message is<br><span class="text-accent">a lost deal.</span>
-          </h1>
-          <p class="text-lg text-gray-300 mb-8 max-w-lg leading-relaxed">
-            Wakeeli is the AI conversion system built for Lebanese real estate agencies. It qualifies leads, matches listings, and books property tours automatically on WhatsApp, 24 hours a day.
-          </p>
-          <div class="flex flex-col sm:flex-row gap-4">
-            <a href="#pricing" class="bg-accent hover:bg-accent-dark text-white font-bold px-8 py-4 rounded-xl text-base transition-colors text-center shadow-lg shadow-accent/30">
-              Book a Demo
-            </a>
-            <a href="#solution" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-8 py-4 rounded-xl text-base transition-colors text-center">
-              See How It Works
-            </a>
-          </div>
-          <div class="mt-10 flex items-center gap-6">
-            <div class="text-center">
-              <div class="text-3xl font-black text-white">24/7</div>
-              <div class="text-xs text-gray-400 mt-0.5">Always On</div>
-            </div>
-            <div class="h-10 w-px bg-white/20"></div>
-            <div class="text-center">
-              <div class="text-3xl font-black text-white">3s</div>
-              <div class="text-xs text-gray-400 mt-0.5">Response Time</div>
-            </div>
-            <div class="h-10 w-px bg-white/20"></div>
-            <div class="text-center">
-              <div class="text-3xl font-black text-white">21x</div>
-              <div class="text-xs text-gray-400 mt-0.5">More Conversions</div>
-            </div>
-          </div>
-        </div>
-        <div class="relative flex justify-center lg:justify-end">
-          <div class="relative w-full max-w-sm">
-            <div class="absolute inset-0 bg-accent/20 rounded-3xl blur-3xl transform scale-95"></div>
-            <div class="relative bg-navy-light/60 border border-white/10 rounded-2xl p-5 backdrop-blur-sm shadow-2xl">
-              <div class="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
-                <div class="w-9 h-9 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">WA</div>
-                <div>
-                  <div class="text-white text-sm font-semibold">Wakeeli AI</div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="pulse-dot" style="width:6px;height:6px;"></span>
-                    <span class="text-green-400 text-xs">online</span>
-                  </div>
-                </div>
-              </div>
-              <div class="flex flex-col gap-3">
-                <div class="whatsapp-bubble">
-                  Marhaba, I saw your listing for the Achrafieh apartment. Is it still available?
-                </div>
-                <div class="ai-bubble">
-                  Hi! Yes, it is available. Are you looking to buy or rent? I can match you with similar listings too.
-                </div>
-                <div class="whatsapp-bubble">
-                  Buy. Budget around $350k. Need 3 bedrooms.
-                </div>
-                <div class="ai-bubble">
-                  Perfect. I found 4 matching listings in Achrafieh and Gemmayzeh. Want me to book a viewing this week?
-                </div>
-                <div class="flex justify-end">
-                  <div class="bg-navy text-white text-xs rounded-full px-4 py-1.5 border border-white/20 font-medium">
-                    Viewing booked: Thursday 3pm
-                  </div>
-                </div>
-                <div class="text-center">
-                  <span class="text-gray-400 text-xs">AI handled this in 90 seconds</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- Mobile nav -->
+  <div id="mobile-nav" style="flex-direction:column;gap:0;padding:0 28px 20px;border-top:1px solid #f3f4f6;">
+    <a href="#how" class="nav-link" style="padding:14px 0;border-bottom:1px solid #f8f8f8;display:block;" onclick="closeNav()">How It Works</a>
+    <a href="#features" class="nav-link" style="padding:14px 0;border-bottom:1px solid #f8f8f8;display:block;" onclick="closeNav()">Features</a>
+    <a href="#pricing" class="nav-link" style="padding:14px 0;border-bottom:1px solid #f8f8f8;display:block;" onclick="closeNav()">Pricing</a>
+    <a href="#faq" class="nav-link" style="padding:14px 0;border-bottom:1px solid #f8f8f8;display:block;" onclick="closeNav()">FAQ</a>
+    <a href="#demo" class="btn btn-primary" style="margin-top:16px;display:block;text-align:center;" onclick="closeNav()">Book a Demo</a>
+  </div>
+</nav>
 
-  <!-- SOCIAL PROOF BAR -->
-  <section class="bg-gray-50 border-y border-gray-200 py-10 px-6 lg:px-12">
-    <div class="max-w-7xl mx-auto">
-      <p class="text-center text-gray-400 text-xs font-semibold uppercase tracking-widest mb-8">Trusted by leading Lebanese real estate agencies</p>
-      <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-        <div class="text-gray-300 font-bold text-lg tracking-tight">Pro-Founders</div>
-        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
-        <div class="text-gray-300 font-bold text-lg tracking-tight">Beirut Commune</div>
-        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
-        <div class="text-gray-300 font-bold text-lg tracking-tight">Ray White</div>
-        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
-        <div class="text-gray-300 font-bold text-lg tracking-tight">Spectrum</div>
-        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
-        <div class="text-gray-300 font-bold text-lg tracking-tight">One Properties</div>
-        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
-        <div class="text-gray-300 font-bold text-lg tracking-tight">JSK</div>
-        <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
-        <div class="text-gray-300 font-bold text-lg tracking-tight">C Properties</div>
-      </div>
-    </div>
-  </section>
 
-  <!-- PROBLEM -->
-  <section id="problem" class="py-20 px-6 lg:px-12 bg-white">
-    <div class="max-w-7xl mx-auto">
-      <div class="text-center mb-14">
-        <span class="text-accent text-sm font-bold uppercase tracking-widest">The Problem</span>
-        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Your pipeline is leaking deals every day.</h2>
-        <p class="text-gray-500 max-w-xl mx-auto text-base">Lebanese real estate runs on WhatsApp. But agencies are still handling it like it's 2010.</p>
-      </div>
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="card-hover bg-white border border-gray-100 rounded-2xl p-7 shadow-sm">
-          <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-5">
-            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-navy mb-3">Agents respond too late</h3>
-          <p class="text-gray-500 text-sm leading-relaxed mb-4">
-            Forbes research shows 35 to 50% of sales go to the first business that responds. Most agency teams reply in hours. Your competitor responds in seconds.
-          </p>
-          <div class="bg-red-50 rounded-lg px-4 py-2.5 text-xs text-accent font-semibold">
-            35-50% of deals go to the first responder (Forbes)
-          </div>
-        </div>
-        <div class="card-hover bg-white border border-gray-100 rounded-2xl p-7 shadow-sm">
-          <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-5">
-            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-navy mb-3">Follow-up is a mess</h3>
-          <p class="text-gray-500 text-sm leading-relaxed mb-4">
-            Agents juggle 50+ WhatsApp threads across personal phones, with no system, no visibility, and no way to know which leads have gone cold. Nothing falls through the cracks except everything.
-          </p>
-          <div class="bg-red-50 rounded-lg px-4 py-2.5 text-xs text-accent font-semibold">
-            Avg. agency response time: 4 to 8 hours
-          </div>
-        </div>
-        <div class="card-hover bg-white border border-gray-100 rounded-2xl p-7 shadow-sm">
-          <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-5">
-            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-navy mb-3">Good leads disappear</h3>
-          <p class="text-gray-500 text-sm leading-relaxed mb-4">
-            High-intent buyers reach out at 10pm on a Sunday. No one answers. By Monday morning they have already scheduled a visit with your competitor. Those leads are gone forever.
-          </p>
-          <div class="bg-red-50 rounded-lg px-4 py-2.5 text-xs text-accent font-semibold">
-            70% of buyers contact 2 or more agencies before deciding
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="hero-grid fade-up">
 
-  <!-- SOLUTION -->
-  <section id="solution" class="py-20 px-6 lg:px-12 bg-navy">
-    <div class="max-w-7xl mx-auto">
-      <div class="text-center mb-14">
-        <span class="text-accent text-sm font-bold uppercase tracking-widest">The Solution</span>
-        <h2 class="text-3xl md:text-4xl font-black text-white mt-3 mb-4">Wakeeli handles the entire lead journey.</h2>
-        <p class="text-gray-300 max-w-xl mx-auto text-base">From first message to booked visit, your AI never sleeps, never misses a lead, and never lets a deal slip.</p>
+    <!-- Left -->
+    <div>
+      <div class="hero-eyebrow">
+        <span class="badge">
+          <span class="badge-dot"></span>
+          AI-Powered Lead Conversion
+        </span>
       </div>
-      <div class="grid md:grid-cols-2 gap-6">
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors">
-          <div class="flex items-start gap-5">
-            <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-lg font-bold text-white mb-2">Responds in seconds, 24/7</h3>
-              <p class="text-gray-400 text-sm leading-relaxed">No more waiting. The moment a lead messages your WhatsApp, Wakeeli is already responding. Arabic, English, or both. Day or night. Weekend or holiday.</p>
-            </div>
-          </div>
-        </div>
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors">
-          <div class="flex items-start gap-5">
-            <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-lg font-bold text-white mb-2">Qualifies and matches automatically</h3>
-              <p class="text-gray-400 text-sm leading-relaxed">The AI asks the right questions: budget, location, size, timeline. It then matches the lead to your exact listings and presents the best options instantly.</p>
-            </div>
-          </div>
-        </div>
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors">
-          <div class="flex items-start gap-5">
-            <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-lg font-bold text-white mb-2">Books tours without human intervention</h3>
-              <p class="text-gray-400 text-sm leading-relaxed">Once a lead is qualified and interested, Wakeeli checks agent availability and books the property visit directly in the conversation. No back-and-forth, no missed slots.</p>
-            </div>
-          </div>
-        </div>
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors">
-          <div class="flex items-start gap-5">
-            <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-lg font-bold text-white mb-2">Hands off only when it matters</h3>
-              <p class="text-gray-400 text-sm leading-relaxed">Your agents step in only for high-intent, visit-ready leads. No more time wasted on cold enquiries or basic questions. Only close-ready conversations land on their desk.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="mt-10 text-center">
-        <a href="#pricing" class="inline-block bg-accent hover:bg-accent-dark text-white font-bold px-8 py-4 rounded-xl text-base transition-colors shadow-lg shadow-accent/30">
+
+      <h1 class="hero-h1">
+        Every lead answered.<br>
+        Every tour booked.<br>
+        <span class="highlight">Automatically.</span>
+      </h1>
+
+      <p class="hero-sub">
+        Wakeeli connects to your agency WhatsApp and handles every inbound inquiry 24/7. Qualifies leads, matches listings, books property tours. Your agents show up only to close.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="#demo" class="btn btn-primary btn-primary-lg">
           Book a Demo
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
+        <a href="#how" class="btn btn-outline btn-outline-lg">See How It Works</a>
+      </div>
+
+      <div class="hero-trust">
+        <div class="hero-trust-item">
+          <div class="hero-trust-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          No credit card needed
+        </div>
+        <div class="hero-trust-item">
+          <div class="hero-trust-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          Live in under 24 hours
+        </div>
+        <div class="hero-trust-item">
+          <div class="hero-trust-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          Arabic and English
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- STATS -->
-  <section class="py-16 px-6 lg:px-12 bg-white border-b border-gray-100">
-    <div class="max-w-7xl mx-auto">
-      <div class="grid md:grid-cols-3 gap-8 text-center">
+    <!-- Right: Phone -->
+    <div class="phone-wrap">
+      <div style="position:relative;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="wa-status">
+              <span>9:41</span>
+              <span style="display:flex;gap:4px;align-items:center;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><rect x="2" y="8" width="4" height="13"/><rect x="9" y="5" width="4" height="16"/><rect x="16" y="2" width="4" height="19"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="7" width="18" height="11" rx="2"/><path d="M22 11v3"/></svg>
+              </span>
+            </div>
+            <div class="wa-header">
+              <div class="wa-avatar">W</div>
+              <div>
+                <div class="wa-name">Wakeeli AI</div>
+                <div class="wa-sub">Pro-Founders Properties</div>
+              </div>
+            </div>
+            <div class="wa-body">
+              <div class="date-chip">Today</div>
+              <div class="wa-in">
+                Hi, looking for a 2BR in Achrafieh, budget $2,500/month
+                <div class="bt">9:31 AM</div>
+              </div>
+              <div class="wa-out">
+                Hi! I'm the virtual assistant for Pro-Founders. We have 3 perfect listings. Quick question: move in immediately or within 3 months?
+                <div class="bt">9:31 AM <span class="bt-tick">&#10003;&#10003;</span></div>
+              </div>
+              <div class="wa-in">
+                Next month ideally
+                <div class="bt">9:33 AM</div>
+              </div>
+              <div class="wa-out">
+                I have 2 units available next month in Achrafieh. 68m&sup2; at $2,300 or 75m&sup2; at $2,450. Want to schedule a viewing?
+                <div class="bt">9:33 AM <span class="bt-tick">&#10003;&#10003;</span></div>
+              </div>
+              <div class="wa-in">
+                Yes, the 75m&sup2; one
+                <div class="bt">9:34 AM</div>
+              </div>
+              <div class="wa-out confirmed">
+                &#10003; Tour confirmed Thursday at 3 PM. Agent Jana will meet you there. See you then!
+                <div class="bt">9:34 AM <span class="bt-tick">&#10003;&#10003;</span></div>
+              </div>
+              <div style="text-align:center;margin-top:4px;">
+                <span style="background:rgba(7,94,84,.11);color:#075e54;font-size:9px;font-weight:700;padding:3px 10px;border-radius:100px;letter-spacing:.06em;display:inline-block;">TOUR BOOKED IN 3 MINUTES</span>
+              </div>
+            </div>
+            <div class="wa-bar">
+              <div class="wa-input">Type a message...</div>
+              <div class="wa-send">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating badges -->
+        <div class="float-badge red" style="top:-14px;right:-22px;">AI, not an agent</div>
+        <div class="float-badge" style="bottom:44px;right:-26px;color:#1a2744;">
+          &#128197; Tour booked in 3 min
+        </div>
+        <div class="float-badge" style="bottom:-8px;left:-26px;color:#22c55e;">
+          &#9899; AI replied in 3 seconds
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ===== SOCIAL PROOF BAR ===== -->
+<section class="proof-bar">
+  <div class="container">
+    <p class="proof-label">Trusted by real estate agencies across Lebanon and the GCC</p>
+    <div class="marquee-wrap">
+      <div class="marquee-track">
+        <div style="display:flex;align-items:center;gap:44px;padding:0 22px;">
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">PRO-FOUNDERS</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">BEIRUT COMMUNE</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">RAYWHITE LEBANON</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">SPECTRUM PROPERTIES</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">ONE PROPERTIES</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">JSK REAL ESTATE</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">C PROPERTIES</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:44px;padding:0 22px;">
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">PRO-FOUNDERS</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">BEIRUT COMMUNE</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">RAYWHITE LEBANON</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">SPECTRUM PROPERTIES</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">ONE PROPERTIES</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">JSK REAL ESTATE</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+          <span style="font-size:13.5px;font-weight:800;color:#9ca3af;letter-spacing:.05em;white-space:nowrap;">C PROPERTIES</span>
+          <span style="color:#d1d5db;">&#8226;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== STATS ===== -->
+<section class="stats-section fade-up">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">The Math</div>
+      <h2 class="section-h2">Speed decides who <span class="highlight">closes.</span></h2>
+      <p class="section-sub">Every number below is money left on the table if you're not there first.</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-cell">
+        <div class="stat-num">35-50%</div>
+        <div class="stat-label">of sales</div>
+        <div class="stat-desc">go to the first responder, according to Forbes</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">21x</div>
+        <div class="stat-label">higher conversion</div>
+        <div class="stat-desc">when you respond within the first 5 minutes</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">&lt;3s</div>
+        <div class="stat-label">AI response time</div>
+        <div class="stat-desc">on every single inbound inquiry, every time</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">always on</div>
+        <div class="stat-desc">never misses a lead, never sleeps, never takes a weekend</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== PROBLEM ===== -->
+<section class="section-dark fade-up">
+  <div class="container">
+    <div class="section-header">
+      <div style="margin-bottom:20px;"><span class="badge badge-dark">The Problem</span></div>
+      <h2 class="section-h2-white">
+        Your agents are losing leads<br>
+        <span style="color:rgba(255,255,255,.4);">right now</span>
+      </h2>
+      <p class="section-sub-white">Three silent killers working against your agency every single day. None of them are your agents' fault.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;" class="problem-grid">
+      <div class="card-dark">
+        <div class="icon-wrap icon-wrap-dark">&#8987;</div>
+        <h3 class="card-h3-white">Response delays cost deals</h3>
+        <p class="card-p-white">Leads don't wait. They message 5 agencies simultaneously and go with whoever responds first. If your agent is in a showing, that lead is already gone.</p>
+      </div>
+      <div class="card-dark">
+        <div class="icon-wrap icon-wrap-dark">&#127769;</div>
+        <h3 class="card-h3-white">After-hours inquiries go unanswered</h3>
+        <p class="card-p-white">40% of WhatsApp messages arrive outside business hours. By the time your team sees them, a competitor already closed.</p>
+      </div>
+      <div class="card-dark">
+        <div class="icon-wrap icon-wrap-dark">&#128202;</div>
+        <h3 class="card-h3-white">Agents waste time on cold leads</h3>
+        <p class="card-p-white">80% of inquiries never qualify. But your agents spend equal time on all of them, burning hours that should go to deals that actually close.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== HOW IT WORKS ===== -->
+<section id="how" class="section-light fade-up">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-h2">From first message to booked tour <span class="highlight">in minutes.</span></h2>
+      <p class="section-sub">Four automated steps. Zero manual effort from your team.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;position:relative;" class="how-grid">
+      <div class="step-connector"></div>
+
+      <div class="card" style="text-align:center;position:relative;z-index:1;">
+        <div class="step-num">1</div>
+        <div style="font-size:30px;margin-bottom:14px;">&#128241;</div>
+        <h3 style="font-size:16px;font-weight:700;color:#0a1020;margin-bottom:8px;">Lead messages WhatsApp</h3>
+        <p style="font-size:13.5px;color:#6b7280;line-height:1.7;">A buyer or renter messages your agency number at any hour, day or night.</p>
+      </div>
+
+      <div class="card" style="text-align:center;position:relative;z-index:1;">
+        <div class="step-num">2</div>
+        <div style="font-size:30px;margin-bottom:14px;">&#129302;</div>
+        <h3 style="font-size:16px;font-weight:700;color:#0a1020;margin-bottom:8px;">AI responds and qualifies</h3>
+        <p style="font-size:13.5px;color:#6b7280;line-height:1.7;">Replies in under 3 seconds, asks smart questions, scores the lead in real time.</p>
+      </div>
+
+      <div class="card" style="text-align:center;position:relative;z-index:1;">
+        <div class="step-num">3</div>
+        <div style="font-size:30px;margin-bottom:14px;">&#127968;</div>
+        <h3 style="font-size:16px;font-weight:700;color:#0a1020;margin-bottom:8px;">AI matches to listings</h3>
+        <p style="font-size:13.5px;color:#6b7280;line-height:1.7;">Searches your inventory and presents the right properties based on budget and criteria.</p>
+      </div>
+
+      <div class="card" style="text-align:center;position:relative;z-index:1;">
+        <div class="step-num">4</div>
+        <div style="font-size:30px;margin-bottom:14px;">&#128197;</div>
+        <h3 style="font-size:16px;font-weight:700;color:#0a1020;margin-bottom:8px;">Tour booked on calendar</h3>
+        <p style="font-size:13.5px;color:#6b7280;line-height:1.7;">Checks agent availability and confirms the viewing. Both parties get a confirmation instantly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== FEATURES ===== -->
+<section id="features" class="section fade-up">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Features</div>
+      <h2 class="section-h2">Built for real estate.<br><span class="highlight">Designed to convert.</span></h2>
+      <p class="section-sub">Everything your agency needs to capture and convert leads on autopilot.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;" class="features-grid">
+
+      <div class="card">
+        <div class="icon-wrap icon-wrap-red">&#9889;</div>
+        <h3 class="card-h3">Instant Response</h3>
+        <p class="card-p">Sub-3 second AI replies, 24 hours a day, 365 days a year. No delays, no missed windows, no excuses.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon-wrap icon-wrap-navy">&#127919;</div>
+        <h3 class="card-h3">Smart Qualification</h3>
+        <p class="card-p">The AI asks the right questions to score every lead by budget, timeline, and intent. Only warm leads ever reach your agents.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon-wrap icon-wrap-red">&#128269;</div>
+        <h3 class="card-h3">Listing Matching</h3>
+        <p class="card-p">Connects leads to the right properties from your inventory instantly. No more agents scanning listings mid-conversation.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon-wrap icon-wrap-navy">&#128197;</div>
+        <h3 class="card-h3">Tour Booking</h3>
+        <p class="card-p">Syncs with agent calendars and schedules viewings automatically, sending confirmations to both the lead and the assigned agent.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon-wrap icon-wrap-red">&#127760;</div>
+        <h3 class="card-h3">Arabic + English</h3>
+        <p class="card-p">Native bilingual support. The AI detects and matches the lead's language, switching seamlessly mid-conversation.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon-wrap icon-wrap-navy">&#129309;</div>
+        <h3 class="card-h3">Human Handoff</h3>
+        <p class="card-p">When a lead is warm and ready, the AI escalates to the right agent instantly with full conversation context already attached.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== COMPARISON ===== -->
+<section class="section-dark fade-up">
+  <div class="container">
+    <div class="section-header">
+      <div style="margin-bottom:20px;"><span class="badge badge-dark">The Difference</span></div>
+      <h2 class="section-h2-white">Wakeeli vs. <span style="color:rgba(255,255,255,.38);">the old way</span></h2>
+      <p class="section-sub-white">The numbers don't lie. Here's what changes when you automate.</p>
+    </div>
+
+    <div style="max-width:880px;margin:0 auto;" class="comp-wrap">
+      <div class="comp-head">
+        <div class="comp-cell comp-label" style="color:rgba(255,255,255,.28);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;"></div>
+        <div class="comp-cell" style="text-align:center;padding:18px 24px;">
+          <span style="font-size:14px;font-weight:800;color:#fff;border-left:none;">WAKEELI</span>
+        </div>
+        <div class="comp-cell" style="text-align:center;padding:18px 24px;border-left:1px solid rgba(255,255,255,.05);">
+          <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.3);">Human Only</span>
+        </div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell comp-label">Response time</div>
+        <div class="comp-win">Under 3 seconds</div>
+        <div class="comp-lose">Hours to days</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell comp-label">Availability</div>
+        <div class="comp-win">24/7/365</div>
+        <div class="comp-lose">Business hours only</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell comp-label">Lead qualification</div>
+        <div class="comp-win">Automatic, every lead</div>
+        <div class="comp-lose">Manual, inconsistent</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell comp-label">Tour booking</div>
+        <div class="comp-win">Instant, automatic</div>
+        <div class="comp-lose">Back-and-forth WhatsApp</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell comp-label">Agent time saved</div>
+        <div class="comp-win">47 hours / month</div>
+        <div class="comp-lose">0 hours</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell comp-label">Cost per conversion</div>
+        <div class="comp-win">Fixed, predictable</div>
+        <div class="comp-lose">High, unpredictable</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== RESULTS ===== -->
+<section class="section-dark fade-up" style="padding-top:0;background:linear-gradient(180deg,#1a2744 0%,#0f1729 100%);">
+  <div class="container" style="padding-top:80px;border-top:1px solid rgba(255,255,255,.06);">
+    <div class="section-header">
+      <div style="margin-bottom:20px;"><span class="badge badge-dark">Results</span></div>
+      <h2 class="section-h2-white">The numbers agencies see</h2>
+      <p class="section-sub-white">Real outcomes from real estate agencies using Wakeeli to convert more leads.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;" class="results-grid">
+      <div class="result-card">
+        <div class="result-num">3x</div>
+        <h3 class="result-h3">more tours booked in 30 days</h3>
+        <p class="result-p">Agencies see triple the viewing bookings within the first month of using Wakeeli.</p>
+      </div>
+      <div class="result-card">
+        <div class="result-num">90%</div>
+        <h3 class="result-h3">of leads qualified automatically</h3>
+        <p class="result-p">Nine out of ten leads are scored and filtered before a human agent ever gets involved.</p>
+      </div>
+      <div class="result-card">
+        <div class="result-num">47h</div>
+        <h3 class="result-h3">saved per agent per month</h3>
+        <p class="result-p">More than a full work week given back to every agent, every single month.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="section-light fade-up">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">What agencies say</div>
+      <h2 class="section-h2">Agencies who switched <span class="highlight">don't go back.</span></h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;" class="testimonials-grid">
+
+      <div class="testimonial-card">
+        <p class="testimonial-text">"We were losing leads every night. Since Wakeeli, every morning I see tours already booked by the AI. My agents come in to a warm list instead of cold inboxes."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,#e63946,#c1121f);">KA</div>
+          <div>
+            <div class="testimonial-name">Karim A.</div>
+            <div class="testimonial-role">Director, Pro-Founders</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card">
+        <p class="testimonial-text">"The first weekend it went live, Wakeeli booked 4 tours. That was 4 tours I would have missed. For $599 a month that is the easiest ROI decision I have ever made."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,#1a2744,#2a4a8a);">LH</div>
+          <div>
+            <div class="testimonial-name">Layla H.</div>
+            <div class="testimonial-role">Owner, Spectrum Properties</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card">
+        <p class="testimonial-text">"My team used to spend half their day on WhatsApp chasing unqualified leads. Now Wakeeli filters everything and my agents only talk to people who are actually ready to view."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,#16a34a,#15803d);">MT</div>
+          <div>
+            <div class="testimonial-name">Maya T.</div>
+            <div class="testimonial-role">Sales Lead, One Properties</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== PRICING ===== -->
+<section id="pricing" class="section fade-up">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-h2">Simple, transparent pricing</h2>
+      <p class="section-sub">One Wakeeli plan pays for itself the moment it books your first tour.</p>
+    </div>
+
+    <div class="pricing-grid">
+
+      <!-- Starter -->
+      <div class="price-card">
+        <div class="price-tier" style="color:#9ca3af;">Starter</div>
+        <div class="price-amount">$149<span class="price-period" style="color:#9ca3af;">/mo</span></div>
+        <div class="price-desc">1 agent &bull; 100 conversations/month</div>
         <div>
-          <div class="text-4xl md:text-5xl font-black text-navy mb-2">21x</div>
-          <div class="text-gray-500 text-sm max-w-xs mx-auto">Higher conversion rate when you respond within 5 minutes versus 30 minutes</div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:#4b5563;">AI lead qualification</span>
+          </div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:#4b5563;">Listing matching</span>
+          </div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:#4b5563;">WhatsApp integration</span>
+          </div>
+          <div class="price-check" style="margin-bottom:32px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:#4b5563;">Tour booking</span>
+          </div>
         </div>
-        <div class="border-t md:border-t-0 md:border-x border-gray-100 pt-8 md:pt-0 md:px-8">
-          <div class="text-4xl md:text-5xl font-black text-navy mb-2">35-50%</div>
-          <div class="text-gray-500 text-sm max-w-xs mx-auto">Of all real estate deals go to the first company that responds, according to Forbes research</div>
+        <a href="#demo" class="price-btn-outline">Get Started</a>
+      </div>
+
+      <!-- Professional (featured) -->
+      <div class="price-card-featured">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-tier" style="color:rgba(255,255,255,.4);">Professional</div>
+        <div class="price-amount price-amount-white">$599<span class="price-period" style="color:rgba(255,255,255,.4);">/mo</span></div>
+        <div class="price-desc" style="color:rgba(255,255,255,.4);">5 agents &bull; 500 conversations/month</div>
+        <div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:rgba(255,255,255,.82);">Everything in Starter</span>
+          </div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:rgba(255,255,255,.82);">Priority support</span>
+          </div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:rgba(255,255,255,.82);">Analytics dashboard</span>
+          </div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:rgba(255,255,255,.82);">Multi-agent routing</span>
+          </div>
+          <div class="price-check" style="margin-bottom:32px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:rgba(255,255,255,.82);">Arabic + English AI</span>
+          </div>
         </div>
-        <div class="border-t md:border-t-0 border-gray-100 pt-8 md:pt-0">
-          <div class="text-4xl md:text-5xl font-black text-navy mb-2">3 sec</div>
-          <div class="text-gray-500 text-sm max-w-xs mx-auto">Average Wakeeli AI response time. Not 3 hours. Not 3 minutes. Three seconds, every time.</div>
+        <a href="#demo" class="btn btn-primary" style="display:block;text-align:center;border-radius:100px;font-size:15px;">Book a Demo</a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="price-card">
+        <div class="price-tier" style="color:#9ca3af;">Enterprise</div>
+        <div class="price-amount">$1,200<span class="price-period" style="color:#9ca3af;">/mo</span></div>
+        <div class="price-desc">Unlimited agents and conversations</div>
+        <div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:#4b5563;">Everything in Professional</span>
+          </div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:#4b5563;">Dedicated account manager</span>
+          </div>
+          <div class="price-check">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:#4b5563;">Custom integrations</span>
+          </div>
+          <div class="price-check" style="margin-bottom:32px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="price-feature" style="color:#4b5563;">White-label option</span>
+          </div>
         </div>
+        <a href="#demo" class="price-btn-outline">Contact Sales</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== FAQ ===== -->
+<section id="faq" class="section-light fade-up">
+  <div style="max-width:740px;margin:0 auto;padding:0 28px;">
+    <div class="section-header">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-h2">Answers to the obvious questions</h2>
+      <p class="section-sub">No fluff. Just what you actually want to know.</p>
+    </div>
+
+    <div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Does it work in Arabic?
+          <svg class="faq-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-body">Yes. Wakeeli speaks Arabic and English natively. It detects which language the lead writes in and responds in kind, switching mid-conversation if needed. Built specifically for GCC and Lebanese markets where bilingual conversations are the norm.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          What happens after hours?
+          <svg class="faq-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-body">Wakeeli never sleeps. Every lead that messages at 2am gets an instant response, gets qualified, and gets matched to listings. Tour bookings go onto your agents' calendars for the next available slot. No missed opportunities.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Can it really book tours?
+          <svg class="faq-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-body">Yes. Wakeeli connects directly to your agent's calendar, checks availability in real time, and confirms bookings instantly. The lead receives a confirmation message and the agent gets a calendar invite. No human involvement required at any step.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Does it replace my agents?
+          <svg class="faq-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-body">No. Wakeeli handles everything before the close: response, qualification, matching, and booking. Your agents focus on what they do best, which is showing properties and closing deals. Think of Wakeeli as the world's best intake team.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          What if a lead asks something complex?
+          <svg class="faq-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-body">Wakeeli handles the full qualification and matching flow autonomously. For complex legal, financial, or highly specific questions outside that scope, it flags the conversation and hands off to the right agent with the full context already loaded.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          How long does setup take?
+          <svg class="faq-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-body">Under 24 hours. We connect your WhatsApp Business account, load your listings, configure your agent calendars, and you're live. No coding required. No technical knowledge needed from your team.</div>
+      </div>
+
+      <div class="faq-item" style="border-bottom:none;">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Which channels does it support?
+          <svg class="faq-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2744" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-body">WhatsApp Business API is the primary channel, which is perfect for GCC and Lebanon. iMessage and SMS support is on the roadmap for UK and US market expansion.</div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- FEATURES -->
-  <section id="features" class="py-20 px-6 lg:px-12 bg-gray-50">
-    <div class="max-w-7xl mx-auto">
-      <div class="text-center mb-14">
-        <span class="text-accent text-sm font-bold uppercase tracking-widest">Platform</span>
-        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Everything your agency needs in one place.</h2>
-        <p class="text-gray-500 max-w-xl mx-auto text-base">Nine fully integrated modules. One dashboard. Complete control over your lead pipeline.</p>
-      </div>
 
-      <div class="flex flex-wrap justify-center gap-2 mb-8" id="tabs-nav">
-        <button class="tab-btn active text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="smart-inbox">Smart Inbox</button>
-        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="lead-management">Lead Management</button>
-        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="ai-conversations">AI Conversations</button>
-        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="listings">Listings</button>
-        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="tours">Tours</button>
-        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="analytics">Analytics</button>
-        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="agent-management">Agent Management</button>
-        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="ai-routing">AI Routing</button>
-        <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 transition-all" data-tab="settings">Settings</button>
-      </div>
-
-      <div id="tabs-content">
-
-        <div id="tab-smart-inbox" class="tab-content active">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">Smart Inbox</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">All your WhatsApp conversations in a single unified inbox. AI-sorted by priority, status, and intent. Your team sees only what needs attention, not a wall of noise.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>AI-prioritized conversations</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Status filters: new, active, booked, closed</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Full conversation history with AI notes</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">Smart Inbox Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="tab-lead-management" class="tab-content">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">Lead Management</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">A complete CRM built for real estate. Every lead profile includes budget, requirements, preferred locations, and full conversation history, all populated automatically by the AI.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Auto-populated lead profiles</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Pipeline view with deal stages</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Re-engagement alerts for cold leads</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">Lead Management Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="tab-ai-conversations" class="tab-content">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">AI Conversations</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">Your AI assistant handles the full conversation flow. It qualifies leads with natural dialogue, matches them to listings, and guides them toward booking a visit, all without sounding like a bot.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Arabic and English, natural tone</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Customizable qualification questions</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Smooth handoff to human agents</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">AI Conversations Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="tab-listings" class="tab-content">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">Listings</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">Upload and manage your full property portfolio. The AI automatically matches incoming leads to the right listings based on their requirements, budget, and location preferences.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Bulk listing import via CSV</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Smart AI matching engine</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Availability status management</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">Listings Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="tab-tours" class="tab-content">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">Tours</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">Wakeeli books property visits automatically. It checks your agents' availability, proposes time slots, confirms with the lead, and sends reminders. All inside WhatsApp.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Automated availability checking</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Confirmation and reminders on WhatsApp</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Calendar integration for agents</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">Tours Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="tab-analytics" class="tab-content">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">Analytics</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">Full visibility into your pipeline. Conversion rates, response times, tour booking rates, and agent performance, all in one clean dashboard. Know exactly where deals are won or lost.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Lead-to-visit conversion tracking</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Agent performance benchmarks</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Weekly email digest reports</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">Analytics Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="tab-agent-management" class="tab-content">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">Agent Management</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">Add and manage your team. Set specializations, coverage areas, availability windows, and performance targets. Each agent sees only their leads, their tours, and their numbers.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Role-based access and views</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Availability and coverage settings</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Individual performance dashboards</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">Agent Management Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="tab-ai-routing" class="tab-content">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">AI Routing</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">The AI decides which leads get handled automatically and which ones need a human. When it's time to hand off, it routes to the right agent based on their area, workload, and specialization.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Smart agent-lead matching</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Configurable handoff triggers</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Fallback and overflow rules</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">AI Routing Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="tab-settings" class="tab-content">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid md:grid-cols-2">
-            <div class="p-8 flex flex-col justify-center">
-              <div class="w-10 h-10 bg-navy/10 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-navy mb-3">Settings</h3>
-              <p class="text-gray-500 text-sm leading-relaxed mb-5">Full control over your AI behavior. Customize the conversation tone, language preference, working hours, and qualification criteria. Configure your WhatsApp number and team structure in minutes.</p>
-              <ul class="space-y-2">
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>AI tone and language customization</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>WhatsApp number setup and verification</li>
-                <li class="flex items-center gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Business hours and OOO configuration</li>
-              </ul>
-            </div>
-            <div class="bg-gray-50 border-l border-gray-100 p-6 flex items-center justify-center">
-              <div class="screenshot-placeholder w-full">
-                <span class="text-gray-400 text-sm mt-8 z-10 relative">Settings Screenshot</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section id="how-it-works" class="py-20 px-6 lg:px-12 bg-white">
-    <div class="max-w-5xl mx-auto">
-      <div class="text-center mb-14">
-        <span class="text-accent text-sm font-bold uppercase tracking-widest">Simple by Design</span>
-        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Three steps. Zero friction.</h2>
-        <p class="text-gray-500 max-w-lg mx-auto text-base">You connect your WhatsApp. Wakeeli does the rest. Your team wakes up to a calendar full of visits.</p>
-      </div>
-      <div class="grid md:grid-cols-3 gap-8 relative">
-        <div class="hidden md:block absolute top-12 left-1/3 right-1/3 h-0.5 bg-gray-200 z-0"></div>
-        <div class="text-center relative z-10">
-          <div class="w-20 h-20 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-navy/20">
-            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-            </svg>
-          </div>
-          <div class="text-xs font-bold text-accent uppercase tracking-widest mb-2">Step 1</div>
-          <h3 class="text-base font-bold text-navy mb-2">Lead messages WhatsApp</h3>
-          <p class="text-gray-500 text-sm leading-relaxed">A buyer or tenant reaches out on your agency's WhatsApp number. Any time of day, any language.</p>
-        </div>
-        <div class="text-center relative z-10">
-          <div class="w-20 h-20 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-navy/20">
-            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
-            </svg>
-          </div>
-          <div class="text-xs font-bold text-accent uppercase tracking-widest mb-2">Step 2</div>
-          <h3 class="text-base font-bold text-navy mb-2">AI qualifies and books</h3>
-          <p class="text-gray-500 text-sm leading-relaxed">Wakeeli qualifies the lead, matches them to listings, and books the property visit, automatically, in seconds.</p>
-        </div>
-        <div class="text-center relative z-10">
-          <div class="w-20 h-20 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-navy/20">
-            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-          </div>
-          <div class="text-xs font-bold text-accent uppercase tracking-widest mb-2">Step 3</div>
-          <h3 class="text-base font-bold text-navy mb-2">Agent closes the deal</h3>
-          <p class="text-gray-500 text-sm leading-relaxed">Your agent shows up to a confirmed visit with a qualified, listing-matched lead ready to buy. Just close.</p>
-        </div>
-      </div>
-      <div class="mt-12 bg-navy/5 border border-navy/10 rounded-2xl p-6 text-center">
-        <p class="text-navy font-semibold text-base">Your agents spend zero time on cold leads. They only meet visit-ready buyers.</p>
-        <p class="text-gray-500 text-sm mt-1">That's not an incremental improvement. That's a different business.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- PRICING -->
-  <section id="pricing" class="py-20 px-6 lg:px-12 bg-gray-50">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-14">
-        <span class="text-accent text-sm font-bold uppercase tracking-widest">Pricing</span>
-        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Simple pricing. Serious results.</h2>
-        <p class="text-gray-500 max-w-lg mx-auto text-base">No setup fees. No long-term contracts. Cancel anytime. Your first 14 days are free.</p>
-      </div>
-      <div class="grid md:grid-cols-3 gap-6 items-stretch">
-
-        <div class="card-hover bg-white border border-gray-200 rounded-2xl p-7 flex flex-col">
-          <div class="mb-6">
-            <div class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Starter</div>
-            <div class="flex items-end gap-1 mb-1">
-              <span class="text-4xl font-black text-navy">$149</span>
-              <span class="text-gray-400 text-sm mb-1.5">/month</span>
-            </div>
-            <p class="text-gray-500 text-sm">Perfect for boutique agencies getting started with AI lead conversion.</p>
-          </div>
-          <ul class="space-y-3 flex-grow mb-8">
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              1 agent seat
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              100 AI conversations/month
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Smart Inbox and Lead CRM
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Automated tour booking
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Email support
-            </li>
-          </ul>
-          <a href="#" class="block text-center bg-navy/10 hover:bg-navy/20 text-navy font-bold px-6 py-3.5 rounded-xl text-sm transition-colors">
-            Start Free Trial
-          </a>
-        </div>
-
-        <div class="card-hover bg-white border-2 border-navy rounded-2xl p-7 flex flex-col pricing-popular relative">
-          <div class="tag-popular">Most Popular</div>
-          <div class="mb-6">
-            <div class="text-sm font-bold text-navy uppercase tracking-widest mb-3">Professional</div>
-            <div class="flex items-end gap-1 mb-1">
-              <span class="text-4xl font-black text-navy">$599</span>
-              <span class="text-gray-400 text-sm mb-1.5">/month</span>
-            </div>
-            <p class="text-gray-500 text-sm">For growing agencies serious about dominating their market.</p>
-          </div>
-          <ul class="space-y-3 flex-grow mb-8">
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              5 agent seats
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              500 AI conversations/month
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              All Starter features
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Advanced analytics dashboard
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Priority support
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              AI conversation customization
-            </li>
-          </ul>
-          <a href="#" class="block text-center bg-navy hover:bg-navy-dark text-white font-bold px-6 py-3.5 rounded-xl text-sm transition-colors shadow-lg shadow-navy/30">
-            Start Free Trial
-          </a>
-        </div>
-
-        <div class="card-hover bg-white border border-gray-200 rounded-2xl p-7 flex flex-col">
-          <div class="mb-6">
-            <div class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Enterprise</div>
-            <div class="flex items-end gap-1 mb-1">
-              <span class="text-4xl font-black text-navy">$1,200</span>
-              <span class="text-gray-400 text-sm mb-1.5">/month</span>
-            </div>
-            <p class="text-gray-500 text-sm">For large agencies and groups that need full power and white-glove service.</p>
-          </div>
-          <ul class="space-y-3 flex-grow mb-8">
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Unlimited agent seats
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Unlimited AI conversations
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              All Professional features
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Dedicated account manager
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              Custom integrations and API
-            </li>
-            <li class="flex items-center gap-2.5 text-sm text-gray-600">
-              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-              SLA and 24/7 phone support
-            </li>
-          </ul>
-          <a href="#" class="block text-center bg-navy/10 hover:bg-navy/20 text-navy font-bold px-6 py-3.5 rounded-xl text-sm transition-colors">
-            Contact Sales
-          </a>
-        </div>
-
-      </div>
-      <p class="text-center text-gray-400 text-xs mt-6">All plans include a 14-day free trial. No credit card required.</p>
-    </div>
-  </section>
-
-  <!-- FAQ -->
-  <section id="faq" class="py-20 px-6 lg:px-12 bg-white">
-    <div class="max-w-3xl mx-auto">
-      <div class="text-center mb-14">
-        <span class="text-accent text-sm font-bold uppercase tracking-widest">FAQ</span>
-        <h2 class="text-3xl md:text-4xl font-black text-navy mt-3 mb-4">Questions? We have answers.</h2>
-      </div>
-      <div class="divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden" id="faq-list">
-
-        <div class="faq-item">
-          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
-            <span class="text-sm font-semibold text-navy pr-4">How does the AI handle Arabic conversations?</span>
-            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <div class="faq-answer px-5 pb-5">
-            <p class="text-gray-500 text-sm leading-relaxed">Wakeeli is fully bilingual in Arabic and English. The AI detects the language of the incoming message and responds naturally in the same language. It handles Lebanese dialect, Modern Standard Arabic, and Arabizi. You can also set a default language preference per channel.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
-            <span class="text-sm font-semibold text-navy pr-4">Can I customize the conversation flow and questions?</span>
-            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <div class="faq-answer px-5 pb-5">
-            <p class="text-gray-500 text-sm leading-relaxed">Yes. You control the qualification questions, tone, and conversation style. You can define what information the AI collects, in what order, and what triggers a handoff to a human agent. Professional and Enterprise plans include full conversation flow customization.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
-            <span class="text-sm font-semibold text-navy pr-4">How long does setup take?</span>
-            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <div class="faq-answer px-5 pb-5">
-            <p class="text-gray-500 text-sm leading-relaxed">Most agencies are live within 48 hours. You connect your WhatsApp number, upload your listings, add your agents, and you are done. Our onboarding team walks you through every step. Enterprise clients get a dedicated setup session.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
-            <span class="text-sm font-semibold text-navy pr-4">What WhatsApp number do I use with Wakeeli?</span>
-            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <div class="faq-answer px-5 pb-5">
-            <p class="text-gray-500 text-sm leading-relaxed">You can use your existing agency WhatsApp Business number. We connect via the official WhatsApp Business API. All messages still appear to come from your number, your brand. Leads never know there is an AI involved unless you want them to.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
-            <span class="text-sm font-semibold text-navy pr-4">What happens when a lead needs a human agent?</span>
-            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <div class="faq-answer px-5 pb-5">
-            <p class="text-gray-500 text-sm leading-relaxed">When a lead meets your handoff criteria (e.g. ready to make an offer, complex request, or requests a human), Wakeeli notifies the assigned agent with a full conversation summary. The agent jumps in seamlessly. The lead never has to repeat themselves.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
-            <span class="text-sm font-semibold text-navy pr-4">Does it integrate with my existing CRM or property portal?</span>
-            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <div class="faq-answer px-5 pb-5">
-            <p class="text-gray-500 text-sm leading-relaxed">Wakeeli includes its own built-in CRM and listing management. Enterprise plans support custom API integrations with third-party tools including Property Finder, OpenRE, and custom platforms. Contact our sales team for your specific integration requirements.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
-            <span class="text-sm font-semibold text-navy pr-4">Is my data and my clients' data secure?</span>
-            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <div class="faq-answer px-5 pb-5">
-            <p class="text-gray-500 text-sm leading-relaxed">Yes. All data is encrypted in transit and at rest. We use secure cloud infrastructure and follow industry-standard security practices. Your lead data is never shared or sold. Enterprise clients can request data processing agreements and security documentation.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
-            <span class="text-sm font-semibold text-navy pr-4">What if I want to cancel?</span>
-            <svg class="faq-icon w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-          <div class="faq-answer px-5 pb-5">
-            <p class="text-gray-500 text-sm leading-relaxed">Cancel anytime, no questions asked. There are no annual contracts or cancellation fees on Starter and Professional plans. You keep access until the end of your billing period. Your lead data can be exported in full before you go.</p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA BANNER -->
-  <section class="py-20 px-6 lg:px-12 gradient-hero">
-    <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4">More first conversations.<br>More visits booked.<br><span class="text-accent">More deals closed.</span></h2>
-      <p class="text-gray-300 text-base mb-8 max-w-xl mx-auto">Every hour without Wakeeli is an hour your leads are waiting. And while they wait, your competitor is already booking their visit.</p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="#pricing" class="bg-accent hover:bg-accent-dark text-white font-bold px-8 py-4 rounded-xl text-base transition-colors shadow-lg shadow-accent/30">
-          Book a Demo
+<!-- ===== FINAL CTA ===== -->
+<section id="demo" class="cta-section fade-up">
+  <div class="container" style="position:relative;z-index:1;">
+    <div style="max-width:780px;margin:0 auto;">
+      <div style="margin-bottom:28px;"><span class="badge badge-dark">Ready to start?</span></div>
+      <h2 class="cta-h2">
+        More first conversations.<br>
+        More visits booked.<br>
+        <span class="highlight">More deals closed.</span>
+      </h2>
+      <p class="cta-sub">Book a 20-minute demo. We'll show you exactly how Wakeeli works with your listings and your team.</p>
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:24px;">
+        <a href="mailto:hello@wakeeli.ai" class="btn btn-primary" style="font-size:17px;padding:18px 48px;">
+          Book Your Demo
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-        <a href="#pricing" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-8 py-4 rounded-xl text-base transition-colors">
-          Start Free Trial
-        </a>
+        <a href="#pricing" class="btn btn-ghost-white" style="font-size:17px;padding:18px 48px;">View Pricing</a>
       </div>
-      <p class="text-gray-400 text-xs mt-5">14-day free trial. No credit card required. Setup in 48 hours.</p>
+      <p style="font-size:13.5px;color:rgba(255,255,255,.28);">No commitment. No credit card. Just 20 minutes.</p>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- FOOTER -->
-  <footer class="bg-navy-dark py-12 px-6 lg:px-12">
-    <div class="max-w-7xl mx-auto">
-      <div class="grid md:grid-cols-4 gap-8 mb-10">
-        <div class="md:col-span-2">
-          <div class="flex items-center mb-4">
-            <span class="text-2xl font-black text-white tracking-tight">Wake</span><span class="text-2xl font-black text-accent tracking-tight">eli</span>
-          </div>
-          <p class="text-gray-400 text-sm leading-relaxed max-w-xs mb-5">The AI conversion system built for Lebanese real estate agencies. Qualify, match, and book visits on WhatsApp, 24/7.</p>
-          <a href="#pricing" class="inline-block bg-accent hover:bg-accent-dark text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
-            Book a Demo
-          </a>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+
+      <div>
+        <div class="footer-brand-name">
+          <span>WAKE</span><span>ELI</span>
         </div>
-        <div>
-          <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Product</div>
-          <ul class="space-y-2.5">
-            <li><a href="#features" class="text-gray-400 hover:text-white text-sm transition-colors">Features</a></li>
-            <li><a href="#pricing" class="text-gray-400 hover:text-white text-sm transition-colors">Pricing</a></li>
-            <li><a href="#how-it-works" class="text-gray-400 hover:text-white text-sm transition-colors">How It Works</a></li>
-            <li><a href="#faq" class="text-gray-400 hover:text-white text-sm transition-colors">FAQ</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Company</div>
-          <ul class="space-y-2.5">
-            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">About</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Blog</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Contact</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a></li>
-            <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a></li>
-          </ul>
-        </div>
+        <p class="footer-tagline">More first conversations. More visits booked. More deals closed.</p>
+        <p class="footer-city">Beirut, Lebanon</p>
       </div>
-      <div class="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-        <p class="text-gray-500 text-xs">2024 Wakeeli. All rights reserved. Built in Beirut.</p>
-        <p class="text-gray-500 text-xs">WhatsApp is a trademark of Meta Platforms, Inc. Wakeeli is not affiliated with Meta.</p>
+
+      <div>
+        <h4 class="footer-col-title">Product</h4>
+        <a href="#how" class="footer-link">How It Works</a>
+        <a href="#features" class="footer-link">Features</a>
+        <a href="#pricing" class="footer-link">Pricing</a>
+        <a href="#demo" class="footer-link">Book a Demo</a>
       </div>
+
+      <div>
+        <h4 class="footer-col-title">Markets</h4>
+        <a href="#" class="footer-link">Lebanon</a>
+        <a href="#" class="footer-link">GCC</a>
+        <a href="#" class="footer-link">United Kingdom</a>
+        <a href="#" class="footer-link">United States</a>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Company</h4>
+        <a href="#" class="footer-link">About</a>
+        <a href="mailto:hello@wakeeli.ai" class="footer-link">Contact</a>
+        <a href="#" class="footer-link">Privacy Policy</a>
+        <a href="#" class="footer-link">Terms of Service</a>
+      </div>
+
     </div>
-  </footer>
 
-  <script>
-    // Nav scroll effect
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 50) {
-        navbar.classList.add('nav-scrolled');
-      } else {
-        navbar.classList.remove('nav-scrolled');
-      }
+    <div class="footer-bottom">
+      <span class="footer-copy">&#169; 2026 Wakeeli. All rights reserved.</span>
+      <span class="footer-copy">Built for the future of real estate.</span>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+  // Nav scroll shadow
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 30);
+  }, {passive:true});
+
+  // Burger menu
+  function toggleNav(){
+    document.getElementById('mobile-nav').classList.toggle('open');
+  }
+  function closeNav(){
+    document.getElementById('mobile-nav').classList.remove('open');
+  }
+
+  // Responsive nav
+  function setNavMode(){
+    const mobile = window.innerWidth < 768;
+    document.getElementById('burger').style.display = mobile ? 'block' : 'none';
+  }
+  setNavMode();
+  window.addEventListener('resize', setNavMode);
+
+  // FAQ
+  function toggleFaq(btn){
+    const body = btn.nextElementSibling;
+    const icon = btn.querySelector('.faq-icon');
+    const isOpen = body.classList.contains('open');
+    document.querySelectorAll('.faq-body').forEach(b => b.classList.remove('open'));
+    document.querySelectorAll('.faq-icon').forEach(i => i.classList.remove('open'));
+    if(!isOpen){ body.classList.add('open'); icon.classList.add('open'); }
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1);
+      const el = id ? document.getElementById(id) : null;
+      if(el){ e.preventDefault(); el.scrollIntoView({behavior:'smooth',block:'start'}); closeNav(); }
     });
+  });
 
-    // Mobile menu
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const menuIcon = document.getElementById('menu-icon');
-    const closeIcon = document.getElementById('close-icon');
-
-    mobileMenuBtn.addEventListener('click', () => {
-      const isOpen = !mobileMenu.classList.contains('hidden');
-      if (isOpen) {
-        mobileMenu.classList.add('hidden');
-        menuIcon.classList.remove('hidden');
-        closeIcon.classList.add('hidden');
-      } else {
-        mobileMenu.classList.remove('hidden');
-        menuIcon.classList.add('hidden');
-        closeIcon.classList.remove('hidden');
-      }
+  // Fade-in on scroll
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
     });
+  },{threshold:0.05,rootMargin:'0px 0px -24px 0px'});
+  document.querySelectorAll('.fade-up').forEach((el, i) => {
+    if(i === 0) setTimeout(() => el.classList.add('in'), 80);
+    else io.observe(el);
+  });
 
-    function closeMobileMenu() {
-      mobileMenu.classList.add('hidden');
-      menuIcon.classList.remove('hidden');
-      closeIcon.classList.add('hidden');
-    }
+  // Grid responsive fixes
+  function fixGrids(){
+    const w = window.innerWidth;
 
-    // Tabs
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+    // Problem grid
+    const pg = document.querySelector('.problem-grid');
+    if(pg) pg.style.gridTemplateColumns = w < 640 ? '1fr' : w < 960 ? '1fr 1fr' : 'repeat(3,1fr)';
 
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetTab = btn.getAttribute('data-tab');
+    // Features grid
+    const fg = document.querySelector('.features-grid');
+    if(fg) fg.style.gridTemplateColumns = w < 640 ? '1fr' : w < 960 ? '1fr 1fr' : 'repeat(3,1fr)';
 
-        tabBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    // How it works
+    const hg = document.querySelector('.how-grid');
+    if(hg) hg.style.gridTemplateColumns = w < 640 ? '1fr 1fr' : w < 768 ? '1fr 1fr' : 'repeat(4,1fr)';
 
-        tabContents.forEach(content => {
-          content.classList.remove('active');
-        });
+    // Stats
+    const sg = document.querySelector('.stats-grid');
+    if(sg) sg.style.gridTemplateColumns = w < 640 ? '1fr 1fr' : w < 1100 ? '1fr 1fr' : 'repeat(4,1fr)';
 
-        const target = document.getElementById('tab-' + targetTab);
-        if (target) target.classList.add('active');
-      });
+    // Results
+    const rg = document.querySelector('.results-grid');
+    if(rg) rg.style.gridTemplateColumns = w < 640 ? '1fr' : w < 960 ? '1fr 1fr' : 'repeat(3,1fr)';
+
+    // Testimonials
+    const tg = document.querySelector('.testimonials-grid');
+    if(tg) tg.style.gridTemplateColumns = w < 640 ? '1fr' : w < 960 ? '1fr 1fr' : 'repeat(3,1fr)';
+
+    // Comp table
+    const ch = document.querySelectorAll('.comp-head,.comp-row');
+    ch.forEach(row => {
+      row.style.gridTemplateColumns = w < 768 ? '1fr 1fr' : '2fr 1fr 1fr';
+      const fc = row.querySelector('.comp-label');
+      if(fc) fc.style.display = w < 768 ? 'none' : 'block';
     });
-
-    // FAQ accordion
-    function toggleFaq(btn) {
-      const item = btn.parentElement;
-      const answer = item.querySelector('.faq-answer');
-      const icon = btn.querySelector('.faq-icon');
-      const isOpen = answer.classList.contains('open');
-
-      // Close all
-      document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
-      document.querySelectorAll('.faq-icon').forEach(i => i.classList.remove('open'));
-
-      if (!isOpen) {
-        answer.classList.add('open');
-        icon.classList.add('open');
-      }
-    }
-  </script>
+  }
+  fixGrids();
+  window.addEventListener('resize', fixGrids);
+</script>
 
 </body>
 </html>

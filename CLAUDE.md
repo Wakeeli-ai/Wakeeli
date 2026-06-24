@@ -778,7 +778,7 @@ Right: "Small" = small sqm. Search for 4-bed under the given budget, any sqm. No
 | Chat Test UI | https://wakeeli-ai.up.railway.app/chat-test |
 | GitHub Repo | Wakeeli-ai/Wakeeli |
 | GitHub Token | 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 |
-| Miro Token | eyJtaXJvLm9yaWdpbiI6ImV1MDEifQ_2B2XPlJ6eQ-vaGeDKqRHSzpW60E |
+| Miro Token | eyJtaXJvLm9yaWdpbiI6ImV1MDEifQ_X2YQwcftuItxvzkjjLUevZ-voUU |
 
 ---
 

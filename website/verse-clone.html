@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verse.ai - Win more customers with smarter SMS conversations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { font-family: 'Be Vietnam Pro', 'Inter', sans-serif; }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #00B8D9, #0048FF, #9B59B6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .gradient-text-blue-purple {
+      background: linear-gradient(90deg, #0048FF, #9B59B6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .gradient-text-purple-pink {
+      background: linear-gradient(90deg, #9B59B6, #E91E8C);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .gradient-text-cyan-blue {
+      background: linear-gradient(90deg, #00B8D9, #0048FF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .announcement-bar {
+      background: linear-gradient(90deg, #0048FF, #00B8D9);
+    }
+
+    .floating-nav {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    .hero-bg {
+      background-color: #EEF2FF;
+    }
+
+    .btn-primary {
+      background: #0048FF;
+      color: #fff;
+      border-radius: 50px;
+      padding: 12px 28px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary:hover { background: #0039CC; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,72,255,0.3); }
+
+    .btn-outline {
+      background: transparent;
+      color: #0048FF;
+      border: 2px solid #0048FF;
+      border-radius: 50px;
+      padding: 11px 28px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .btn-outline:hover { background: #EEF2FF; }
+
+    .btn-demo {
+      background: #0048FF;
+      color: #fff;
+      border-radius: 50px;
+      padding: 10px 22px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-demo:hover { background: #0039CC; }
+
+    .feature-card {
+      background: #F8F9FA;
+      border-radius: 24px;
+      padding: 48px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .phone-frame {
+      width: 280px;
+      min-height: 560px;
+      background: #1a1a1a;
+      border-radius: 44px;
+      padding: 12px;
+      position: relative;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35), inset 0 0 0 2px #333;
+    }
+    .phone-screen {
+      background: #f5f5f5;
+      border-radius: 34px;
+      overflow: hidden;
+      height: 100%;
+      min-height: 536px;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-notch {
+      background: #1a1a1a;
+      width: 120px;
+      height: 30px;
+      border-radius: 0 0 20px 20px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+    .chat-header {
+      background: #fff;
+      padding: 10px 16px;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0048FF, #00B8D9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #f0f0f0;
+    }
+    .msg-bubble {
+      padding: 8px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      max-width: 80%;
+      line-height: 1.4;
+    }
+    .msg-agent {
+      background: #0048FF;
+      color: white;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+    }
+    .msg-user {
+      background: #fff;
+      color: #111;
+      border-bottom-right-radius: 4px;
+      align-self: flex-end;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .msg-time { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 3px; }
+
+    .phone-circle-bg {
+      position: absolute;
+      width: 460px;
+      height: 460px;
+      background: #0048FF;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      opacity: 0.9;
+    }
+
+    .stat-badge {
+      background: white;
+      border-radius: 14px;
+      padding: 8px 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      font-size: 12px;
+      font-weight: 700;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: absolute;
+      white-space: nowrap;
+      z-index: 20;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #00B8D9;
+      animation: pulse 2s infinite;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0,184,217,0.5); }
+      70% { box-shadow: 0 0 0 8px rgba(0,184,217,0); }
+      100% { box-shadow: 0 0 0 0 rgba(0,184,217,0); }
+    }
+
+    #announcement-bar.hidden-bar { display: none; }
+
+    .nav-link {
+      color: #374151;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: all 0.15s;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .nav-link:hover { background: #F3F4F6; color: #0048FF; }
+
+    .icon-box {
+      width: 48px;
+      height: 48px;
+      background: #EDE9FE;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .footer-link {
+      color: #6B7280;
+      font-size: 14px;
+      transition: color 0.15s;
+      display: block;
+      margin-bottom: 10px;
+      text-decoration: none;
+    }
+    .footer-link:hover { color: #0048FF; }
+
+    .cta-banner {
+      background: linear-gradient(135deg, #0048FF 0%, #7C3AED 100%);
+      border-radius: 20px;
+    }
+
+    .logo-pill {
+      background: #F3F4F6;
+      border-radius: 12px;
+      padding: 14px 24px;
+      color: #6B7280;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    html { scroll-behavior: smooth; }
+    .section-gap { padding-top: 80px; padding-bottom: 80px; }
+
+    @media (max-width: 768px) {
+      .feature-card { padding: 28px 20px; }
+      .phone-circle-bg { width: 300px; height: 300px; }
+      .phone-frame { width: 240px; }
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900">
+
+  <!-- 1. Announcement Bar -->
+  <div id="announcement-bar" class="announcement-bar flex items-center justify-center gap-4 px-4 py-2.5 relative">
+    <p class="text-white text-sm font-medium text-center">
+      Verse is now powered by NiCE Cognigy
+    </p>
+    <button class="bg-black text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-gray-800 transition-colors whitespace-nowrap">
+      Learn more
+    </button>
+    <button
+      onclick="document.getElementById('announcement-bar').classList.add('hidden-bar');"
+      class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:opacity-70 transition-opacity p-1"
+      aria-label="Close"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 2. Navigation -->
+  <div class="sticky top-0 z-50 px-4 pt-3 pb-2">
+    <nav class="floating-nav flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">
+      <a href="#" class="flex items-center gap-2 flex-shrink-0 no-underline">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #0048FF, #00B8D9);">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 1L17 5.5V12.5L9 17L1 12.5V5.5L9 1Z" fill="white" opacity="0.9"/>
+            <path d="M9 5L13 7.5V12.5L9 15L5 12.5V7.5L9 5Z" fill="white"/>
+          </svg>
+        </div>
+        <span class="font-bold text-gray-900 text-lg tracking-tight">verse.ai</span>
+      </a>
+
+      <div class="hidden md:flex items-center gap-1">
+        <a href="#" class="nav-link">Why Verse</a>
+        <a href="#" class="nav-link">Platform</a>
+        <a href="#" class="nav-link">Solutions</a>
+        <a href="#" class="nav-link">Resources</a>
+        <a href="#" class="nav-link">Pricing</a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="#" class="hidden md:flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors no-underline">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Login
+        </a>
+        <button class="btn-demo">Book a demo</button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- 3. Hero Section -->
+  <section class="hero-bg pt-16 pb-20 px-4 overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+
+        <!-- Left Column -->
+        <div class="space-y-7">
+          <div class="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border border-blue-100">
+            <span class="pulse-dot"></span>
+            <span class="text-sm font-medium text-gray-700">AI-powered lead conversion</span>
+          </div>
+
+          <h1 class="text-5xl xl:text-6xl font-bold leading-tight text-gray-900">
+            Win more customers with
+            <span class="gradient-text"> smarter SMS conversations</span>
+          </h1>
+
+          <p class="text-lg text-gray-500 leading-relaxed max-w-lg">
+            Engage, qualify, and follow up with every single lead using Verse texting: the most powerful platform for customer conversations.
+          </p>
+
+          <div class="flex flex-wrap gap-4 pt-2">
+            <button class="btn-primary">
+              Get started
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="btn-outline">Book a demo</button>
+          </div>
+
+          <p class="text-sm text-gray-400 pt-1">No credit card required. Setup in minutes.</p>
+        </div>
+
+        <!-- Right Column: Phone Mockup -->
+        <div class="flex justify-center items-center relative" style="min-height: 580px;">
+          <div class="phone-circle-bg"></div>
+
+          <div class="phone-frame" style="position: relative; z-index: 10;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="chat-header">
+                <div class="chat-avatar">V</div>
+                <div>
+                  <p style="font-size:12px; font-weight:700; color:#111827; margin:0;">Verse Assistant</p>
+                  <p style="font-size:11px; color:#16A34A; font-weight:500; margin:0;">Online</p>
+                </div>
+              </div>
+              <div class="chat-messages">
+                <div class="msg-bubble msg-agent">
+                  Hi! I'm reaching out about your recent inquiry for a 3-bed home in Austin. Is now a good time to chat?
+                  <div class="msg-time">10:02 AM</div>
+                </div>
+                <div class="msg-bubble msg-user">
+                  Yes! I'm interested but not sure about the price range
+                </div>
+                <div class="msg-bubble msg-agent">
+                  Great! What's your budget? We have options from $350K to $600K in Austin.
+                  <div class="msg-time">10:04 AM</div>
+                </div>
+                <div class="msg-bubble msg-user">
+                  Around $450K. What's available?
+                </div>
+                <div class="msg-bubble msg-agent">
+                  I have 3 properties that match perfectly. Can I book a tour this week?
+                  <div class="msg-time">10:05 AM</div>
+                </div>
+                <div class="msg-bubble msg-user">
+                  Thursday works!
+                </div>
+                <div class="msg-bubble msg-agent">
+                  Thursday at 2 PM confirmed. Calendar invite on its way!
+                  <div class="msg-time">10:06 AM</div>
+                </div>
+              </div>
+              <div style="background:white; padding:8px 12px; border-top:1px solid #e5e5e5; display:flex; align-items:center; gap:8px;">
+                <div style="flex:1; background:#f5f5f5; border-radius:20px; padding:7px 12px; font-size:11px; color:#9ca3af;">Message...</div>
+                <div style="width:28px; height:28px; border-radius:50%; background:#0048FF; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6h10M7 2l4 4-4 4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating stat badges -->
+          <div class="stat-badge" style="top: 7%; right: -8px;">
+            <span style="color:#0048FF; font-size:17px; font-weight:900; line-height:1;">16x</span>
+            <span style="font-weight:500; color:#6B7280; font-size:11px;">avg ROI</span>
+          </div>
+          <div class="stat-badge" style="bottom: 24%; left: -16px;">
+            <span style="color:#16A34A;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.8 3.6L13 5.3l-3 2.9.7 4.1L7 10.4l-3.7 1.9.7-4.1-3-2.9 4.2-.7L7 1z" fill="currentColor"/></svg>
+            </span>
+            <span style="font-weight:700; color:#111; font-size:13px;">98%</span>
+            <span style="font-weight:500; color:#6B7280; font-size:11px;">open rate</span>
+          </div>
+          <div class="stat-badge" style="bottom: 8%; right: -4px;">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#9B59B6" stroke-width="1.5"/><path d="M6.5 3.5v3l2 1.2" stroke="#9B59B6" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span style="font-weight:700; color:#111; font-size:13px;">&lt;15s</span>
+            <span style="font-weight:500; color:#6B7280; font-size:11px;">response</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Stats Section -->
+  <section class="bg-white section-gap px-4">
+    <div class="max-w-5xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-10 text-center">
+
+        <div class="space-y-3">
+          <div class="text-7xl font-black gradient-text-cyan-blue leading-none">16x</div>
+          <p class="text-gray-500 font-medium text-base">average Verse customer ROI</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="text-7xl font-black gradient-text-blue-purple leading-none">98%</div>
+          <p class="text-gray-500 font-medium text-base">average text open rates</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="text-7xl font-black gradient-text-purple-pink leading-none">&lt;15 sec</div>
+          <p class="text-gray-500 font-medium text-base">average response time</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Engage / Qualify / Convert Card -->
+  <section class="bg-white py-6 px-4">
+    <div class="feature-card">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+
+        <!-- Left: photo with overlay -->
+        <div class="relative">
+          <div style="border-radius:20px; overflow:hidden; min-height:380px; position:relative; background:linear-gradient(160deg,#c7d2fe 0%,#a5b4fc 50%,#818cf8 100%);">
+            <!-- Person silhouette -->
+            <div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:200px; height:290px; background:linear-gradient(180deg,#6366f1,#4f46e5); border-radius:100px 100px 0 0; opacity:0.55;"></div>
+            <div style="position:absolute; bottom:255px; left:50%; transform:translateX(-50%); width:88px; height:88px; background:#c7d2fe; border-radius:50%;"></div>
+            <!-- Chat bubble overlay -->
+            <div style="position:absolute; bottom:28px; right:20px; background:white; border-radius:16px; padding:14px 16px; box-shadow:0 8px 30px rgba(0,0,0,0.15); max-width:200px; z-index:10;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+                <div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#0048FF,#00B8D9); display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:700; flex-shrink:0;">V</div>
+                <span style="font-size:11px; font-weight:700; color:#111;">Verse AI</span>
+              </div>
+              <p style="font-size:11px; color:#374151; line-height:1.5; margin:0 0 8px 0;">Tour booked for Thursday at 2 PM! Looking forward to meeting you.</p>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <span style="background:#EEF2FF; color:#0048FF; font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px;">Qualified</span>
+                <span style="background:#F0FDF4; color:#16A34A; font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px;">Booked</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: text -->
+        <div class="space-y-5">
+          <h2 class="text-4xl font-bold leading-tight text-gray-900">
+            Engage. Qualify.<br>
+            <span class="gradient-text-blue-purple">Convert. Close.</span>
+          </h2>
+          <p class="text-gray-500 text-base leading-relaxed">
+            Verse's AI-powered messaging platform handles your entire lead-to-appointment workflow. From first contact to qualified meeting, our system works 24/7 so your agents can focus on what they do best: closing deals.
+          </p>
+          <p class="text-gray-500 text-base leading-relaxed">
+            No lead falls through the cracks. No response left waiting. Every inquiry gets an intelligent, personalized reply within seconds.
+          </p>
+          <a href="#" style="display:inline-flex; align-items:center; gap:6px; color:#0048FF; font-weight:600; text-decoration:none; font-size:15px;">
+            Read more <span>+</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Logo Strip -->
+  <section class="bg-white section-gap px-4">
+    <div class="max-w-6xl mx-auto text-center space-y-10">
+      <h3 class="text-2xl font-bold">
+        Trusted across <span class="gradient-text">industries</span>
+      </h3>
+      <div class="flex flex-wrap justify-center items-center gap-4">
+        <div class="logo-pill">WiserAdvisor</div>
+        <div class="logo-pill">PolicyPoint</div>
+        <div class="logo-pill">NEXTGEN LEADS</div>
+        <div class="logo-pill">Independence</div>
+        <div class="logo-pill">First Citizens Bank</div>
+        <div class="logo-pill">Prio Tax Relief</div>
+        <div class="logo-pill">LeadFlow</div>
+        <div class="logo-pill">ProRealty</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. How Verse Works -->
+  <section class="bg-white section-gap px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center space-y-4 mb-14">
+        <h2 class="text-4xl font-bold text-gray-900">
+          <span class="gradient-text">How</span> Verse works
+        </h2>
+        <p class="text-gray-500 text-lg max-w-xl mx-auto">From first touch to booked appointment, fully automated.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div class="bg-gray-50 rounded-2xl p-6 space-y-4 hover:shadow-md transition-shadow">
+          <div class="icon-box">
+            <span>&#128229;</span>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base">Leads come in</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">New leads arrive from any source: web forms, CRMs, ad platforms, or direct inbound. Verse captures them all instantly.</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-2xl p-6 space-y-4 hover:shadow-md transition-shadow">
+          <div class="icon-box">
+            <span>&#128172;</span>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base">Verse engages</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Our AI responds within seconds via SMS, 24/7. Personal, natural conversations that feel human, not robotic.</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-2xl p-6 space-y-4 hover:shadow-md transition-shadow">
+          <div class="icon-box">
+            <span>&#9989;</span>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base">Verse qualifies</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Smart qualification identifies budget, timeline, and intent. Only sales-ready leads reach your team.</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-2xl p-6 space-y-4 hover:shadow-md transition-shadow">
+          <div class="icon-box">
+            <span>&#128197;</span>
+          </div>
+          <h3 class="font-semibold text-gray-900 text-base">Appointments booked</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Verse schedules meetings directly on your calendar. Your agents show up to conversations, not cold calls.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Stop losing leads card -->
+  <section class="bg-white py-6 px-4">
+    <div class="feature-card">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+
+        <!-- Left: text -->
+        <div class="space-y-5">
+          <h2 class="text-4xl font-bold leading-tight text-gray-900">
+            Stop losing leads to
+            <span class="gradient-text">slow response times</span>
+          </h2>
+          <p class="text-gray-500 text-base leading-relaxed">
+            Forbes found that 35-50% of sales go to the first responder. Verse puts you first, every time. Our AI replies within 15 seconds, no matter when a lead comes in.
+          </p>
+          <p class="text-gray-500 text-base leading-relaxed">
+            21x higher conversion rates when you respond within 5 minutes. Verse makes that the floor, not the ceiling.
+          </p>
+          <a href="#" style="display:inline-flex; align-items:center; gap:6px; color:#0048FF; font-weight:600; text-decoration:none; font-size:15px;">
+            Learn more
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+
+        <!-- Right: photo -->
+        <div style="border-radius:20px; overflow:hidden; min-height:360px; position:relative; background:linear-gradient(160deg,#bbf7d0 0%,#86efac 50%,#4ade80 100%);">
+          <div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:180px; height:280px; background:linear-gradient(180deg,#22c55e,#16a34a); border-radius:90px 90px 0 0; opacity:0.55;"></div>
+          <div style="position:absolute; bottom:248px; left:50%; transform:translateX(-50%); width:78px; height:78px; background:#bbf7d0; border-radius:50%;"></div>
+          <!-- Speed badge -->
+          <div style="position:absolute; top:24px; left:24px; background:white; border-radius:16px; padding:14px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.12); z-index:10;">
+            <div style="font-size:10px; color:#6B7280; font-weight:600; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">Response time</div>
+            <div style="font-size:26px; font-weight:900; background:linear-gradient(90deg,#0048FF,#9B59B6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1;">&lt;15s</div>
+            <div style="font-size:10px; color:#16A34A; font-weight:600; margin-top:3px;">vs 11hr industry avg</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Blue Gradient CTA Banner -->
+  <section class="bg-white section-gap px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="cta-banner px-10 py-14 text-center space-y-6">
+        <h2 class="text-3xl md:text-4xl font-bold text-white leading-tight max-w-2xl mx-auto">
+          See how Verse works: Check out our new interactive demos!
+        </h2>
+        <p class="text-blue-100 text-lg max-w-xl mx-auto">
+          Watch the full lead journey from first text to booked appointment. Live. Interactive. No sales pitch.
+        </p>
+        <button style="display:inline-flex; align-items:center; gap:8px; border:2px solid white; color:white; border-radius:50px; padding:12px 32px; font-weight:600; font-size:16px; background:transparent; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='white'; this.style.color='#4F46E5';" onmouseout="this.style.background='transparent'; this.style.color='white';">
+          &#128196; Let's go
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. Verse Features Card -->
+  <section class="bg-white py-6 px-4">
+    <div class="feature-card">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+
+        <!-- Left: phone mockup -->
+        <div class="flex justify-center">
+          <div class="phone-frame" style="width:248px; min-height:490px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen" style="min-height:466px;">
+              <div style="background:#0048FF; padding:10px 14px; display:flex; align-items:center; gap:8px;">
+                <div style="width:30px; height:30px; border-radius:50%; background:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#0048FF; flex-shrink:0;">V</div>
+                <div>
+                  <p style="font-size:11px; font-weight:700; color:white; margin:0;">Verse Platform</p>
+                  <p style="font-size:9px; color:rgba(255,255,255,0.8); margin:0;">SMS + Email + Voice</p>
+                </div>
+              </div>
+              <div style="flex:1; padding:10px; display:flex; flex-direction:column; gap:7px; background:#f0f0f0; overflow:hidden;">
+                <div style="background:#0048FF; color:white; padding:8px 11px; border-radius:13px; border-bottom-left-radius:3px; font-size:10px; max-width:80%; line-height:1.4;">Hi Sarah! Thanks for your interest in our financial planning services.</div>
+                <div style="background:white; padding:8px 11px; border-radius:13px; border-bottom-right-radius:3px; font-size:10px; max-width:80%; align-self:flex-end; box-shadow:0 1px 4px rgba(0,0,0,0.1); line-height:1.4;">What's the minimum investment?</div>
+                <div style="background:#0048FF; color:white; padding:8px 11px; border-radius:13px; border-bottom-left-radius:3px; font-size:10px; max-width:85%; line-height:1.4;">We start at $25K. Want to schedule a free consultation?</div>
+                <div style="background:white; padding:8px 11px; border-radius:13px; border-bottom-right-radius:3px; font-size:10px; max-width:75%; align-self:flex-end; box-shadow:0 1px 4px rgba(0,0,0,0.1); line-height:1.4;">Yes, this week works</div>
+                <div style="background:#EEF2FF; border:1px solid #c7d2fe; padding:10px; border-radius:10px; font-size:9px; margin-top:2px;">
+                  <div style="color:#0048FF; font-weight:700; margin-bottom:2px;">&#128197; Tour Confirmed</div>
+                  <div style="color:#374151;">Tuesday, June 18 at 3:00 PM</div>
+                  <div style="color:#6B7280; margin-top:2px;">Added to calendar</div>
+                </div>
+              </div>
+              <div style="background:white; padding:8px 10px; border-top:1px solid #e5e5e5; display:flex; align-items:center; gap:6px;">
+                <div style="flex:1; background:#f5f5f5; border-radius:20px; padding:6px 10px; font-size:10px; color:#9ca3af;">Reply...</div>
+                <div style="width:26px; height:26px; border-radius:50%; background:#0048FF; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 5h8M5 1l4 4-4 4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: features list -->
+        <div class="space-y-6">
+          <h2 class="text-3xl font-bold leading-tight text-gray-900">
+            Verse features: <span class="gradient-text-blue-purple">Business SMS that checks every box</span>
+          </h2>
+          <p class="text-gray-500 text-base leading-relaxed">
+            Everything you need to run high-performance SMS conversations at scale, from compliance to AI scheduling to live transfers.
+          </p>
+          <div class="space-y-0">
+
+            <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid #f3f4f6;">
+              <span style="font-size:18px; line-height:1; padding-top:1px; flex-shrink:0;">&#128197;</span>
+              <div>
+                <span style="font-weight:600; color:#111827; font-size:14px;">AI appointment scheduling</span>
+                <span style="color:#d1d5db; margin:0 8px; font-size:14px;">&#8226;</span>
+                <span style="color:#6B7280; font-size:14px;">Books meetings automatically, no human needed.</span>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid #f3f4f6;">
+              <span style="font-size:18px; line-height:1; padding-top:1px; flex-shrink:0;">&#128737;&#65039;</span>
+              <div>
+                <span style="font-weight:600; color:#111827; font-size:14px;">Compliance with trustContact</span>
+                <span style="color:#d1d5db; margin:0 8px; font-size:14px;">&#8226;</span>
+                <span style="color:#6B7280; font-size:14px;">Stay compliant with TCPA and carrier regulations.</span>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid #f3f4f6;">
+              <span style="font-size:18px; line-height:1; padding-top:1px; flex-shrink:0;">&#128222;</span>
+              <div>
+                <span style="font-weight:600; color:#111827; font-size:14px;">Live transfers with CallConnect</span>
+                <span style="color:#d1d5db; margin:0 8px; font-size:14px;">&#8226;</span>
+                <span style="color:#6B7280; font-size:14px;">Warm hand-off to agents when the moment is right.</span>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid #f3f4f6;">
+              <span style="font-size:18px; line-height:1; padding-top:1px; flex-shrink:0;">&#129302;</span>
+              <div>
+                <span style="font-weight:600; color:#111827; font-size:14px;">Conversational AI</span>
+                <span style="color:#d1d5db; margin:0 8px; font-size:14px;">&#8226;</span>
+                <span style="color:#6B7280; font-size:14px;">Natural language understanding that feels human.</span>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid #f3f4f6;">
+              <span style="font-size:18px; line-height:1; padding-top:1px; flex-shrink:0;">&#127897;&#65039;</span>
+              <div>
+                <span style="font-weight:600; color:#111827; font-size:14px;">Voicemail Drops</span>
+                <span style="color:#d1d5db; margin:0 8px; font-size:14px;">&#8226;</span>
+                <span style="color:#6B7280; font-size:14px;">Automated voicemails that pair with SMS follow-ups.</span>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 0;">
+              <span style="font-size:18px; line-height:1; padding-top:1px; flex-shrink:0;">&#128260;</span>
+              <div>
+                <span style="font-weight:600; color:#111827; font-size:14px;">Lead Nurturing</span>
+                <span style="color:#d1d5db; margin:0 8px; font-size:14px;">&#8226;</span>
+                <span style="color:#6B7280; font-size:14px;">Multi-touch sequences that keep leads warm until they convert.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. Conversion Rate Optimization Card -->
+  <section class="bg-white py-6 px-4">
+    <div class="feature-card">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+
+        <!-- Left: text -->
+        <div class="space-y-5">
+          <h2 class="text-4xl font-bold leading-tight text-gray-900">
+            <span class="gradient-text">Conversion rate</span> optimization for marketing and sales
+          </h2>
+          <p class="text-gray-500 text-base leading-relaxed">
+            Every dollar you spend on lead generation is protected. Verse ensures your paid traffic converts at maximum efficiency by catching leads the moment intent is highest.
+          </p>
+          <p class="text-gray-500 text-base leading-relaxed">
+            Real-time reporting shows you exactly which channels, messages, and sequences drive the most appointments. Optimize with data, not gut feelings.
+          </p>
+          <a href="#" style="display:inline-flex; align-items:center; gap:6px; color:#0048FF; font-weight:600; text-decoration:none; font-size:15px;">
+            Learn more
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+
+        <!-- Right: metrics mockup -->
+        <div style="border-radius:20px; overflow:hidden; min-height:380px; position:relative; background:linear-gradient(160deg,#fdf4ff 0%,#fce7f3 100%);">
+          <div style="position:absolute; inset:0; background:linear-gradient(160deg,#f5d0fe,#e879f9,#c026d3); opacity:0.28; border-radius:20px;"></div>
+          <div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:150px; height:250px; background:linear-gradient(180deg,#c026d3,#9333ea); border-radius:75px 75px 0 0; opacity:0.38;"></div>
+          <div style="position:absolute; bottom:218px; left:50%; transform:translateX(-50%); width:68px; height:68px; background:#f5d0fe; border-radius:50%;"></div>
+          <!-- CRO metrics -->
+          <div style="position:absolute; top:20px; right:20px; background:white; border-radius:16px; padding:16px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.12); min-width:160px; z-index:10;">
+            <div style="font-size:10px; color:#6B7280; font-weight:600; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">This Month</div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; color:#374151;">Leads in</span>
+                <span style="font-size:14px; font-weight:800; color:#0048FF;">1,240</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; color:#374151;">Qualified</span>
+                <span style="font-size:14px; font-weight:800; color:#9B59B6;">847</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; color:#374151;">Booked</span>
+                <span style="font-size:14px; font-weight:800; color:#16A34A;">312</span>
+              </div>
+              <div style="margin-top:4px; padding-top:9px; border-top:1px solid #f3f4f6;">
+                <div style="font-size:11px; color:#6B7280; margin-bottom:2px;">Conversion rate</div>
+                <div style="font-size:22px; font-weight:900; background:linear-gradient(90deg,#0048FF,#9B59B6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.2;">25.2%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. Integrations / Analytics Card -->
+  <section class="bg-white py-6 px-4">
+    <div class="feature-card">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+
+        <!-- Left: analytics chart -->
+        <div>
+          <div style="background:white; border-radius:20px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid #f3f4f6;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <div>
+                <div style="font-size:13px; font-weight:700; color:#111827; margin-bottom:2px;">Performance Overview</div>
+                <div style="font-size:11px; color:#6B7280;">Last 30 days</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <span style="background:#EEF2FF; color:#0048FF; font-size:10px; font-weight:600; padding:4px 10px; border-radius:20px;">Weekly</span>
+                <span style="background:#f9fafb; color:#6B7280; font-size:10px; font-weight:600; padding:4px 10px; border-radius:20px;">Monthly</span>
+              </div>
+            </div>
+            <!-- Bar chart -->
+            <div style="display:flex; align-items:flex-end; gap:7px; height:110px; margin-bottom:10px;">
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div style="width:100%; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#0048FF,#7C3AED); height:48px;"></div>
+                <span style="font-size:9px; color:#9ca3af;">Mon</span>
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div style="width:100%; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#0048FF,#7C3AED); height:75px;"></div>
+                <span style="font-size:9px; color:#9ca3af;">Tue</span>
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div style="width:100%; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#0048FF,#7C3AED); height:58px;"></div>
+                <span style="font-size:9px; color:#9ca3af;">Wed</span>
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div style="width:100%; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#00B8D9,#0048FF); height:95px;"></div>
+                <span style="font-size:9px; color:#9ca3af;">Thu</span>
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div style="width:100%; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#0048FF,#7C3AED); height:78px;"></div>
+                <span style="font-size:9px; color:#9ca3af;">Fri</span>
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div style="width:100%; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#9B59B6,#E91E8C); height:42px;"></div>
+                <span style="font-size:9px; color:#9ca3af;">Sat</span>
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div style="width:100%; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#9B59B6,#E91E8C); height:32px;"></div>
+                <span style="font-size:9px; color:#9ca3af;">Sun</span>
+              </div>
+            </div>
+            <!-- KPI row -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:10px; padding-top:12px; border-top:1px solid #f3f4f6;">
+              <div style="text-align:center;">
+                <div style="font-size:17px; font-weight:900; background:linear-gradient(90deg,#00B8D9,#0048FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.2;">1,240</div>
+                <div style="font-size:9px; color:#6B7280;">Leads</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:17px; font-weight:900; background:linear-gradient(90deg,#0048FF,#9B59B6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.2;">312</div>
+                <div style="font-size:9px; color:#6B7280;">Booked</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:17px; font-weight:900; background:linear-gradient(90deg,#9B59B6,#E91E8C); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.2;">25.2%</div>
+                <div style="font-size:9px; color:#6B7280;">CVR</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: text -->
+        <div class="space-y-5">
+          <h2 class="text-4xl font-bold leading-tight text-gray-900">
+            Seamless integrations with <span class="gradient-text">real-time insights and key performance indicators</span>
+          </h2>
+          <p class="text-gray-500 text-base leading-relaxed">
+            Connect Verse to your existing CRM, ad platforms, and calendar tools in minutes. Salesforce, HubSpot, Zoho, and more. Data flows both ways so nothing gets out of sync.
+          </p>
+          <div class="grid grid-cols-3 gap-3">
+            <div style="background:#F8F9FA; border-radius:12px; padding:12px; text-align:center;"><span style="font-size:12px; font-weight:700; color:#374151;">Salesforce</span></div>
+            <div style="background:#F8F9FA; border-radius:12px; padding:12px; text-align:center;"><span style="font-size:12px; font-weight:700; color:#374151;">HubSpot</span></div>
+            <div style="background:#F8F9FA; border-radius:12px; padding:12px; text-align:center;"><span style="font-size:12px; font-weight:700; color:#374151;">Zoho CRM</span></div>
+            <div style="background:#F8F9FA; border-radius:12px; padding:12px; text-align:center;"><span style="font-size:12px; font-weight:700; color:#374151;">Google Cal</span></div>
+            <div style="background:#F8F9FA; border-radius:12px; padding:12px; text-align:center;"><span style="font-size:12px; font-weight:700; color:#374151;">Calendly</span></div>
+            <div style="background:#EEF2FF; border-radius:12px; padding:12px; text-align:center;"><span style="font-size:12px; font-weight:700; color:#0048FF;">+50 more</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 13. Business SMS Done Right -->
+  <section class="bg-white section-gap px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center space-y-4 mb-14">
+        <h2 class="text-4xl font-bold text-gray-900">
+          Business SMS <span class="gradient-text">done right.</span>
+        </h2>
+        <p class="text-gray-500 text-lg max-w-xl mx-auto">Everything your team needs to run compliant, high-converting SMS at scale.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+
+        <div class="bg-gray-50 rounded-2xl p-7 space-y-4 hover:shadow-lg transition-shadow">
+          <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#EEF2FF,#C7D2FE); display:flex; align-items:center; justify-content:center; font-size:22px;">&#128274;</div>
+          <h3 class="text-lg font-bold text-gray-900">TCPA Compliant</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Opt-in management, quiet hours enforcement, and carrier compliance built in. Send with confidence, never with risk.</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-2xl p-7 space-y-4 hover:shadow-lg transition-shadow">
+          <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#EEF2FF,#C7D2FE); display:flex; align-items:center; justify-content:center; font-size:22px;">&#9889;</div>
+          <h3 class="text-lg font-bold text-gray-900">High Deliverability</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Direct carrier relationships and 10DLC registration ensure your messages land in the inbox, not spam folders.</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-2xl p-7 space-y-4 hover:shadow-lg transition-shadow">
+          <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#EEF2FF,#C7D2FE); display:flex; align-items:center; justify-content:center; font-size:22px;">&#128202;</div>
+          <h3 class="text-lg font-bold text-gray-900">Full Reporting</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">Delivery rates, open rates, response rates, and conversion tracking across every campaign and sequence.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="bg-white py-6 px-4 pb-20">
+    <div class="max-w-3xl mx-auto text-center space-y-8 bg-gray-50 rounded-3xl p-14">
+      <h2 class="text-4xl font-bold text-gray-900">
+        Ready to convert more leads?
+      </h2>
+      <p class="text-gray-500 text-lg">
+        Join thousands of sales teams using Verse to respond faster, qualify smarter, and close more.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:16px; justify-content:center;">
+        <button class="btn-primary" style="font-size:16px; padding:14px 32px;">
+          Get started free
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn-outline" style="font-size:16px; padding:13px 32px;">Book a demo</button>
+      </div>
+      <p class="text-gray-400 text-sm">No credit card required. Free 14-day trial.</p>
+    </div>
+  </section>
+
+  <!-- 14. Footer -->
+  <footer class="bg-white border-t border-gray-100 px-4 pt-16 pb-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+
+        <!-- Brand -->
+        <div class="col-span-2 md:col-span-1 space-y-5">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#0048FF,#00B8D9); display:flex; align-items:center; justify-content:center;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M9 1L17 5.5V12.5L9 17L1 12.5V5.5L9 1Z" fill="white" opacity="0.9"/>
+                <path d="M9 5L13 7.5V12.5L9 15L5 12.5V7.5L9 5Z" fill="white"/>
+              </svg>
+            </div>
+            <span style="font-weight:700; color:#111827; font-size:18px; line-height:1;">verse.ai</span>
+          </div>
+          <p class="text-gray-500 text-sm leading-relaxed">The AI-powered SMS platform that converts leads into booked appointments, automatically.</p>
+          <div style="display:flex; gap:10px;">
+            <a href="#" style="width:32px; height:32px; background:#F3F4F6; border-radius:8px; display:flex; align-items:center; justify-content:center; text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='#EEF2FF'" onmouseout="this.style.background='#F3F4F6'">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 1L8 6M13 1H9M13 1V5" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 3H3C2 3 1 4 1 5V11C1 12 2 13 3 13H9C10 13 11 12 11 11V8" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </a>
+            <a href="#" style="width:32px; height:32px; background:#F3F4F6; border-radius:8px; display:flex; align-items:center; justify-content:center; text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='#EEF2FF'" onmouseout="this.style.background='#F3F4F6'">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="3" stroke="#6B7280" stroke-width="1.5"/><circle cx="7" cy="7" r="2.5" stroke="#6B7280" stroke-width="1.5"/><circle cx="10.5" cy="3.5" r="0.75" fill="#6B7280"/></svg>
+            </a>
+            <a href="#" style="width:32px; height:32px; background:#F3F4F6; border-radius:8px; display:flex; align-items:center; justify-content:center; text-decoration:none; transition:background 0.15s;" onmouseover="this.style.background='#EEF2FF'" onmouseout="this.style.background='#F3F4F6'">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 1.5L7.5 7M13 1.5H9.5M13 1.5V5" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 2H3C2 2 1 3 1 4V11C1 12 2 13 3 13H10C11 13 12 12 12 11V8" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Why Verse -->
+        <div>
+          <h4 style="font-weight:700; color:#111827; font-size:12px; margin-bottom:18px; text-transform:uppercase; letter-spacing:0.06em;">Why Verse</h4>
+          <a href="#" class="footer-link">ROI Calculator</a>
+          <a href="#" class="footer-link">Customer Stories</a>
+          <a href="#" class="footer-link">Verse vs Competitors</a>
+          <a href="#" class="footer-link">Speed to Lead</a>
+        </div>
+
+        <!-- Platform -->
+        <div>
+          <h4 style="font-weight:700; color:#111827; font-size:12px; margin-bottom:18px; text-transform:uppercase; letter-spacing:0.06em;">Platform</h4>
+          <a href="#" class="footer-link">Conversational AI</a>
+          <a href="#" class="footer-link">Lead Nurturing</a>
+          <a href="#" class="footer-link">CallConnect</a>
+          <a href="#" class="footer-link">trustContact</a>
+          <a href="#" class="footer-link">Integrations</a>
+        </div>
+
+        <!-- Solutions -->
+        <div>
+          <h4 style="font-weight:700; color:#111827; font-size:12px; margin-bottom:18px; text-transform:uppercase; letter-spacing:0.06em;">Solutions</h4>
+          <a href="#" class="footer-link">Financial Services</a>
+          <a href="#" class="footer-link">Real Estate</a>
+          <a href="#" class="footer-link">Insurance</a>
+          <a href="#" class="footer-link">Home Services</a>
+          <a href="#" class="footer-link">Healthcare</a>
+        </div>
+
+        <!-- Resources -->
+        <div>
+          <h4 style="font-weight:700; color:#111827; font-size:12px; margin-bottom:18px; text-transform:uppercase; letter-spacing:0.06em;">Resources</h4>
+          <a href="#" class="footer-link">Blog</a>
+          <a href="#" class="footer-link">Documentation</a>
+          <a href="#" class="footer-link">Help Center</a>
+          <a href="#" class="footer-link">Webinars</a>
+          <a href="#" class="footer-link">Contact Sales</a>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div style="border-top:1px solid #f3f4f6; padding-top:24px; display:flex; flex-direction:column; gap:12px; align-items:center; justify-content:space-between;" class="sm:flex-row">
+        <p style="color:#9CA3AF; font-size:13px; margin:0;">2024 Verse.ai. All rights reserved.</p>
+        <div style="display:flex; gap:24px;">
+          <a href="#" style="color:#9CA3AF; font-size:13px; text-decoration:none; transition:color 0.15s;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9CA3AF'">Privacy Policy</a>
+          <a href="#" style="color:#9CA3AF; font-size:13px; text-decoration:none; transition:color 0.15s;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9CA3AF'">Terms of Service</a>
+          <a href="#" style="color:#9CA3AF; font-size:13px; text-decoration:none; transition:color 0.15s;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9CA3AF'">Cookie Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -68,13 +68,14 @@ _SEARCH_AFFIRM_PATTERN = re.compile(
 
 # Pattern to strip internal chain-of-thought reasoning that leaks into responses
 _THINKING_LINE_PATTERN = re.compile(
-    r'^(?:Wait[,.]|Hmm[,.]?|Hm[,.]?|Actually,\s+(?:let|I|wait)|'
+    r'^(?:Wait[,.:]|Wait\s*-|Hmm[,.]?|Hm[,.]?|Actually,\s+(?:let|I|wait)|'
+    r'Skipping|'
     r'Let me restart|Let me re-think|Let me reconsider|Let me start over|'
-    r'Let me just\b|Let me respond\b|'
+    r'Let me just\b|Let me respond\b|Let me check\b|'
     r'I need to reset|I need to reconsider|I need to\b|I realize[d]?\s+I|'
     r'I should\b|I should just\b|'
     r'Rethinking this|Re-reading this|'
-    r'I already\b|I notice[d]?\b|Looking at\b|Based on\b|'
+    r'I already\b|I notice[d]?\b|I can see\b|Looking at\b|Based on\b|'
     r'Oh,|Okay,|OK,|Right,|So,)[^\n]*(?:\n|$)',
     re.IGNORECASE | re.MULTILINE
 )
@@ -368,7 +369,7 @@ Important behavior rules:
             message = f"""
 Important behavior rules:
 
-- Inform the user: {tool_output}
+- Tell the lead that one of our agents will follow up with them shortly. Do not mention any technical details or system status.
 
 Example:
 "Hey {name}! I'm connecting you with one of our agents now." ||| "They'll be in touch with you shortly!"
@@ -780,7 +781,7 @@ Use ||| to separate your parts.
                                 )
 
                             msg = f"""
-NO EXACT MATCH. Alternative listings are already included in the response by the system.
+No listings matched the exact criteria. Show the closest available alternatives and do not announce that there are no exact matches.
 Your job is only to generate:
 1. {alt_opening_instruction}
 2. {alt_recommendation_instruction}
@@ -943,7 +944,7 @@ One question. Nothing else. Do not bundle with other questions.
                             # Asked for name twice already. Drop it and ask only missing fields.
                             message = f"""
 Ask only for these missing details in one short message: {missing_str}.{area_note}
-Do NOT include a greeting. Do NOT re-ask for anything already known.
+Do NOT include a greeting. Only ask for fields that are provably missing. If a field was answered at any point in the conversation, treat it as known and move on.
 Keep it casual and brief.
 """
                         else:
@@ -978,7 +979,7 @@ NEVER include a greeting in Message 1. NEVER write one big paragraph.
 
                         message = f"""
 Ask only for these missing details in one short message: {missing_str}.{area_note}
-Do NOT include a greeting. Do NOT re-ask for anything already known.
+Do NOT include a greeting. Only ask for fields that are provably missing. If a field was answered at any point in the conversation, treat it as known and move on.
 Keep it casual and brief.
 """
 
@@ -1035,7 +1036,7 @@ NEVER ask name first. NEVER ask fields separately. NEVER write one big paragraph
                         missing_str = ", ".join(missing_fields)
                         message = f"""
 Ask only for these missing details in one short message: {missing_str}
-Do NOT re-ask for anything already known.
+Only ask for fields that are provably missing. If a field was answered at any point in the conversation, treat it as known and move on.
 Keep it casual and brief.
 """
                     elif not has_name:
@@ -1146,7 +1147,9 @@ Greet the user naturally and ask how you can help them find a property in Lebano
 
     static_prompt = get_static_system_prompt()
     dynamic_prompt = get_dynamic_action_prompt(message)
-    session_state_text = f"\nCurrent session state: {state}"
+    _internal_keys = {"classification", "rejection_count", "show_alternatives", "budget_ask_count"}
+    _safe_state = {k: v for k, v in state.items() if k not in _internal_keys}
+    session_state_text = f"\nCurrent session state: {_safe_state}"
 
     # Build system as a list of content blocks so the large static framework
     # is eligible for Anthropic prompt caching. The dynamic action instruction

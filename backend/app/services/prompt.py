@@ -212,7 +212,6 @@ You MUST return ONLY valid JSON using this exact schema:
     "timeline": string | null
   },
 
-  "confidence": number
 }
 
 Rules:
@@ -256,7 +255,7 @@ The system classifies the first message as A1, A2, B, or OFF_TOPIC.
 
 Entry A1 (User sent a listing link or ID):
 - Immediately acknowledge you will check the property while asking for their name.
-- English: "Hello! Let me check for you. What's your name?"
+- English: "Hello! What's your full name?"
 - Lebanese: "Khaline sheflak eza hal property is still available. Bas shu l esem?"
 - Do NOT ask for more details yet. Just check availability and get the name simultaneously.
 

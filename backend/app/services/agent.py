@@ -68,11 +68,12 @@ _SEARCH_AFFIRM_PATTERN = re.compile(
 
 # Pattern to strip internal chain-of-thought reasoning that leaks into responses
 _THINKING_LINE_PATTERN = re.compile(
-    r'^(?:Wait[,.:]|Wait\s*-|Hmm[,.]?|Hm[,.]?|Actually,\s+(?:let|I|wait)|'
-    r'Skipping|'
+    r'^(?:Wait[,.:!]|Wait\s*[-–]|Hmm[,.]?|Hm[,.]?|Actually,\s+(?:let|I|wait)|'
+    r'Skipping[-\s]|Skipping\b|Skip\s*[-–]|'
     r'Let me restart|Let me re-think|Let me reconsider|Let me start over|'
-    r'Let me just\b|Let me respond\b|Let me check\b|'
-    r'I need to reset|I need to reconsider|I need to\b|I realize[d]?\s+I|'
+    r'Let me just\b|Let me respond\b|Let me check\b|Let me verify\b|Let me look\b|'
+    r'Looking at the\b|Checking the\b|'
+    r'I need to check\b|I need to reset|I need to reconsider|I need to\b|I realize[d]?\s+I|'
     r'I should\b|I should just\b|'
     r'Rethinking this|Re-reading this|'
     r'I already\b|I notice[d]?\b|I can see\b|Looking at\b|Based on\b|'
@@ -181,6 +182,24 @@ _VAGUE_BUDGET_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# FIX 4: Property type extraction from informal abbreviations the LLM may miss.
+# Matches common shorthand users write: apt, appt, APPT, condo, house, villa, studio.
+_PROP_TYPE_ABBREV_PATTERN = re.compile(
+    r"\b(APPT|appt|apt|apartment|condo(?:minium)?|house|villa|studio)\b",
+    re.IGNORECASE
+)
+
+_PROP_TYPE_ABBREV_MAP = {
+    "appt": "apartment",
+    "apt": "apartment",
+    "apartment": "apartment",
+    "condo": "condo",
+    "condominium": "condo",
+    "house": "house",
+    "villa": "villa",
+    "studio": "studio",
+}
+
 
 
 def update_memory(session: SessionState, extracted, user_message: str = ""):
@@ -202,6 +221,7 @@ def update_memory(session: SessionState, extracted, user_message: str = ""):
                 prop_info[key] = usd_val
                 if user_said_lbp:
                     session.lbp_converted[key] = usd_val
+    extracted.pop('confidence', None)
     session.update_agent_state(extracted)
     # Vague budget (budget_flexible) never counts as valid budget info.
     # Clear it after every update so the bot always asks for a rough range
@@ -225,6 +245,20 @@ def update_memory(session: SessionState, extracted, user_message: str = ""):
             # Second vague answer: skip budget entirely on next turn.
             session.budget_ask_count = 2
     session.property_info["budget_flexible"] = None
+
+    # FIX 4: If the LLM extractor left property_type null but the raw message
+    # contains a recognizable abbreviation or keyword, extract it here in code
+    # so the session always has the value and the bot never asks again.
+    _stored_prop_type = session.property_info.get("property_type")
+    if not _stored_prop_type and user_message:
+        _pt_match = _PROP_TYPE_ABBREV_PATTERN.search(user_message)
+        if _pt_match:
+            _pt_raw = _pt_match.group(1).lower()
+            _pt_normalized = _PROP_TYPE_ABBREV_MAP.get(_pt_raw, _pt_raw)
+            session.property_info["property_type"] = _pt_normalized
+            # Studio also sets bedrooms to 0 to keep logic consistent
+            if _pt_normalized == "studio" and session.property_info.get("bedrooms") is None:
+                session.property_info["bedrooms"] = 0
 
 
 def decide_next_action(session: SessionState):
@@ -283,6 +317,12 @@ def _generate_reply_inner(action, user_message, db, conversation, conversation_i
     # Used at the end to decide whether to prepend the anti-greeting safety prefix.
     was_greeted = session.greeted
 
+    # Hard guard: off-topic messages never engage the lead.
+    # Return hardcoded drop-off immediately. No LLM call. No greeting.
+    # This is a backup to the pre-check in process_user_message.
+    if session.classification == "OFF_TOPIC":
+        return ["I can only help with real estate. Looking to buy or rent something in Lebanon?"]
+
     # Short-circuit: bare greeting gets a deterministic hardcoded response.
     # No LLM call needed. This prevents Claude from ignoring the instruction
     # and dumping qualification questions when the user just says hi/hello.
@@ -294,9 +334,9 @@ def _generate_reply_inner(action, user_message, db, conversation, conversation_i
         )
         if arabic_unicode_pattern.search(user_message) or arabic_romanized_pattern.search(user_message):
             session.greeted = True
-            return ["\u0623\u0647\u0644\u0627\u064b! \u0643\u064a\u0641 \u0628\u0642\u062f\u0631 \u0633\u0627\u0639\u062f\u0643\u061f"]
+            return ["\u0623\u0647\u0644\u0627\u064b!", "\u0643\u064a\u0641 \u0628\u0642\u062f\u0631 \u0633\u0627\u0639\u062f\u0643\u061f"]
         session.greeted = True
-        return ["Hello! How can I help you?"]
+        return ["Hello!", "How can I help you?"]
 
     if action == "route_to_agent":
         route_message = session.pending_route_message or "Let me connect you with one of our agents."
@@ -366,10 +406,15 @@ Important behavior rules:
                 db.commit()
 
             name = state.get("user_info", {}).get("name", "")
+            if agent:
+                user_facing_status = "Our agent will be in touch with you shortly."
+            else:
+                user_facing_status = "Someone from our team will reach out to you."
+
             message = f"""
 Important behavior rules:
 
-- Tell the lead that one of our agents will follow up with them shortly. Do not mention any technical details or system status.
+- Tell the lead that an agent will be in touch shortly. Do not mention agent names, availability, or system status.
 
 Example:
 "Hey {name}! I'm connecting you with one of our agents now." ||| "They'll be in touch with you shortly!"
@@ -1119,6 +1164,27 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             + message
         )
 
+    # Property type safety net: if a property type is already stored in the session,
+    # explicitly forbid the LLM from asking for it again. Also forbid "hometown" as an option.
+    _known_prop_type = session.property_info.get("property_type")
+    if _known_prop_type:
+        message = (
+            f"CRITICAL: The user already told us they are looking for a {_known_prop_type}. "
+            "Do NOT ask for property type again. It is already known. Never say 'property type' to the user. "
+            "If you must ask about housing options, use: 'What exactly are you looking for, an apartment, a condo, or a house?' "
+            "Never include 'hometown' as an option.\n\n"
+            + message
+        )
+    else:
+        # Even when unknown, forbid the wrong phrasing and the bogus "hometown" option
+        message = (
+            "CRITICAL: Never say 'property type' to the user and never offer 'hometown' as an option. "
+            "If you need to ask what they are looking for, say: "
+            "'What exactly are you looking for, an apartment, a condo, or a house?' "
+            "Options are apartment, condo, house only.\n\n"
+            + message
+        )
+
     # LBP conversion: if a budget was converted from LBP this turn, instruct the LLM
     # to silently proceed without mentioning the conversion to the user.
     if session.lbp_converted:
@@ -1147,9 +1213,10 @@ Greet the user naturally and ask how you can help them find a property in Lebano
 
     static_prompt = get_static_system_prompt()
     dynamic_prompt = get_dynamic_action_prompt(message)
-    _internal_keys = {"classification", "rejection_count", "show_alternatives", "budget_ask_count"}
-    _safe_state = {k: v for k, v in state.items() if k not in _internal_keys}
-    session_state_text = f"\nCurrent session state: {_safe_state}"
+    _state_for_prompt = dict(state)
+    for _key in ('classification', 'rejection_count', 'show_alternatives', 'budget_ask_count', 'confidence'):
+        _state_for_prompt.pop(_key, None)
+    session_state_text = f"\nCurrent session state: {_state_for_prompt}"
 
     # Build system as a list of content blocks so the large static framework
     # is eligible for Anthropic prompt caching. The dynamic action instruction
@@ -1222,13 +1289,17 @@ Greet the user naturally and ask how you can help them find a property in Lebano
     # Listings flow: inject the formatted listings block between the LLM opener and closer.
     # _direct_parts = ["__LISTING_OPENER__", formatted_listings, "__LISTING_CLOSER__"]
     # LLM generates: opener (parts[0]) and closer (parts[1:])
-    # Final reply: [opener, listings, ...closer_parts]
+    # Each listing is sent as its own separate message bubble, not one combined block.
     if _direct_parts is not None:
         listing_block = _direct_parts[1]
+        # Split the joined listings block back into individual listing strings.
+        # _format_listing uses "\n" internally and listings are joined with "\n\n",
+        # so splitting on "\n\n" yields one string per listing.
+        individual_listings = [l.strip() for l in listing_block.split("\n\n") if l.strip()]
         if parts:
-            assembled = parts[0:1] + [listing_block] + parts[1:]
+            assembled = parts[0:1] + individual_listings + parts[1:]
         else:
-            assembled = [listing_block]
+            assembled = individual_listings
         return assembled
 
     return parts if parts else [raw_reply]
@@ -1445,6 +1516,19 @@ def process_user_message(db: Session, conversation_id: int, user_message: str, *
 
         # Decide next action based on current session state
         action = decide_next_action(session)
+
+        # Pre-check: off-topic messages drop off immediately with a hardcoded response.
+        # No LLM call. No greeting. No engagement. The scope check has no exceptions,
+        # not even on message one.
+        if session.classification == "OFF_TOPIC":
+            drop_off = "I can only help with real estate. Looking to buy or rent something in Lebanon?"
+            ai_msg = Message(conversation_id=conversation_id, role="assistant", content=drop_off)
+            db.add(ai_msg)
+            db.commit()
+            session._dedup_message = user_message
+            session._dedup_ts = _now
+            session._dedup_reply = [drop_off]
+            return [drop_off]
 
         # Check routing conditions - may override the action
         should_route, route_message = _check_routing_conditions(session, user_message)

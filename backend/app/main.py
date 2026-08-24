@@ -102,6 +102,20 @@ def chat_test_page():
     )
 
 
+@app.get("/dev-report")
+def dev_report_page():
+    """Serve the daily developer report form. No authentication required."""
+    html_path = os.path.join(os.path.dirname(__file__), "..", "static", "dev-report.html")
+    return FileResponse(
+        html_path,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
 @app.get("/dashboard/costs")
 def costs_dashboard():
     """Serve the cost analytics dashboard. No authentication required."""

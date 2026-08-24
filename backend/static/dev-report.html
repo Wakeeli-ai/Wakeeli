@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Developer Report</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+      width: 100%;
+      max-width: 680px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #1a2744;
+      padding: 28px 36px;
+    }
+
+    .card-header h1 {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .card-body {
+      padding: 36px;
+    }
+
+    .field {
+      margin-bottom: 28px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a2744;
+      margin-bottom: 8px;
+    }
+
+    .field .optional-tag {
+      font-weight: 400;
+      color: #888;
+      font-size: 12px;
+      margin-left: 6px;
+    }
+
+    .field input[type="text"],
+    .field input[type="number"],
+    .field textarea {
+      width: 100%;
+      border: 1.5px solid #d1d5db;
+      border-radius: 7px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #1a1a1a;
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .field input[type="text"]:focus,
+    .field input[type="number"]:focus,
+    .field textarea:focus {
+      border-color: #1a2744;
+      background: #fff;
+    }
+
+    .field input[readonly] {
+      background: #f0f2f5;
+      color: #555;
+      cursor: default;
+    }
+
+    .field textarea {
+      min-height: 90px;
+      line-height: 1.5;
+    }
+
+    .field input[type="number"] {
+      width: 120px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 24px;
+      margin-top: 2px;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      color: #1a1a1a;
+      cursor: pointer;
+    }
+
+    .radio-group input[type="radio"] {
+      accent-color: #1a2744;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .field.error input,
+    .field.error textarea {
+      border-color: #e53e3e;
+      background: #fff8f8;
+    }
+
+    .error-msg {
+      display: none;
+      color: #e53e3e;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .field.error .error-msg {
+      display: block;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: #1a2744;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.2s, opacity 0.2s;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background: #243660;
+    }
+
+    .submit-btn:active:not(:disabled) {
+      opacity: 0.85;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.35);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .submit-btn.loading .spinner {
+      display: block;
+    }
+
+    .submit-btn.loading .btn-label {
+      opacity: 0.75;
+    }
+
+    .toast {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 7px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .toast.success {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      color: #166534;
+    }
+
+    .toast.error {
+      background: #fff8f8;
+      border: 1.5px solid #fca5a5;
+      color: #991b1b;
+    }
+
+    .confirmation {
+      display: none;
+      text-align: center;
+      padding: 60px 36px;
+    }
+
+    .confirmation .check-icon {
+      width: 56px;
+      height: 56px;
+      background: #1a2744;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .confirmation .check-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .confirmation p {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1a2744;
+    }
+
+    .confirmation p.sub {
+      font-size: 13px;
+      font-weight: 400;
+      color: #888;
+      margin-top: 6px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 4px 0 28px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #9ca3af;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <h1>Daily Developer Report</h1>
+  </div>
+
+  <div id="form-wrapper" class="card-body">
+    <form id="report-form" novalidate>
+
+      <div class="field" id="field-devName">
+        <label for="devName">Your name</label>
+        <input type="text" id="devName" name="devName" placeholder="First and last name" />
+        <span class="error-msg">This field is required.</span>
+      </div>
+
+      <div class="field">
+        <label for="date">Date</label>
+        <input type="text" id="date" name="date" readonly />
+      </div>
+
+      <hr class="divider" />
+      <p class="section-title">Today's Work</p>
+
+      <div class="field" id="field-workedOn">
+        <label for="workedOn">What did you work on today?</label>
+        <textarea id="workedOn" name="workedOn" placeholder="Describe the tasks and features you worked on..."></textarea>
+        <span class="error-msg">This field is required.</span>
+      </div>
+
+      <div class="field" id="field-completed">
+        <label for="completed">What did you complete?</label>
+        <textarea id="completed" name="completed" placeholder="List what you finished and shipped..."></textarea>
+        <span class="error-msg">This field is required.</span>
+      </div>
+
+      <div class="field" id="field-inProgress">
+        <label for="inProgress">What is still in progress? <span class="optional-tag">optional</span></label>
+        <textarea id="inProgress" name="inProgress" placeholder="Anything carried over to tomorrow..."></textarea>
+      </div>
+
+      <div class="field" id="field-blockers">
+        <label for="blockers">Any blockers or issues? <span class="optional-tag">optional</span></label>
+        <textarea id="blockers" name="blockers" placeholder="Anything slowing you down or blocking progress..."></textarea>
+      </div>
+
+      <hr class="divider" />
+      <p class="section-title">Assessment</p>
+
+      <div class="field">
+        <label for="hoursWorked">Hours worked today</label>
+        <input type="number" id="hoursWorked" name="hoursWorked" min="1" max="16" value="8" />
+      </div>
+
+      <div class="field">
+        <label>Confidence level on today's output</label>
+        <div class="radio-group">
+          <label>
+            <input type="radio" name="confidenceLevel" value="Low" />
+            Low
+          </label>
+          <label>
+            <input type="radio" name="confidenceLevel" value="Medium" checked />
+            Medium
+          </label>
+          <label>
+            <input type="radio" name="confidenceLevel" value="High" />
+            High
+          </label>
+        </div>
+      </div>
+
+      <div class="field" id="field-founderReview">
+        <label for="founderReview">Anything the founder needs to review or approve? <span class="optional-tag">optional</span></label>
+        <textarea id="founderReview" name="founderReview" placeholder="PRs, decisions, design choices, anything needing sign-off..."></textarea>
+      </div>
+
+      <hr class="divider" />
+      <p class="section-title">Looking Ahead</p>
+
+      <div class="field" id="field-planTomorrow">
+        <label for="planTomorrow">Plan for tomorrow</label>
+        <textarea id="planTomorrow" name="planTomorrow" placeholder="What are you tackling first thing tomorrow?"></textarea>
+        <span class="error-msg">This field is required.</span>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">
+        <span class="spinner"></span>
+        <span class="btn-label">Submit Report</span>
+      </button>
+
+      <div class="toast" id="toast-success" role="alert">
+        Report saved to Google Sheets.
+      </div>
+      <div class="toast" id="toast-error" role="alert">
+        Something went wrong. Please try again.
+      </div>
+
+    </form>
+  </div>
+
+  <div class="confirmation" id="confirmation">
+    <div class="check-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </div>
+    <p>Report submitted. Good work.</p>
+    <p class="sub">Saved to Google Sheets.</p>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // CONFIG: Paste your Google Apps Script Web App URL here
+  // ============================================================
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWi3TW48OBrSMJb0k-BIw_M7EVyPHtI8Qj4GV3nQMLI1Be4H6iZ6FvsgcTDUgx_oBEcA/exec';
+  // ============================================================
+
+  (function () {
+    function getTodayDate() {
+      var now = new Date();
+      var year = now.getFullYear();
+      var month = String(now.getMonth() + 1).padStart(2, '0');
+      var day = String(now.getDate()).padStart(2, '0');
+      return year + '-' + month + '-' + day;
+    }
+
+    document.getElementById('date').value = getTodayDate();
+
+    var requiredFields = [
+      { id: 'devName',      wrapperId: 'field-devName'      },
+      { id: 'workedOn',     wrapperId: 'field-workedOn'     },
+      { id: 'completed',    wrapperId: 'field-completed'    },
+      { id: 'planTomorrow', wrapperId: 'field-planTomorrow' }
+    ];
+
+    function clearErrors() {
+      requiredFields.forEach(function (f) {
+        document.getElementById(f.wrapperId).classList.remove('error');
+      });
+    }
+
+    function validateForm() {
+      var isValid = true;
+      requiredFields.forEach(function (f) {
+        var el = document.getElementById(f.id);
+        var wrapper = document.getElementById(f.wrapperId);
+        if (!el.value.trim()) {
+          wrapper.classList.add('error');
+          isValid = false;
+        } else {
+          wrapper.classList.remove('error');
+        }
+      });
+      return isValid;
+    }
+
+    requiredFields.forEach(function (f) {
+      document.getElementById(f.id).addEventListener('input', function () {
+        if (this.value.trim()) {
+          document.getElementById(f.wrapperId).classList.remove('error');
+        }
+      });
+    });
+
+    function setLoading(on) {
+      var btn = document.getElementById('submit-btn');
+      if (on) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    function showToast(type) {
+      var toastSuccess = document.getElementById('toast-success');
+      var toastError = document.getElementById('toast-error');
+      toastSuccess.style.display = 'none';
+      toastError.style.display = 'none';
+
+      var el = type === 'success' ? toastSuccess : toastError;
+      el.style.display = 'block';
+      el.className = 'toast ' + type;
+
+      if (type === 'success') {
+        setTimeout(function () {
+          document.getElementById('form-wrapper').style.display = 'none';
+          document.getElementById('confirmation').style.display = 'block';
+        }, 800);
+      }
+    }
+
+    document.getElementById('report-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      clearErrors();
+
+      if (!validateForm()) {
+        var firstError = document.querySelector('.field.error');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
+      var selectedConfidence = document.querySelector('input[name="confidenceLevel"]:checked');
+
+      var reportData = {
+        date:            document.getElementById('date').value,
+        devName:         document.getElementById('devName').value.trim(),
+        workedOn:        document.getElementById('workedOn').value.trim(),
+        completed:       document.getElementById('completed').value.trim(),
+        inProgress:      document.getElementById('inProgress').value.trim(),
+        blockers:        document.getElementById('blockers').value.trim(),
+        hoursWorked:     Number(document.getElementById('hoursWorked').value),
+        confidenceLevel: selectedConfidence ? selectedConfidence.value : 'Medium',
+        founderReview:   document.getElementById('founderReview').value.trim(),
+        planTomorrow:    document.getElementById('planTomorrow').value.trim()
+      };
+
+      if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+        console.log('No SCRIPT_URL configured. Report data:', JSON.stringify(reportData, null, 2));
+        showToast('success');
+        return;
+      }
+
+      setLoading(true);
+
+      // Using no-cors mode to avoid CORS redirect issues with Apps Script.
+      // The POST goes through even though the response is opaque.
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(reportData)
+      })
+      .then(function () {
+        setLoading(false);
+        showToast('success');
+      })
+      .catch(function (err) {
+        console.error('Submission error:', err);
+        setLoading(false);
+        showToast('error');
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

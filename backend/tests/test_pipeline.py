@@ -462,7 +462,7 @@ class TestNameGate:
         session.greeted = True
 
         extract = make_extract_result(classification="B", name="Mariam")
-        _run(db, conv_id, "Mariam", extract, llm_reply="Nice to meet you, Mariam!")
+        _run(db, conv_id, "Mariam", extract, llm_reply="Nice to meet you Mariam!")
         session2 = get_session(conv_id)
         assert session2.user_info.get("name") == "Mariam"
 

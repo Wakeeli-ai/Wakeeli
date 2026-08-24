@@ -28,7 +28,21 @@ type Message = {
   role: string;
   content: string;
   timestamp: string;
+  drop_reason?: string;
 };
+
+const DROP_REASON_LABELS: Record<string, string> = {
+  out_of_territory: 'Outside our service area',
+  handoff: 'Handed off to a human agent',
+  post_handoff_silence: 'Handed off to a human agent',
+  no_match: 'No listings matched your criteria',
+  out_of_scope: 'Outside scope',
+};
+
+function resolveDropReason(reason?: string): string {
+  if (!reason) return 'Outside scope';
+  return DROP_REASON_LABELS[reason] ?? 'Outside scope';
+}
 
 type StepEvent = {
   id: string;
@@ -162,6 +176,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       { id: 1019, role: 'user', content: 'W shu el contract terms? Min lease keef?', timestamp: '2026-04-01T07:15:00.000Z' },
       { id: 1020, role: 'assistant', content: 'Standard 1-year minimum, renewable. Owner open to 2 years with a small discount. Passing you now to our agent Joelle to finalize the details.', timestamp: '2026-04-01T07:18:00.000Z' },
       { id: 1021, role: 'user', content: 'ok perfect, shukran ktir', timestamp: '2026-04-01T07:20:00.000Z' },
+      { id: 10211, role: 'assistant', content: '', drop_reason: 'handoff', timestamp: '2026-04-01T07:20:05.000Z' },
     ],
   },
   {
@@ -179,6 +194,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       { id: 1024, role: 'user', content: 'Visibility is everything for a boutique. The Kaslik one sounds better. Shu el contract terms?', timestamp: '2026-03-31T09:15:00.000Z' },
       { id: 1025, role: 'assistant', content: '2-year minimum commercial lease. Owner open to a fit-out contribution if you sign 3 years. Large display window, street parking in front. Want to schedule a viewing?', timestamp: '2026-03-31T09:16:00.000Z' },
       { id: 1026, role: 'user', content: 'Yes please! Wednesday or Thursday this week work for me.', timestamp: '2026-03-31T09:30:00.000Z' },
+      { id: 10261, role: 'assistant', content: '', drop_reason: 'out_of_territory', timestamp: '2026-03-31T09:30:05.000Z' },
     ],
   },
   {
@@ -837,6 +853,24 @@ export default function Conversations() {
                     }
 
                     const m = item.data;
+
+                    // Drop-off system message: empty content or explicit drop_reason
+                    if (m.role === 'assistant' && (!m.content || m.content.trim() === '' || m.drop_reason)) {
+                      return (
+                        <div
+                          key={m.id}
+                          style={{ marginTop: 12, marginBottom: 12 }}
+                          className="flex justify-center"
+                        >
+                          <span
+                            style={{ fontSize: 12, color: '#8E8E93' }}
+                          >
+                            AI Agent dropped off &middot; Reason: {resolveDropReason(m.drop_reason)}
+                          </span>
+                        </div>
+                      );
+                    }
+
                     const isUser = m.role === 'user';
                     const parts =
                       !isUser && m.content.includes('|||')

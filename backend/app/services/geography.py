@@ -1,7 +1,7 @@
 """
-Lebanon administrative geography hierarchy.
+Lebanon administrative geography hierarchy, plus US metro area support.
 
-Structure: Governorate -> District (Caza) -> City/Town
+Structure (Lebanon): Governorate -> District (Caza) -> City/Town
 
 8 Governorates (Mohafazat):
   1. Beirut
@@ -13,6 +13,8 @@ Structure: Governorate -> District (Caza) -> City/Town
   7. Akkar
   8. Baalbek-Hermel
 """
+
+from typing import Optional
 
 # ---------------------------------------------------------------------------
 # GOVERNORATE -> DISTRICTS mapping
@@ -567,3 +569,404 @@ def get_area_examples(location: str, location_type: str) -> str:
         return ', '.join(examples)
 
     return ''
+
+
+# ---------------------------------------------------------------------------
+# US SERVICE AREA: 10 STATES ONLY
+# Florida, Texas, North Carolina, Georgia, Arizona,
+# Ohio, Pennsylvania, Michigan, Alabama, South Carolina
+#
+# US_REGION_MAP keys: canonical metro name (title case)
+# Values: list of city/neighborhood/suburb keywords (all lowercase)
+# ---------------------------------------------------------------------------
+
+US_REGION_MAP: dict[str, list[str]] = {
+
+    # ---- Florida: Miami ----
+    'Miami': [
+        'miami', 'miami beach', 'south beach', 'brickell', 'wynwood',
+        'coconut grove', 'coral gables', 'downtown miami', 'midtown miami',
+        'edgewater', 'little havana', 'design district miami',
+        'doral', 'hialeah', 'miami lakes', 'north miami', 'miami gardens',
+        'aventura', 'sunny isles beach', 'bal harbour', 'surfside fl',
+        'homestead fl', 'kendall', 'cutler bay', 'palmetto bay', 'pinecrest',
+        'key biscayne', 'opa locka', 'medley', 'sweetwater fl',
+    ],
+
+    # ---- Florida: Fort Lauderdale ----
+    'Fort Lauderdale': [
+        'fort lauderdale', 'las olas', 'wilton manors', 'victoria park',
+        'pompano beach', 'deerfield beach', 'hallandale beach',
+        'hollywood fl', 'hollywood florida', 'oakland park',
+        'plantation fl', 'plantation florida', 'davie fl', 'miramar',
+        'pembroke pines', 'cooper city', 'weston fl',
+        'coral springs', 'margate fl', 'tamarac', 'lauderhill', 'sunrise fl',
+        'lauderdale lakes', 'north lauderdale', 'coconut creek fl',
+        'southwest ranches', 'parkland fl',
+    ],
+
+    # ---- Florida: Tampa ----
+    'Tampa': [
+        'tampa', 'south tampa', 'hyde park tampa', 'ybor city',
+        'seminole heights', 'carrollwood', 'westchase', 'new tampa',
+        'temple terrace', 'brandon fl', 'riverview fl', 'apollo beach',
+        'seffner', 'valrico', 'land o lakes', 'lutz fl', 'wesley chapel',
+        'zephyrhills', 'plant city',
+        'st pete', 'st. pete', 'saint pete', 'saint petersburg fl',
+        'st petersburg', 'st. petersburg', 'gulfport fl', 'pinellas park',
+        'clearwater', 'largo fl', 'dunedin fl', 'safety harbor',
+        'tarpon springs', 'palm harbor', 'treasure island fl', 'st pete beach',
+        'kenwood', 'old northeast', 'downtown st pete',
+    ],
+
+    # ---- Florida: Orlando ----
+    'Orlando': [
+        'orlando', 'downtown orlando', 'college park orlando', 'dr phillips',
+        'lake nona', 'winter park fl', 'winter park florida',
+        'kissimmee', 'windermere fl', 'celebration fl', 'champions gate',
+        'altamonte springs', 'maitland fl', 'casselberry', 'oviedo fl',
+        'sanford fl', 'apopka', 'clermont fl', 'davenport fl',
+        'longwood fl', 'lake mary', 'winter garden fl', 'reunion fl',
+    ],
+
+    # ---- Texas: Austin ----
+    'Austin': [
+        'austin', 'east austin', 'south congress', 'domain austin',
+        'downtown austin', 'travis heights', 'bouldin creek',
+        'mueller austin', 'tarrytown austin', 'clarksville austin',
+        'round rock', 'cedar park tx', 'pflugerville', 'georgetown tx',
+        'buda tx', 'kyle tx', 'leander tx', 'liberty hill tx',
+        'lakeway tx', 'westlake hills', 'dripping springs', 'bee cave tx',
+    ],
+
+    # ---- Texas: Dallas ----
+    'Dallas': [
+        'dallas', 'uptown dallas', 'knox henderson', 'deep ellum',
+        'bishop arts', 'oak cliff', 'lake highlands', 'preston hollow',
+        'lower greenville', 'east dallas', 'north dallas', 'far north dallas',
+        'frisco tx', 'plano tx', 'allen tx', 'mckinney tx', 'prosper tx',
+        'irving tx', 'arlington tx', 'grand prairie tx', 'carrollton tx',
+        'garland tx', 'mesquite tx', 'addison tx', 'richardson tx',
+        'lewisville tx', 'flower mound', 'southlake tx', 'grapevine tx',
+        'coppell tx', 'cedar hill tx', 'desoto tx',
+    ],
+
+    # ---- Texas: Fort Worth ----
+    'Fort Worth': [
+        'fort worth', 'cultural district fort worth', 'downtown fort worth',
+        'near southside fort worth', 'west 7th fort worth',
+        'weatherford tx', 'burleson tx', 'mansfield tx', 'crowley tx',
+        'hurst tx', 'euless tx', 'bedford tx', 'colleyville tx',
+        'keller tx', 'north richland hills', 'haltom city', 'saginaw tx',
+    ],
+
+    # ---- Texas: Houston ----
+    'Houston': [
+        'houston', 'midtown houston', 'montrose', 'the heights houston',
+        'river oaks houston', 'galleria houston', 'medical center houston',
+        'uptown houston', 'museum district houston', 'east end houston',
+        'katy tx', 'sugar land', 'the woodlands', 'pearland tx',
+        'spring tx', 'conroe tx', 'cypress tx', 'missouri city tx',
+        'friendswood', 'league city', 'clear lake tx', 'deer park tx',
+        'pasadena tx', 'baytown tx', 'humble tx', 'kingwood tx',
+        'tomball', 'stafford tx', 'richmond tx',
+    ],
+
+    # ---- North Carolina: Charlotte ----
+    'Charlotte': [
+        'charlotte', 'south end charlotte', 'noda charlotte',
+        'dilworth charlotte', 'myers park charlotte', 'ballantyne',
+        'plaza midwood', 'uptown charlotte', 'university city charlotte',
+        'steele creek', 'huntersville nc', 'cornelius nc', 'davidson nc',
+        'mooresville nc', 'concord nc', 'kannapolis nc',
+        'gastonia', 'matthews nc', 'mint hill nc', 'pineville nc',
+        'indian trail nc', 'monroe nc', 'harrisburg nc',
+    ],
+
+    # ---- North Carolina: Raleigh ----
+    'Raleigh': [
+        'raleigh', 'downtown raleigh', 'north hills raleigh',
+        'five points raleigh', 'glenwood south', 'brier creek',
+        'north raleigh', 'midtown raleigh',
+        'cary nc', 'apex nc', 'morrisville nc', 'wake forest nc',
+        'garner nc', 'holly springs nc', 'fuquay varina',
+        'knightdale', 'wendell nc', 'zebulon nc',
+        'durham nc', 'chapel hill nc', 'carrboro', 'hillsborough nc',
+    ],
+
+    # ---- Georgia: Atlanta ----
+    'Atlanta': [
+        'atlanta', 'buckhead', 'midtown atlanta', 'old fourth ward',
+        'grant park atlanta', 'inman park', 'little five points atlanta',
+        'kirkwood atlanta', 'east atlanta', 'west end atlanta',
+        'downtown atlanta', 'virginia highland', 'poncey highland',
+        'decatur ga', 'dunwoody ga', 'sandy springs ga', 'roswell ga',
+        'alpharetta ga', 'marietta ga', 'smyrna ga', 'kennesaw ga',
+        'brookhaven ga', 'chamblee ga', 'doraville', 'tucker ga',
+        'stonecrest', 'lithonia', 'conyers ga', 'covington ga',
+        'norcross ga', 'duluth ga', 'suwanee ga', 'johns creek ga',
+        'peachtree city', 'newnan ga', 'mcdonough ga', 'woodstock ga',
+        'canton ga', 'cumming ga',
+    ],
+
+    # ---- Arizona: Phoenix ----
+    'Phoenix': [
+        'phoenix', 'downtown phoenix', 'arcadia phoenix', 'midtown phoenix',
+        'north phoenix', 'ahwatukee', 'camelback east phoenix',
+        'tempe az', 'mesa az', 'chandler az', 'gilbert az',
+        'glendale az', 'peoria az', 'surprise az', 'goodyear az',
+        'avondale az', 'queen creek az', 'maricopa az', 'el mirage az',
+        'cave creek az', 'carefree az', 'tolleson az', 'litchfield park',
+        'sun city az', 'sun city west',
+    ],
+
+    # ---- Arizona: Scottsdale ----
+    'Scottsdale': [
+        'scottsdale', 'old town scottsdale', 'north scottsdale',
+        'south scottsdale', 'scottsdale quarter', 'dc ranch scottsdale',
+        'mccormick ranch', 'gainey ranch', 'paradise valley az',
+        'fountain hills az', 'rio verde az',
+    ],
+
+    # ---- Ohio: Columbus ----
+    'Columbus': [
+        'columbus ohio', 'columbus oh', 'columbus',
+        'short north', 'german village', 'franklinton',
+        'clintonville', 'bexley oh', 'grandview heights',
+        'upper arlington', 'worthington oh', 'westerville oh',
+        'gahanna oh', 'new albany oh', 'pickerington oh', 'reynoldsburg',
+        'grove city oh', 'hilliard oh', 'dublin ohio', 'powell oh',
+        'lewis center', 'canal winchester', 'grove city ohio',
+    ],
+
+    # ---- Ohio: Cleveland ----
+    'Cleveland': [
+        'cleveland ohio', 'cleveland oh', 'cleveland',
+        'ohio city cleveland', 'tremont cleveland', 'university circle',
+        'little italy cleveland', 'detroit shoreway', 'west park cleveland',
+        'lakewood ohio', 'beachwood oh', 'solon oh', 'strongsville oh',
+        'westlake ohio', 'shaker heights', 'parma oh', 'north olmsted',
+        'brunswick oh', 'mentor oh', 'willoughby oh', 'euclid oh',
+        'garfield heights', 'maple heights oh', 'independence oh',
+        'rocky river oh', 'bay village oh',
+    ],
+
+    # ---- Pennsylvania: Philadelphia ----
+    'Philadelphia': [
+        'philadelphia', 'philly', 'center city philly',
+        'center city philadelphia', 'rittenhouse square',
+        'fishtown', 'old city philly', 'manayunk',
+        'south philly', 'north philly', 'east passyunk',
+        'fairmount philadelphia', 'graduate hospital',
+        'point breeze', 'west philly', 'germantown philadelphia',
+        'mount airy philadelphia', 'chestnut hill philadelphia',
+        'cherry hill nj', 'cherry hill', 'moorestown nj',
+        'king of prussia', 'conshohocken pa', 'plymouth meeting',
+        'blue bell pa', 'horsham pa', 'bensalem pa',
+        'northeast philadelphia', 'mount laurel nj',
+        'haddonfield nj', 'voorhees nj',
+        'wilmington de', 'wilmington delaware',
+    ],
+
+    # ---- Michigan: Detroit ----
+    'Detroit': [
+        'detroit', 'midtown detroit', 'new center detroit', 'corktown',
+        'downtown detroit', 'rivertown detroit', 'eastern market detroit',
+        'birmingham mi', 'bloomfield hills mi', 'troy mi',
+        'sterling heights mi', 'warren mi', 'dearborn mi',
+        'livonia mi', 'westland mi', 'taylor mi', 'allen park mi',
+        'lincoln park mi', 'royal oak mi', 'ferndale mi',
+        'hazel park mi', 'madison heights mi',
+        'novi mi', 'wixom mi', 'southfield mi', 'oak park mi',
+        'farmington hills mi', 'redford mi', 'garden city mi',
+    ],
+
+    # ---- Michigan: Ann Arbor ----
+    'Ann Arbor': [
+        'ann arbor', 'downtown ann arbor', 'kerrytown',
+        'burns park ann arbor', 'ypsilanti', 'saline mi',
+        'dexter mi', 'canton township mi', 'canton mi',
+        'plymouth mi', 'northville mi',
+    ],
+
+    # ---- Alabama: Birmingham ----
+    'Birmingham': [
+        'birmingham al', 'birmingham alabama', 'birmingham',
+        'downtown birmingham al', 'homewood al', 'hoover al',
+        'mountain brook al', 'vestavia hills al', 'irondale al',
+        'trussville al', 'pell city al', 'alabaster al',
+        'pelham al', 'chelsea al', 'calera al', 'gardendale al',
+        'center point al', 'moody al',
+    ],
+
+    # ---- Alabama: Huntsville ----
+    'Huntsville': [
+        'huntsville al', 'huntsville alabama', 'huntsville',
+        'downtown huntsville al', 'research park huntsville',
+        'monte sano huntsville',
+        'madison al', 'madison alabama', 'harvest al',
+        'meridianville al', 'hampton cove al', 'jones valley al',
+        'owens cross roads al', 'gurley al',
+    ],
+
+    # ---- South Carolina: Charleston ----
+    'Charleston': [
+        'charleston sc', 'charleston south carolina', 'charleston',
+        'downtown charleston sc', 'south of broad charleston',
+        'harleston village', 'wagener terrace charleston',
+        'west ashley', 'james island sc', 'johns island sc',
+        'mount pleasant sc', 'north charleston sc',
+        'summerville sc', 'goose creek sc', 'hanahan sc',
+        'moncks corner', 'folly beach sc', 'isle of palms sc',
+        'daniel island sc', 'ladson sc',
+    ],
+
+    # ---- South Carolina: Columbia ----
+    'Columbia': [
+        'columbia sc', 'columbia south carolina', 'columbia',
+        'downtown columbia sc', 'five points columbia sc', 'shandon',
+        'forest acres sc', 'lexington sc', 'irmo sc', 'cayce sc',
+        'west columbia sc', 'springdale sc', 'blythewood sc',
+        'chapin sc', 'gaston sc',
+    ],
+}
+
+# Example neighborhoods per metro shown when asking the lead to narrow down.
+# Keep to 3-4 recognizable names per market.
+US_METRO_NEIGHBORHOODS: dict[str, list[str]] = {
+    'Miami':           ['Brickell', 'Coral Gables', 'Wynwood', 'South Beach'],
+    'Fort Lauderdale': ['Las Olas', 'Victoria Park', 'Pompano Beach', 'Weston'],
+    'Tampa':           ['South Tampa', 'Hyde Park', 'Carrollwood', 'Brandon'],
+    'Orlando':         ['Lake Nona', 'Winter Park', 'Dr. Phillips', 'College Park'],
+    'Austin':          ['South Congress', 'East Austin', 'Domain', 'Round Rock'],
+    'Dallas':          ['Uptown', 'Knox Henderson', 'Bishop Arts', 'Frisco'],
+    'Fort Worth':      ['Cultural District', 'Near Southside', 'Keller', 'Southlake'],
+    'Houston':         ['Montrose', 'The Heights', 'River Oaks', 'The Woodlands'],
+    'Charlotte':       ['South End', 'NoDa', 'Dilworth', 'Ballantyne'],
+    'Raleigh':         ['North Hills', 'Cary', 'Apex', 'Durham'],
+    'Atlanta':         ['Buckhead', 'Midtown', 'Decatur', 'Sandy Springs'],
+    'Phoenix':         ['Arcadia', 'Tempe', 'Chandler', 'Gilbert'],
+    'Scottsdale':      ['Old Town', 'North Scottsdale', 'DC Ranch', 'Paradise Valley'],
+    'Columbus':        ['Short North', 'German Village', 'Dublin', 'Westerville'],
+    'Cleveland':       ['Ohio City', 'Lakewood', 'Beachwood', 'Shaker Heights'],
+    'Philadelphia':    ['Rittenhouse Square', 'Fishtown', 'Manayunk', 'Center City'],
+    'Detroit':         ['Midtown Detroit', 'Corktown', 'Royal Oak', 'Birmingham'],
+    'Ann Arbor':       ['Downtown Ann Arbor', 'Kerrytown', 'Ypsilanti', 'Canton'],
+    'Birmingham':      ['Homewood', 'Mountain Brook', 'Vestavia Hills', 'Hoover'],
+    'Huntsville':      ['Research Park', 'Downtown Huntsville', 'Madison', 'Hampton Cove'],
+    'Charleston':      ['Downtown Charleston', 'Mount Pleasant', 'West Ashley', 'James Island'],
+    'Columbia':        ['Forest Acres', 'Lexington', 'Irmo', 'Five Points'],
+}
+
+# Flat set of all US city/neighborhood keywords for quick membership checks
+_US_CITY_KEYWORDS: set[str] = {
+    kw
+    for keywords in US_REGION_MAP.values()
+    for kw in keywords
+}
+
+# State names and abbreviations for the 10 covered service states only.
+# General US references (usa, america, us) are included so broad queries
+# like "I'm looking in the US" are not blocked before the bot can ask for a city.
+_US_SERVICE_STATE_KEYWORDS: set[str] = {
+    'florida', 'fl',
+    'texas', 'tx',
+    'north carolina', 'nc',
+    'georgia', 'ga',
+    'arizona', 'az',
+    'ohio', 'oh',
+    'pennsylvania', 'pa',
+    'michigan', 'mi',
+    'alabama', 'al',
+    'south carolina', 'sc',
+}
+
+_US_STATE_KEYWORDS: set[str] = _US_SERVICE_STATE_KEYWORDS | {
+    'usa', 'united states', 'united states of america', 'america', 'us',
+}
+
+# Lowercase set of all metro key names for get_us_location_type()
+_US_METRO_NAMES: set[str] = {metro.lower() for metro in US_REGION_MAP}
+
+
+def is_us_location(text: str) -> bool:
+    """
+    Return True if the text contains any keyword from the 10 covered US states.
+
+    Only matches cities/neighborhoods within the service area (FL, TX, NC, GA,
+    AZ, OH, PA, MI, AL, SC) plus generic US country references.
+    Checks are case-insensitive. Short keywords (<=2 chars) use word-boundary
+    matching to avoid false positives (e.g. 'al' inside 'also').
+    """
+    lowered = text.lower()
+
+    # Multi-word keywords: plain substring check
+    for kw in _US_CITY_KEYWORDS | _US_STATE_KEYWORDS:
+        if len(kw) > 2 and kw in lowered:
+            return True
+
+    # Short keywords (1-2 chars): require word boundary to avoid false positives
+    import re as _re
+    for kw in _US_CITY_KEYWORDS | _US_STATE_KEYWORDS:
+        if len(kw) <= 2:
+            if _re.search(r'\b' + _re.escape(kw) + r'\b', lowered):
+                return True
+
+    return False
+
+
+def get_us_region(text: str) -> Optional[str]:
+    """
+    Return the canonical US metro name if any keyword in the text matches
+    a city or neighborhood in US_REGION_MAP.
+
+    Returns None if no match found. First match in insertion order is returned.
+    """
+    lowered = text.lower()
+    for metro, keywords in US_REGION_MAP.items():
+        for kw in keywords:
+            if kw in lowered:
+                return metro
+    return None
+
+
+def get_us_location_type(location: str) -> tuple[str, str]:
+    """
+    Classify a US location string into metro vs neighborhood.
+
+    Returns (type, canonical):
+      type: 'metro' | 'neighborhood' | 'unknown'
+      canonical: title-case metro name or original text
+
+    'metro' means the user named a major city that needs neighborhood niching.
+    'neighborhood' means the user named a specific area that is precise enough.
+    """
+    loc = location.strip().lower()
+
+    # Exact match on a metro key -> needs niching
+    if loc in _US_METRO_NAMES:
+        for metro in US_REGION_MAP:
+            if metro.lower() == loc:
+                return ('metro', metro)
+
+    # Keyword match inside a metro's neighborhood list -> specific enough
+    for metro, keywords in US_REGION_MAP.items():
+        for kw in keywords:
+            if kw == loc:
+                return ('neighborhood', metro)
+
+    # Partial metro name match (handles 'ft lauderdale', 'philly', etc.)
+    for metro in US_REGION_MAP:
+        if loc in metro.lower() or metro.lower() in loc:
+            return ('metro', metro)
+
+    return ('unknown', location)
+
+
+def get_us_area_examples(metro: str) -> str:
+    """
+    Return a short comma-separated string of 3 example neighborhoods for
+    the given metro. Used to populate the location niching question.
+    """
+    examples = US_METRO_NEIGHBORHOODS.get(metro, [])[:3]
+    return ', '.join(examples)

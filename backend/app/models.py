@@ -1,3 +1,5 @@
+import uuid as _uuid
+
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -149,3 +151,131 @@ class TokenUsage(Base):
     output_tokens = Column(Integer, default=0)
     total_input_tokens = Column(Integer, default=0)
     estimated_cost_usd = Column(Float, default=0.0)
+
+
+# ---------------------------------------------------------------------------
+# Portal tables (Wakeeli client portal, authenticated via Supabase JWT)
+# ---------------------------------------------------------------------------
+
+class WakeeliUserRole(Base):
+    """Global role assignments for portal users (identified by Supabase user_id)."""
+    __tablename__ = "wakeeli_user_roles"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
+    user_id = Column(String(36), nullable=False, index=True)
+    role = Column(String(50), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class WakeeliClient(Base):
+    """
+    Agency (client) record created when a user completes onboarding.
+    One record per portal user (user_id is unique).
+    """
+    __tablename__ = "wakeeli_clients"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
+    user_id = Column(String(36), nullable=False, unique=True, index=True)
+    brand_name = Column(String(255), nullable=True)
+    approved = Column(Boolean, nullable=False, default=False)
+    intake_completion_pct = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    triggers = relationship("WakeeliTrigger", back_populates="client", cascade="all, delete-orphan")
+    sequences = relationship("WakeeliSequence", back_populates="client", cascade="all, delete-orphan")
+
+
+class WakeeliPrompt(Base):
+    """AI prompt templates owned by a portal user, optionally scoped to a client."""
+    __tablename__ = "wakeeli_prompts"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
+    client_id = Column(String(36), ForeignKey("wakeeli_clients.id"), nullable=True, index=True)
+    user_id = Column(String(36), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    type = Column(String(100), nullable=False)
+    content = Column(Text, nullable=False)
+    is_shared = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class WakeeliConversationRule(Base):
+    """WhatsApp routing and escalation rules scoped to a client."""
+    __tablename__ = "wakeeli_conversation_rules"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
+    client_id = Column(String(36), ForeignKey("wakeeli_clients.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    condition_type = Column(String(100), nullable=False)
+    condition_value = Column(String(500), nullable=False)
+    action_type = Column(String(100), nullable=False)
+    action_value = Column(String(500), nullable=True)
+    priority = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class WakeeliClientSettings(Base):
+    """Per-client feature toggles and configuration. One row per client."""
+    __tablename__ = "wakeeli_client_settings"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
+    client_id = Column(String(36), ForeignKey("wakeeli_clients.id"), nullable=False, unique=True, index=True)
+    general_inbound_enabled = Column(Boolean, nullable=False, default=True)
+
+
+# ---------------------------------------------------------------------------
+# Triggers and Sequences (portal, scoped per WakeeliClient)
+# ---------------------------------------------------------------------------
+
+class WakeeliTrigger(Base):
+    """Keyword trigger that fires an opt-in message when matched in WhatsApp."""
+    __tablename__ = "wakeeli_triggers"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
+    client_id = Column(String(36), ForeignKey("wakeeli_clients.id"), nullable=False, index=True)
+    keyword = Column(String(255), nullable=False)
+    opt_in = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    client = relationship("WakeeliClient", back_populates="triggers")
+
+
+class WakeeliSequence(Base):
+    """Automated follow-up sequence attached to a client."""
+    __tablename__ = "wakeeli_sequences"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
+    client_id = Column(String(36), ForeignKey("wakeeli_clients.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    trigger_type = Column(String(100), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    client = relationship("WakeeliClient", back_populates="sequences")
+    steps = relationship(
+        "WakeeliSequenceStep",
+        back_populates="sequence",
+        order_by="WakeeliSequenceStep.step_number",
+        cascade="all, delete-orphan",
+    )
+
+
+class WakeeliSequenceStep(Base):
+    """Single step within a WakeeliSequence."""
+    __tablename__ = "wakeeli_sequence_steps"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(_uuid.uuid4()))
+    sequence_id = Column(String(36), ForeignKey("wakeeli_sequences.id"), nullable=False, index=True)
+    step_number = Column(Integer, nullable=False)
+    delay_days = Column(Integer, nullable=False, default=0)
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    sequence = relationship("WakeeliSequence", back_populates="steps")

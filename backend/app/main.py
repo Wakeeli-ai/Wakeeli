@@ -5,12 +5,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import text, inspect
 from app.database import engine, Base
-from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics, demo, admin_companies
+from app.routes import whatsapp, listings, agents, conversations, auth, chat, analytics, demo, admin_companies, user_roles, prompts, conversation_rules, triggers, sequences
 from app.models import Listing
 from app.config import settings
 
-# Create Tables
-Base.metadata.create_all(bind=engine)
+# Create Tables (non-fatal: if DB is unreachable at startup, app still serves)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as _db_err:
+    import logging as _log
+    _log.getLogger(__name__).warning(f"create_all skipped: {_db_err}")
 
 # Ensure users table has all required columns (handles legacy DBs)
 try:
@@ -30,9 +34,22 @@ except Exception:
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # CORS
+# Explicit origins are required when allow_credentials=True (browsers reject wildcard + credentials).
+# Portal origin is listed first; localhost ports cover local development.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://wakeeli-portal-production.up.railway.app",
+        "https://wakeeli.ai",
+        "https://www.wakeeli.ai",
+        "https://wakeeli-marketing-production.up.railway.app",
+        "https://*.pages.dev",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:4173",
+        "http://localhost:8000",
+        "null",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,6 +65,22 @@ app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(demo.router, prefix="/api/demo", tags=["Demo"])
 app.include_router(admin_companies.router, prefix="/api/admin", tags=["Admin Companies"])
+# Portal routes (Supabase JWT auth, consumed by wakeeli-portal frontend)
+app.include_router(user_roles.router)
+app.include_router(prompts.router)
+app.include_router(conversation_rules.router)
+app.include_router(triggers.router)
+app.include_router(sequences.router)
+
+@app.get("/api/health", tags=["Health"])
+def health_check():
+    """Lightweight liveness probe. Returns 200 when the backend is running."""
+    return {
+        "status": "ok",
+        "environment": "production",
+        "version": settings.VERSION,
+    }
+
 
 # Backend static files (chat-test and costs-dashboard HTML)
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
@@ -151,7 +184,7 @@ def read_root():
 @app.get("/demo/auto")
 def demo_auto():
     """Serve the Wakeeli demo chat in Auto Booking mode."""
-    html_path = os.path.join(os.path.dirname(__file__), "..", "demo", "demo.html")
+    html_path = os.path.join(os.path.dirname(__file__), "..", "demo-chat-US", "demo.html")
     return FileResponse(
         html_path,
         headers={
@@ -165,7 +198,7 @@ def demo_auto():
 @app.get("/demo/handoff")
 def demo_handoff():
     """Serve the Wakeeli demo chat in Agent Handoff mode."""
-    html_path = os.path.join(os.path.dirname(__file__), "..", "demo", "demo.html")
+    html_path = os.path.join(os.path.dirname(__file__), "..", "demo-chat-US", "demo.html")
     return FileResponse(
         html_path,
         headers={

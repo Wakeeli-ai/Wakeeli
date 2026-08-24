@@ -1,18 +1,22 @@
 """Super-admin companies router.
 
 Handles creating and listing companies for the Wakeeli owner portal.
-No auth required at route level (super-admin portal handles auth client-side).
+Also provides portal admin endpoints: pre-approved emails, client-roles.
 """
 
 import re
 import secrets
 import hashlib
+import uuid
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from passlib.context import CryptContext
-from app.database import get_db
+from app.database import get_db, engine
 from app.models import Company, User
+from app.auth.supabase_jwt import get_portal_user, AuthenticatedUser
 
 router = APIRouter()
 
@@ -125,3 +129,141 @@ def list_companies(db: Session = Depends(get_db)):
         }
         for c in companies
     ]
+
+
+# ---------------------------------------------------------------------------
+# Portal admin endpoints (Supabase JWT auth required)
+# ---------------------------------------------------------------------------
+
+def _require_admin(user: AuthenticatedUser) -> None:
+    """Verify the authenticated user has admin role in wakeeli_user_roles."""
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT role FROM wakeeli_user_roles WHERE user_id = :uid"),
+            {"uid": user.user_id},
+        ).fetchone()
+    if not result or result[0] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+
+class PreApprovalCreate(BaseModel):
+    email: str
+    role: str = "client"
+    client_ids: List[str] = []
+
+
+@router.get("/pre-approved-emails")
+async def list_pre_approved_emails(user: AuthenticatedUser = Depends(get_portal_user)):
+    _require_admin(user)
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("SELECT id, email, role, client_ids, created_at FROM wakeeli_pre_approved_emails ORDER BY created_at DESC")
+        ).fetchall()
+    entries = [
+        {
+            "id": r[0],
+            "email": r[1],
+            "role": r[2],
+            "client_ids": r[3] if r[3] else [],
+            "created_at": r[4].isoformat() if r[4] else "",
+        }
+        for r in rows
+    ]
+    return {"entries": entries}
+
+
+@router.post("/pre-approved-emails")
+async def add_pre_approved_email(
+    payload: PreApprovalCreate,
+    user: AuthenticatedUser = Depends(get_portal_user),
+):
+    _require_admin(user)
+    import json
+    entry_id = str(uuid.uuid4())
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO wakeeli_pre_approved_emails (id, email, role, client_ids) "
+                "VALUES (:id, :email, :role, :client_ids::jsonb)"
+            ),
+            {
+                "id": entry_id,
+                "email": payload.email,
+                "role": payload.role,
+                "client_ids": json.dumps(payload.client_ids),
+            },
+        )
+    return {"id": entry_id, "email": payload.email, "role": payload.role}
+
+
+@router.delete("/pre-approved-emails/{entry_id}")
+async def delete_pre_approved_email(
+    entry_id: str,
+    user: AuthenticatedUser = Depends(get_portal_user),
+):
+    _require_admin(user)
+    with engine.begin() as conn:
+        conn.execute(
+            text("DELETE FROM wakeeli_pre_approved_emails WHERE id = :id"),
+            {"id": entry_id},
+        )
+    return {"deleted": entry_id}
+
+
+class ClientRoleCreate(BaseModel):
+    user_id: str
+    role: str
+    client_id: Optional[str] = None
+
+
+@router.get("/client-roles")
+async def list_client_roles(
+    user_id: str,
+    user: AuthenticatedUser = Depends(get_portal_user),
+):
+    _require_admin(user)
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("SELECT id, user_id, role, created_at FROM wakeeli_user_roles WHERE user_id = :uid ORDER BY created_at DESC"),
+            {"uid": user_id},
+        ).fetchall()
+    assignments = [
+        {
+            "id": r[0],
+            "user_id": r[1],
+            "role": r[2],
+            "client_id": None,
+            "created_at": r[3].isoformat() if r[3] else "",
+        }
+        for r in rows
+    ]
+    return {"assignments": assignments}
+
+
+@router.post("/client-roles")
+async def create_client_role(
+    payload: ClientRoleCreate,
+    user: AuthenticatedUser = Depends(get_portal_user),
+):
+    _require_admin(user)
+    role_id = str(uuid.uuid4())
+    with engine.begin() as conn:
+        conn.execute(
+            text("INSERT INTO wakeeli_user_roles (id, user_id, role) VALUES (:id, :user_id, :role)"),
+            {"id": role_id, "user_id": payload.user_id, "role": payload.role},
+        )
+    return {"id": role_id, "user_id": payload.user_id, "role": payload.role}
+
+
+@router.delete("/client-roles/{assignment_id}")
+async def delete_client_role(
+    assignment_id: str,
+    user: AuthenticatedUser = Depends(get_portal_user),
+):
+    _require_admin(user)
+    with engine.begin() as conn:
+        conn.execute(
+            text("DELETE FROM wakeeli_user_roles WHERE id = :id"),
+            {"id": assignment_id},
+        )
+    return {"deleted": assignment_id}

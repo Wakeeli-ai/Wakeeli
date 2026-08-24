@@ -22,6 +22,11 @@ import {
   Edit2,
   Save,
   Camera,
+  TrendingUp,
+  BookOpen,
+  Zap,
+  GitBranch,
+  BookMarked,
 } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
 
@@ -92,16 +97,44 @@ type NavItem = {
   count?: number;
 };
 
-const adminNav: NavItem[] = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/leads', icon: Users, label: 'Leads' },
-  { to: '/conversations', icon: MessageSquare, label: 'Conversations' },
-  { to: '/listings', icon: Building2, label: 'Listings' },
-  { to: '/tours', icon: Calendar, label: 'Tours' },
-  { to: '/agents', icon: UserCog, label: 'Agents' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+type NavGroup = {
+  groupLabel?: string;
+  items: NavItem[];
+};
+
+const adminNavGroups: NavGroup[] = [
+  {
+    items: [
+      { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+      { to: '/leads', icon: Users, label: 'Leads' },
+      { to: '/conversations', icon: MessageSquare, label: 'Conversations' },
+      { to: '/listings', icon: Building2, label: 'Listings' },
+      { to: '/tours', icon: Calendar, label: 'Tours' },
+      { to: '/agents', icon: UserCog, label: 'Agents' },
+      { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+      { to: '/settings', icon: Settings, label: 'Settings' },
+    ],
+  },
+  {
+    groupLabel: 'AI Config',
+    items: [
+      { to: '/conversation-rules', icon: MessageSquare, label: 'Conversation Rules' },
+      { to: '/triggers', icon: Zap, label: 'Triggers' },
+      { to: '/sequences', icon: GitBranch, label: 'Sequences' },
+      { to: '/knowledge-base', icon: BookOpen, label: 'Knowledge Base' },
+    ],
+  },
+  {
+    groupLabel: 'Performance',
+    items: [
+      { to: '/kpi', icon: TrendingUp, label: 'KPI Tracker' },
+      { to: '/playbook', icon: BookMarked, label: 'Playbook' },
+    ],
+  },
 ];
+
+// Flat version for backward-compat uses (pageTitle lookup, etc.)
+const adminNav: NavItem[] = adminNavGroups.flatMap((g) => g.items);
 
 const agentNav: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -150,6 +183,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const [searchParams] = useSearchParams();
   const { role, user, logout } = useRole();
   const navItems = role === 'admin' ? adminNav : agentNav;
+  const navGroups: NavGroup[] = role === 'admin' ? adminNavGroups : [{ items: agentNav }];
   const moreItems = role === 'admin' ? adminMoreItems : agentMoreItems;
   const activeBottomTabItems = role === 'agent' ? agentBottomTabItems : bottomTabItems;
 
@@ -345,60 +379,78 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto" style={{ padding: '10px 8px' }}>
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.to;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to + item.label}
-                to={item.to}
-                className="flex items-center gap-[10px] rounded-lg font-medium transition-all duration-150 mb-[1px]"
-                style={{
-                  padding: '9px 12px',
-                  fontSize: 13,
-                  color: isActive ? '#fff' : 'rgba(255,255,255,0.5)',
-                  backgroundColor: isActive ? 'rgba(255,255,255,0.10)' : 'transparent',
-                  borderLeft: isActive ? '3px solid #2060e8' : '3px solid transparent',
-                  textDecoration: 'none',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.backgroundColor = 'rgba(255,255,255,0.07)';
-                    el.style.color = '#fff';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.backgroundColor = 'transparent';
-                    el.style.color = 'rgba(255,255,255,0.5)';
-                  }
-                }}
-              >
-                <Icon
-                  size={16}
-                  style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.5)', flexShrink: 0 }}
-                />
-                <span className="flex-1">{item.label}</span>
-                {item.count !== undefined && (
-                  <span
-                    className="flex items-center justify-center font-bold text-white"
+          {navGroups.map((group, groupIdx) => (
+            <div key={groupIdx}>
+              {group.groupLabel && (
+                <div
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(255,255,255,0.28)',
+                    padding: '14px 12px 4px',
+                  }}
+                >
+                  {group.groupLabel}
+                </div>
+              )}
+              {group.items.map((item) => {
+                const isActive = location.pathname === item.to;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.to + item.label}
+                    to={item.to}
+                    className="flex items-center gap-[10px] rounded-lg font-medium transition-all duration-150 mb-[1px]"
                     style={{
-                      background: '#ef4444',
-                      minWidth: 18,
-                      height: 18,
-                      borderRadius: 9,
-                      fontSize: 10,
-                      padding: '0 4px',
+                      padding: '9px 12px',
+                      fontSize: 13,
+                      color: isActive ? '#fff' : 'rgba(255,255,255,0.5)',
+                      backgroundColor: isActive ? 'rgba(255,255,255,0.10)' : 'transparent',
+                      borderLeft: isActive ? '3px solid #2060e8' : '3px solid transparent',
+                      textDecoration: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.backgroundColor = 'rgba(255,255,255,0.07)';
+                        el.style.color = '#fff';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.backgroundColor = 'transparent';
+                        el.style.color = 'rgba(255,255,255,0.5)';
+                      }
                     }}
                   >
-                    {item.count}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+                    <Icon
+                      size={16}
+                      style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.5)', flexShrink: 0 }}
+                    />
+                    <span className="flex-1">{item.label}</span>
+                    {item.count !== undefined && (
+                      <span
+                        className="flex items-center justify-center font-bold text-white"
+                        style={{
+                          background: '#ef4444',
+                          minWidth: 18,
+                          height: 18,
+                          borderRadius: 9,
+                          fontSize: 10,
+                          padding: '0 4px',
+                        }}
+                      >
+                        {item.count}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* User card footer */}

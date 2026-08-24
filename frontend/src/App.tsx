@@ -14,6 +14,13 @@ import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import AgentAnalytics from './pages/AgentAnalytics';
 import AgentSettings from './pages/AgentSettings';
+import KpiTracker from './pages/KpiTracker';
+import KnowledgeBase from './pages/KnowledgeBase';
+import ConversationRules from './pages/ConversationRules';
+import TriggersActions from './pages/TriggersActions';
+import Sequences from './pages/Sequences';
+import Playbook from './pages/Playbook';
+import OnboardingWizard from './pages/OnboardingWizard';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useRole();
@@ -69,6 +76,13 @@ function AppRoutes() {
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/agent-analytics" element={<AgentAnalytics />} />
                 <Route path="/agent-settings" element={<AgentSettings />} />
+                <Route path="/kpi" element={<AdminRoute><KpiTracker /></AdminRoute>} />
+                <Route path="/knowledge-base" element={<AdminRoute><KnowledgeBase /></AdminRoute>} />
+                <Route path="/conversation-rules" element={<AdminRoute><ConversationRules /></AdminRoute>} />
+                <Route path="/triggers" element={<AdminRoute><TriggersActions /></AdminRoute>} />
+                <Route path="/sequences" element={<AdminRoute><Sequences /></AdminRoute>} />
+                <Route path="/playbook" element={<AdminRoute><Playbook /></AdminRoute>} />
+                <Route path="/onboarding" element={<OnboardingWizard />} />
               </Routes>
             </AppLayout>
           </ProtectedRoute>

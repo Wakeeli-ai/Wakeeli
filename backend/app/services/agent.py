@@ -429,7 +429,7 @@ Example:
             missing.append("property link or ID")
 
         if not state.get("user_info", {}).get("name"):
-            missing.append("your full name")
+            missing.append("your name")
 
         if missing:
             message = f"Ask user for this missing information: **{', '.join(missing)}**."
@@ -993,7 +993,7 @@ Do NOT include a greeting. Only ask for fields that are provably missing. If a f
 Keep it casual and brief.
 """
                         else:
-                            name_phrase = "What's your full name btw?" if session.name_ask_count == 0 else "And your name?"
+                            name_phrase = "What's your name btw?" if session.name_ask_count == 0 else "And your name?"
                             session.name_asked = True
                             session.name_ask_count += 1
                             message = f"""
@@ -1066,9 +1066,9 @@ Entry B: listing type is known. First contact or early stage. Send exactly 3 mes
 
 Message 1: "Hello, thanks for reaching out!" — use this exact phrase or a natural variation in their language. NOTHING ELSE.
 Message 2: ONE bundled question starting with a leading phrase like "Sure, to help you find the best options," then asking for ALL of these at once: {missing_str}.{area_note}
-Message 3: "What's your full name btw?"
+Message 3: "What's your name btw?"
 
-Example: "Hello, thanks for reaching out!" ||| "Sure, to help you find the best options, what's your budget range, how many bedrooms, and furnished or unfurnished?" ||| "What's your full name btw?"
+Example: "Hello, thanks for reaching out!" ||| "Sure, to help you find the best options, what's your budget range, how many bedrooms, and furnished or unfurnished?" ||| "What's your name btw?"
 
 WRONG examples (NEVER do this):
 - "Marhaba! Looking for a place in Zalka, nice area." — NO, don't echo the user
@@ -1155,6 +1155,17 @@ Greet the user naturally and ask how you can help them find a property in Lebano
             + message
         )
 
+    # Broader name guard: if the name is already known from any previous turn,
+    # hard-forbid re-asking it. Never rely solely on the LLM to remember this.
+    if session.user_info.get("name") and not session.name_just_set:
+        stored_name = session.user_info["name"]
+        message = (
+            f"CRITICAL: The lead's name is already known as '{stored_name}'. "
+            "Never ask for their name again under any circumstances. "
+            "Do not say 'And your name?', 'What is your name?', 'What's your name?', or any variation.\n\n"
+            + message
+        )
+
     # Safety net: if the user was already greeted before this turn, prepend an explicit
     # instruction so the LLM cannot include any greeting regardless of which path ran.
     if was_greeted:
@@ -1208,6 +1219,16 @@ Greet the user naturally and ask how you can help them find a property in Lebano
         f"LANGUAGE DIRECTIVE: Detected user language is {_lang_label}. "
         f"Respond in that exact language and style per the LANGUAGE MIRROR RULE. "
         f"Do not switch to English unless the user switches first.\n\n"
+        + message
+    )
+
+    # NAME PUNCTUATION RULE: injected every call so it is never forgotten.
+    message = (
+        "NAME PUNCTUATION RULE: Never place a comma before or after the lead's name. "
+        "Both directions are banned. "
+        "Wrong: 'Thank you, Fox.' Correct: 'Thank you Fox.' "
+        "Wrong: 'Fox, what area are you looking in?' Correct: 'What area are you looking in Fox?' "
+        "The name is inline text. No punctuation touches it. Zero exceptions.\n\n"
         + message
     )
 
